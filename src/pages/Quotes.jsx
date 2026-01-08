@@ -45,6 +45,7 @@ import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import ConvertQuoteDialog from '@/components/orders/ConvertQuoteDialog';
+import QuotePrintView from '@/components/quotes/QuotePrintView';
 
 export default function Quotes() {
   const [search, setSearch] = useState('');
@@ -55,6 +56,7 @@ export default function Quotes() {
   const [viewingQuote, setViewingQuote] = useState(null);
   const [clientIdFromUrl, setClientIdFromUrl] = useState(null);
   const [convertingQuote, setConvertingQuote] = useState(null);
+  const [printingQuote, setPrintingQuote] = useState(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -70,6 +72,11 @@ export default function Quotes() {
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ['quotes'],
     queryFn: () => base44.entities.Quote.list('-created_date', 200)
+  });
+
+  const { data: representative = [] } = useQuery({
+    queryKey: ['representative'],
+    queryFn: () => base44.entities.Representative.list('-created_date', 1)
   });
 
   const createMutation = useMutation({
@@ -288,6 +295,10 @@ export default function Quotes() {
                             <Eye className="w-4 h-4 mr-2" />
                             Visualizar
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setPrintingQuote(quote)}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Imprimir Formato
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             setEditingQuote(quote);
                             setShowForm(true);
@@ -436,6 +447,19 @@ export default function Quotes() {
         onClose={() => setConvertingQuote(null)}
         isLoading={convertToOrderMutation.isPending}
       />
+
+      {/* Print View Dialog */}
+      <Dialog open={!!printingQuote} onOpenChange={() => setPrintingQuote(null)}>
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0">
+          {printingQuote && (
+            <QuotePrintView 
+              quote={printingQuote} 
+              representative={representative[0]}
+              onClose={() => setPrintingQuote(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
