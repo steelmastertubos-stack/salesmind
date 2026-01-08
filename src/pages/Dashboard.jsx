@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import StatsCard from '@/components/dashboard/StatsCard';
 import OpportunityCard from '@/components/dashboard/OpportunityCard';
 import AlertsPanel from '@/components/dashboard/AlertsPanel';
+import GoalsPanel from '@/components/dashboard/GoalsPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
@@ -174,6 +175,9 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Goals Panel - Destaque */}
+      <GoalsPanel orders={orders} quotes={quotes} />
 
       {/* Main Content */}
       <div className="grid lg:grid-cols-3 gap-6">
