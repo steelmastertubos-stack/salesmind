@@ -70,8 +70,7 @@ export default function Orders() {
           invoice_number: invoiceData.invoice_number,
           invoice_date: invoiceData.invoice_date,
           invoiced_value: parseFloat(invoiceData.invoiced_value) || invoiceDialog.total_value,
-          status: 'invoiced',
-          commission_status: 'invoiced'
+          status: 'faturado'
         }
       });
     }
@@ -96,6 +95,18 @@ export default function Orders() {
 
   const getStatusConfig = (status) => {
     switch (status) {
+      case 'em_analise':
+        return { color: 'bg-amber-100 text-amber-700', label: 'Em Análise' };
+      case 'confirmado':
+        return { color: 'bg-blue-100 text-blue-700', label: 'Confirmado' };
+      case 'em_producao':
+        return { color: 'bg-purple-100 text-purple-700', label: 'Em Produção' };
+      case 'faturado':
+        return { color: 'bg-emerald-100 text-emerald-700', label: 'Faturado' };
+      case 'entregue':
+        return { color: 'bg-teal-100 text-teal-700', label: 'Entregue' };
+      case 'cancelado':
+        return { color: 'bg-red-100 text-red-700', label: 'Cancelado' };
       case 'pending':
         return { color: 'bg-amber-100 text-amber-700', label: 'Pendente' };
       case 'confirmed':
@@ -186,13 +197,12 @@ export default function Orders() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="confirmed">Confirmado</SelectItem>
-            <SelectItem value="in_production">Em Produção</SelectItem>
-            <SelectItem value="shipped">Enviado</SelectItem>
-            <SelectItem value="delivered">Entregue</SelectItem>
-            <SelectItem value="invoiced">Faturado</SelectItem>
-            <SelectItem value="cancelled">Cancelado</SelectItem>
+            <SelectItem value="em_analise">Em Análise</SelectItem>
+            <SelectItem value="confirmado">Confirmado</SelectItem>
+            <SelectItem value="em_producao">Em Produção</SelectItem>
+            <SelectItem value="faturado">Faturado</SelectItem>
+            <SelectItem value="entregue">Entregue</SelectItem>
+            <SelectItem value="cancelado">Cancelado</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -272,13 +282,17 @@ export default function Orders() {
                           Visualizar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleStatusChange(order, 'confirmed')}>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order, 'confirmado')}>
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Confirmar Pedido
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(order, 'shipped')}>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order, 'em_producao')}>
                           <Truck className="w-4 h-4 mr-2" />
-                          Marcar como Enviado
+                          Em Produção
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order, 'entregue')}>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Marcar como Entregue
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => {
                           setInvoiceDialog(order);
