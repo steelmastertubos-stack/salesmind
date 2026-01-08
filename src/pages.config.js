@@ -6,6 +6,7 @@ import Orders from './pages/Orders';
 import FieldMode from './pages/FieldMode';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import ClientDetails from './pages/ClientDetails';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "FieldMode": FieldMode,
     "Reports": Reports,
     "Settings": Settings,
+    "ClientDetails": ClientDetails,
 }
 
 export const pagesConfig = {
