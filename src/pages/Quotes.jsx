@@ -44,6 +44,7 @@ import SteelQuoteForm from '@/components/quotes/SteelQuoteForm';
 import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import ConvertQuoteDialog from '@/components/orders/ConvertQuoteDialog';
 
 export default function Quotes() {
   const [search, setSearch] = useState('');
@@ -53,6 +54,7 @@ export default function Quotes() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [viewingQuote, setViewingQuote] = useState(null);
   const [clientIdFromUrl, setClientIdFromUrl] = useState(null);
+  const [convertingQuote, setConvertingQuote] = useState(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -118,6 +120,45 @@ export default function Quotes() {
     }
     updateMutation.mutate({ id: quote.id, data: updateData });
   };
+
+  const convertToOrderMutation = useMutation({
+    mutationFn: async ({ quote, notes }) => {
+      const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
+      const orderData = {
+        order_number: orderNumber,
+        quote_id: quote.id,
+        client_id: quote.client_id,
+        client_name: quote.client_name,
+        principal_id: quote.principal_id,
+        principal_name: quote.principal_name,
+        items: quote.items,
+        total_value: quote.total_value,
+        total_weight: quote.items?.reduce((sum, item) => sum + (item.total_weight || 0), 0) || 0,
+        total_icms: quote.total_icms,
+        total_ipi: quote.total_ipi,
+        payment_terms: quote.payment_terms,
+        notes: notes || quote.notes,
+        status: 'em_analise',
+        commission_rate: quote.commission_rate || 0,
+        expected_commission: (quote.total_value || 0) * ((quote.commission_rate || 0) / 100),
+        status_history: [{
+          status: 'em_analise',
+          date: new Date().toISOString(),
+          notes: 'Pedido criado a partir do orçamento'
+        }]
+      };
+      
+      const order = await base44.entities.Order.create(orderData);
+      await base44.entities.Quote.update(quote.id, { status: 'converted' });
+      return order;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setConvertingQuote(null);
+      toast.success('Pedido criado com sucesso!');
+    }
+  });
 
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch = 
@@ -278,10 +319,7 @@ export default function Quotes() {
                             </>
                           )}
                           {quote.status === 'approved' && (
-                            <DropdownMenuItem onClick={() => {
-                              // TODO: Convert to order
-                              toast.info('Funcionalidade em desenvolvimento');
-                            }}>
+                            <DropdownMenuItem onClick={() => setConvertingQuote(quote)}>
                               <ShoppingCart className="w-4 h-4 mr-2" />
                               Converter em Pedido
                             </DropdownMenuItem>
@@ -390,6 +428,14 @@ export default function Quotes() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Convert to Order Dialog */}
+      <ConvertQuoteDialog
+        quote={convertingQuote}
+        onConvert={({ notes }) => convertToOrderMutation.mutate({ quote: convertingQuote, notes })}
+        onClose={() => setConvertingQuote(null)}
+        isLoading={convertToOrderMutation.isPending}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>

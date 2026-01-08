@@ -8,6 +8,7 @@ import Principals from './pages/Principals';
 import Quotes from './pages/Quotes';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Commissions from './pages/Commissions';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "Quotes": Quotes,
     "Reports": Reports,
     "Settings": Settings,
+    "Commissions": Commissions,
 }
 
 export const pagesConfig = {
