@@ -209,11 +209,15 @@ export default function QuotePDFExport({ quote, representative }) {
       // Footer
       y = doc.internal.pageSize.getHeight() - 30;
       
-      if (quote.payment_terms || quote.notes) {
+      if (quote.freight_type || quote.payment_terms || quote.notes) {
         doc.setFontSize(8);
         doc.setTextColor(28, 28, 28);
         doc.setFont('helvetica', 'normal');
         
+        if (quote.freight_type) {
+          doc.text(`Frete: ${quote.freight_type}`, margin, y);
+          y += 5;
+        }
         if (quote.payment_terms) {
           doc.text(`Condições de Pagamento: ${quote.payment_terms}`, margin, y);
           y += 5;

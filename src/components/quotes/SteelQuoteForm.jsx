@@ -36,6 +36,7 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
     client_state: quote?.client_state || '',
     principal_id: quote?.principal_id || '',
     items: quote?.items || [],
+    freight_type: quote?.freight_type || 'FOB',
     freight_value: quote?.freight_value || 0,
     payment_terms: quote?.payment_terms || '',
     validity_days: quote?.validity_days || 7,
@@ -495,9 +496,24 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       {/* Totals */}
       {formData.items.length > 0 && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-3">
-          <div className="grid sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid sm:grid-cols-3 gap-4 mb-4">
             <div className="space-y-2">
-              <Label>Frete</Label>
+              <Label>Tipo de Frete</Label>
+              <Select 
+                value={formData.freight_type} 
+                onValueChange={(v) => setFormData({ ...formData, freight_type: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FOB">FOB (Por conta do Cliente)</SelectItem>
+                  <SelectItem value="CIF">CIF (Por conta do Vendedor)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Valor do Frete</Label>
               <Input
                 type="number"
                 min="0"
