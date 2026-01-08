@@ -69,36 +69,48 @@ export default function QuotePDFExport({ quote, representative }) {
       doc.setLineWidth(0.5);
       doc.rect(margin + 70, y, 85, 40);
 
+      // Header do box
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin + 70, y, 85, 8, 'F');
+      doc.setDrawColor(15, 42, 68);
+      doc.setLineWidth(0.5);
+      doc.line(margin + 70, y + 8, margin + 155, y + 8);
+
       doc.setTextColor(15, 42, 68);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text('Representante Comercial', margin + 112.5, y + 6, { align: 'center' });
+      doc.text('Representante Comercial', margin + 112.5, y + 5.5, { align: 'center' });
 
       if (representative) {
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
         doc.setTextColor(28, 28, 28);
 
-        let repY = y + 12;
+        let repY = y + 14;
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.text(representative.name || '', margin + 73, repY);
-        repY += 4;
+        repY += 5;
 
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         if (representative.document) {
-          doc.text(`CNPJ/CPF: ${representative.document}`, margin + 73, repY);
-          repY += 4;
-        }
-        if (representative.address) {
-          doc.text(`End: ${representative.address}`, margin + 73, repY);
+          doc.setFont('helvetica', 'bold');
+          doc.text('CNPJ/CPF:', margin + 73, repY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(representative.document, margin + 95, repY);
           repY += 4;
         }
         if (representative.phone) {
-          doc.text(`Tel: ${representative.phone}`, margin + 73, repY);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Telefone:', margin + 73, repY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(representative.phone, margin + 95, repY);
           repY += 4;
         }
         if (representative.email) {
-          doc.text(`E-mail: ${representative.email}`, margin + 73, repY);
+          doc.setFont('helvetica', 'bold');
+          doc.text('E-mail:', margin + 73, repY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(representative.email, margin + 95, repY);
         }
       }
 

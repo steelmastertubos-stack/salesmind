@@ -43,25 +43,21 @@ export default function QuotePrintView({ quote, representative, onClose }) {
           </div>
 
           {/* Dados do Representante Comercial */}
-          <div className="flex-1 border-2 border-black p-3">
-            <p className="font-bold text-sm mb-2 text-center">Representante Comercial</p>
+          <div className="flex-1 border-2 border-black">
+            <div className="bg-gray-100 border-b-2 border-black px-3 py-2">
+              <p className="font-bold text-sm text-center">Representante Comercial</p>
+            </div>
             {representative && (
-              <div className="text-xs space-y-0.5">
-                <p className="font-bold">{representative.name}</p>
+              <div className="p-3 text-xs space-y-1">
+                <p className="font-bold text-base mb-2">{representative.name}</p>
                 {representative.document && (
-                  <p>CNPJ/CPF: {representative.document}</p>
-                )}
-                {representative.address && (
-                  <p>Endereço: {representative.address}</p>
-                )}
-                {representative.city && representative.state && (
-                  <p>{representative.city}/{representative.state}</p>
+                  <p><span className="font-semibold">CNPJ/CPF:</span> {representative.document}</p>
                 )}
                 {representative.phone && (
-                  <p>Telefone: {representative.phone}</p>
+                  <p><span className="font-semibold">Telefone:</span> {representative.phone}</p>
                 )}
                 {representative.email && (
-                  <p>E-mail: {representative.email}</p>
+                  <p><span className="font-semibold">E-mail:</span> {representative.email}</p>
                 )}
               </div>
             )}
