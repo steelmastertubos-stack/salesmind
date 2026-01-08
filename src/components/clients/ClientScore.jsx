@@ -104,8 +104,6 @@ export default function ClientScore({ client, orders }) {
   );
 }
 
-export { calculateClientScore };
-
 export function calculateClientScore(client, orders) {
   let score = 50;
   const today = new Date();
