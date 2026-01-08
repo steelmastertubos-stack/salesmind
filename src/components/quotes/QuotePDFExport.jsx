@@ -32,22 +32,32 @@ export default function QuotePDFExport({ quote, representative }) {
       doc.setLineWidth(0.5);
       doc.rect(margin, y, pageWidth - 2 * margin - 50, 40);
 
+      // Logo do Representado
+      if (quote.principal_logo_url) {
+        try {
+          doc.addImage(quote.principal_logo_url, 'PNG', margin + 3, y + 3, 30, 15);
+        } catch (e) {
+          console.log('Could not add principal logo');
+        }
+      }
+
       doc.setTextColor(15, 42, 68);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text(quote.principal_name || 'Representado', margin + 3, y + 6);
+      doc.text(quote.principal_name || 'Representado', margin + (quote.principal_logo_url ? 36 : 3), y + 6);
       
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(28, 28, 28);
       
       let textY = y + 12;
+      const textX = margin + (quote.principal_logo_url ? 36 : 3);
       if (quote.principal_cnpj) {
-        doc.text(`CNPJ: ${quote.principal_cnpj}`, margin + 3, textY);
+        doc.text(`CNPJ: ${quote.principal_cnpj}`, textX, textY);
         textY += 5;
       }
       if (quote.principal_state_registration) {
-        doc.text(`I.E.: ${quote.principal_state_registration}`, margin + 3, textY);
+        doc.text(`I.E.: ${quote.principal_state_registration}`, textX, textY);
         textY += 5;
       }
 
@@ -234,6 +244,16 @@ export default function QuotePDFExport({ quote, representative }) {
         doc.text(`Vendedor: ${representative.name} - ${representative.document || ''}`, margin, y + 5);
         if (representative.email) {
           doc.text(`E-mail: ${representative.email}`, margin, y + 9);
+        }
+      }
+
+      // Signature Image (if available)
+      if (representative?.signature_image_url) {
+        try {
+          const sigY = doc.internal.pageSize.getHeight() - 20;
+          doc.addImage(representative.signature_image_url, 'PNG', margin + 50, sigY, 40, 15);
+        } catch (e) {
+          console.log('Could not add signature image');
         }
       }
 
