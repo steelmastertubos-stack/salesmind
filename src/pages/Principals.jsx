@@ -10,7 +10,8 @@ import {
   Package,
   Truck,
   Edit,
-  Trash2
+  Trash2,
+  Upload
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ export default function Principals() {
     phone: '',
     email: '',
     contact_name: '',
+    logo_url: '',
     commission_percentage: '',
     tax_type: '',
     default_tax_rate: '',
@@ -82,6 +84,7 @@ export default function Principals() {
       phone: '',
       email: '',
       contact_name: '',
+      logo_url: '',
       commission_percentage: '',
       tax_type: '',
       default_tax_rate: '',
@@ -131,6 +134,7 @@ export default function Principals() {
       phone: principal.phone || '',
       email: principal.email || '',
       contact_name: principal.contact_name || '',
+      logo_url: principal.logo_url || '',
       commission_percentage: principal.commission_percentage || '',
       tax_type: principal.tax_type || '',
       default_tax_rate: principal.default_tax_rate || '',
@@ -140,6 +144,19 @@ export default function Principals() {
       is_active: principal.is_active !== false
     });
     setShowForm(true);
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setFormData({ ...formData, logo_url: file_url });
+        toast.success('Logo enviado com sucesso!');
+      } catch (error) {
+        toast.error('Erro ao enviar logo');
+      }
+    }
   };
 
   const handleSubmit = (e) => {
@@ -319,6 +336,41 @@ export default function Principals() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Logo da Empresa</Label>
+              <div className="flex items-center gap-4">
+                {formData.logo_url && (
+                  <img 
+                    src={formData.logo_url} 
+                    alt="Logo"
+                    className="h-16 object-contain border border-slate-200 rounded-lg px-2"
+                  />
+                )}
+                <label className="cursor-pointer">
+                  <div className="px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition-colors">
+                    <Upload className="w-5 h-5 mx-auto mb-1 text-slate-400" />
+                    <span className="text-xs text-slate-600">Upload Logo</span>
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                  />
+                </label>
+                {formData.logo_url && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({ ...formData, logo_url: '' })}
+                  >
+                    Remover
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Razão Social *</Label>

@@ -268,6 +268,16 @@ export default function Settings() {
                           onChange={handleSignatureUpload}
                         />
                       </label>
+                      {repData.signature_image_url && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRepData({ ...repData, signature_image_url: '' })}
+                        >
+                          Remover
+                        </Button>
+                      )}
                     </div>
                     <p className="text-xs text-slate-500">
                       Faça upload de uma imagem PNG transparente da sua assinatura
