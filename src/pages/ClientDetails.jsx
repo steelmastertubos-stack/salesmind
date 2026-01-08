@@ -34,6 +34,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageHeader from '@/components/common/PageHeader';
 import ClientForm from '@/components/forms/ClientForm';
 import PurchasePrediction from '@/components/ai/PurchasePrediction';
+import CrossSellSuggestions from '@/components/clients/CrossSellSuggestions';
+import ClientAlerts from '@/components/clients/ClientAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
@@ -275,23 +277,16 @@ export default function ClientDetails() {
         </div>
       </div>
 
-      {/* Last Purchase Suggestion */}
-      {client.last_purchase_product && (
-        <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200 rounded-2xl p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Target className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-emerald-900 mb-1">Próxima Venda Sugerida</h3>
-              <p className="text-sm text-emerald-700">
-                Cliente costuma comprar <strong>{client.last_purchase_product}</strong> a cada {client.average_purchase_cycle || 30} dias
-              </p>
-              <p className="text-sm text-emerald-600 mt-1">
-                Ticket médio: <strong>{formatCurrency(client.average_ticket)}</strong>
-              </p>
-            </div>
-          </div>
+      {/* Alerts */}
+      <ClientAlerts client={client} orders={orders} />
+
+      {/* Cross-Sell Suggestions */}
+      {orders.length > 0 && (
+        <div className="mt-6">
+          <CrossSellSuggestions 
+            client={client} 
+            lastOrder={orders.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0]} 
+          />
         </div>
       )}
 
@@ -360,6 +355,54 @@ export default function ClientDetails() {
 
         {/* Memory Tab */}
         <TabsContent value="memory" className="space-y-4">
+          {/* Relationship Info */}
+          {(client.contact_birthday || client.contact_football_team || client.contact_favorite_drink || client.contact_interests || client.personal_notes) && (
+            <div className="bg-pink-50 border border-pink-200 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-5 h-5 text-pink-600" />
+                <h3 className="font-semibold text-pink-900">Informações de Relacionamento</h3>
+              </div>
+              <div className="space-y-2 text-sm">
+                {client.contact_birthday && (
+                  <div>
+                    <span className="text-pink-600 font-medium">Aniversário:</span>{' '}
+                    <span className="text-pink-800">{new Date(client.contact_birthday).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                )}
+                {client.contact_football_team && (
+                  <div>
+                    <span className="text-pink-600 font-medium">Time:</span>{' '}
+                    <span className="text-pink-800">{client.contact_football_team}</span>
+                  </div>
+                )}
+                {client.contact_favorite_drink && (
+                  <div>
+                    <span className="text-pink-600 font-medium">Bebida:</span>{' '}
+                    <span className="text-pink-800">{client.contact_favorite_drink}</span>
+                  </div>
+                )}
+                {client.contact_interests && (
+                  <div>
+                    <span className="text-pink-600 font-medium">Interesses:</span>{' '}
+                    <span className="text-pink-800">{client.contact_interests}</span>
+                  </div>
+                )}
+                {client.important_dates && (
+                  <div>
+                    <span className="text-pink-600 font-medium">Datas Importantes:</span>{' '}
+                    <span className="text-pink-800">{client.important_dates}</span>
+                  </div>
+                )}
+                {client.personal_notes && (
+                  <div className="pt-2 border-t border-pink-200">
+                    <span className="text-pink-600 font-medium">Observações:</span>
+                    <p className="text-pink-800 mt-1">{client.personal_notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <Brain className="w-5 h-5 text-amber-600" />

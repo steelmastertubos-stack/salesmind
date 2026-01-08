@@ -13,8 +13,10 @@ import {
   User,
   Brain,
   Save,
-  X
+  X,
+  Heart
 } from 'lucide-react';
+import CNPJLookup from '@/components/clients/CNPJLookup';
 
 const SEGMENTS = [
   'Indústria',
@@ -42,6 +44,7 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     cnpj: client?.cnpj || '',
     state_registration: client?.state_registration || '',
     segment: client?.segment || '',
+    cnae: client?.cnae || '',
     address: client?.address || '',
     city: client?.city || '',
     state: client?.state || '',
@@ -51,6 +54,12 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     email: client?.email || '',
     contact_name: client?.contact_name || '',
     contact_role: client?.contact_role || '',
+    contact_birthday: client?.contact_birthday || '',
+    contact_football_team: client?.contact_football_team || '',
+    contact_favorite_drink: client?.contact_favorite_drink || '',
+    contact_interests: client?.contact_interests || '',
+    important_dates: client?.important_dates || '',
+    personal_notes: client?.personal_notes || '',
     purchase_preferences: client?.purchase_preferences || '',
     price_restrictions: client?.price_restrictions || '',
     payment_restrictions: client?.payment_restrictions || '',
@@ -59,9 +68,18 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     previous_complaints: client?.previous_complaints || '',
     recurring_objections: client?.recurring_objections || '',
     special_conditions: client?.special_conditions || '',
+    last_contact_date: client?.last_contact_date || '',
+    next_contact_date: client?.next_contact_date || '',
     status: client?.status || 'active',
     is_active: client?.is_active !== false
   });
+
+  const handleCNPJData = (data) => {
+    setFormData(prev => ({
+      ...prev,
+      ...data
+    }));
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -75,14 +93,18 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="basic" className="text-xs sm:text-sm">
             <Building2 className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Dados</span> Básicos
+            <span className="hidden sm:inline">Dados</span>
           </TabsTrigger>
           <TabsTrigger value="contact" className="text-xs sm:text-sm">
             <Phone className="w-4 h-4 mr-1 sm:mr-2" />
             Contato
+          </TabsTrigger>
+          <TabsTrigger value="relationship" className="text-xs sm:text-sm">
+            <Heart className="w-4 h-4 mr-1 sm:mr-2" />
+            Relação
           </TabsTrigger>
           <TabsTrigger value="memory" className="text-xs sm:text-sm">
             <Brain className="w-4 h-4 mr-1 sm:mr-2" />
@@ -91,6 +113,7 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
+          {!client && <CNPJLookup onDataFetched={handleCNPJData} />}
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="company_name">Razão Social *</Label>
@@ -245,6 +268,100 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               placeholder="email@empresa.com.br"
+            />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="last_contact_date">Último Contato</Label>
+              <Input
+                id="last_contact_date"
+                type="date"
+                value={formData.last_contact_date}
+                onChange={(e) => handleChange('last_contact_date', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="next_contact_date">Próximo Contato</Label>
+              <Input
+                id="next_contact_date"
+                type="date"
+                value={formData.next_contact_date}
+                onChange={(e) => handleChange('next_contact_date', e.target.value)}
+              />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="relationship" className="space-y-4">
+          <div className="bg-pink-50 border border-pink-200 rounded-xl p-4 mb-4">
+            <p className="text-sm text-pink-800">
+              <Heart className="w-4 h-4 inline mr-1" />
+              <strong>Relacionamento:</strong> Informações pessoais que ajudam a criar conexão com o cliente.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact_birthday">Aniversário do Contato</Label>
+              <Input
+                id="contact_birthday"
+                type="date"
+                value={formData.contact_birthday}
+                onChange={(e) => handleChange('contact_birthday', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact_football_team">Time de Futebol</Label>
+              <Input
+                id="contact_football_team"
+                value={formData.contact_football_team}
+                onChange={(e) => handleChange('contact_football_team', e.target.value)}
+                placeholder="Ex: Flamengo, São Paulo..."
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contact_favorite_drink">Bebida Preferida</Label>
+            <Input
+              id="contact_favorite_drink"
+              value={formData.contact_favorite_drink}
+              onChange={(e) => handleChange('contact_favorite_drink', e.target.value)}
+              placeholder="Ex: Café expresso, Whisky..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contact_interests">Interesses e Hobbies</Label>
+            <Textarea
+              id="contact_interests"
+              value={formData.contact_interests}
+              onChange={(e) => handleChange('contact_interests', e.target.value)}
+              placeholder="Ex: Gosta de pescar, acompanha F1, toca violão..."
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="important_dates">Datas Importantes</Label>
+            <Textarea
+              id="important_dates"
+              value={formData.important_dates}
+              onChange={(e) => handleChange('important_dates', e.target.value)}
+              placeholder="Ex: Aniversário da empresa em 15/03, casamento do filho em junho..."
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="personal_notes">Observações Pessoais</Label>
+            <Textarea
+              id="personal_notes"
+              value={formData.personal_notes}
+              onChange={(e) => handleChange('personal_notes', e.target.value)}
+              placeholder="Anotações sobre a personalidade, estilo, preferências do contato..."
+              rows={3}
             />
           </div>
         </TabsContent>
