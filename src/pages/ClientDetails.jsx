@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/common/PageHeader';
 import ClientForm from '@/components/forms/ClientForm';
+import PurchasePrediction from '@/components/ai/PurchasePrediction';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
@@ -295,13 +296,22 @@ export default function ClientDetails() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="history" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="ai" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="ai" className="text-xs">
+            <Brain className="w-3 h-3 mr-1" />
+            IA
+          </TabsTrigger>
           <TabsTrigger value="history" className="text-xs">Histórico</TabsTrigger>
           <TabsTrigger value="memory" className="text-xs">Memória</TabsTrigger>
           <TabsTrigger value="followups" className="text-xs">Follow-ups</TabsTrigger>
           <TabsTrigger value="info" className="text-xs">Dados</TabsTrigger>
         </TabsList>
+
+        {/* AI Tab */}
+        <TabsContent value="ai">
+          <PurchasePrediction client={client} orders={orders} />
+        </TabsContent>
 
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">

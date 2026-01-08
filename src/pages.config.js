@@ -7,6 +7,7 @@ import FieldMode from './pages/FieldMode';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ClientDetails from './pages/ClientDetails';
+import AIInsights from './pages/AIInsights';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "Reports": Reports,
     "Settings": Settings,
     "ClientDetails": ClientDetails,
+    "AIInsights": AIInsights,
 }
 
 export const pagesConfig = {

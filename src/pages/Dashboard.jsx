@@ -10,7 +10,9 @@ import {
   Target,
   Zap,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatsCard from '@/components/dashboard/StatsCard';
@@ -230,6 +232,23 @@ export default function Dashboard() {
               blockedCount: orders.filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status)).length
             }}
           />
+
+          {/* AI Insights Teaser */}
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-4 mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              <h3 className="font-semibold text-purple-900">Insights com IA</h3>
+            </div>
+            <p className="text-sm text-purple-700 mb-3">
+              Preveja compras e receba recomendações inteligentes
+            </p>
+            <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" asChild>
+              <a href="/AIInsights">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Ver Análises
+              </a>
+            </Button>
+          </div>
 
           {/* Quick Actions */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mt-4">
