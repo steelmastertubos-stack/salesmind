@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Search, Loader2, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { base44 } from '@/api/base44Client';
 
 export default function CNPJLookup({ onDataFetched }) {
   const [cnpj, setCnpj] = useState('');
@@ -20,26 +21,45 @@ export default function CNPJLookup({ onDataFetched }) {
       .slice(0, 18);
   };
 
-  const mockCNPJSearch = async (cnpjNumber) => {
-    // Simulação de busca em API (Receita Federal)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  const searchCNPJ = async (cnpjNumber) => {
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Busque informações oficiais da empresa com CNPJ ${cnpjNumber}. 
+        
+Retorne os dados EXATOS e OFICIAIS da empresa:
+- Razão Social completa
+- Nome Fantasia (se houver)
+- CNPJ formatado
+- Endereço completo (logradouro, número, complemento)
+- Cidade
+- Estado (UF)
+- CEP
+- CNAE principal com descrição
+- Segmento de atuação
 
-    const mockData = {
-      company_name: 'INDUSTRIA DE MATERIAIS SIDERURGICOS LTDA',
-      trade_name: 'SIDERÚRGICA DO VALE',
-      cnpj: cnpjNumber,
-      address: 'RUA DAS INDUSTRIAS, 1234',
-      city: 'BETIM',
-      state: 'MG',
-      zip_code: '32600-000',
-      segment: 'Metalurgia',
-      cnae: '2511-0/00 - Fabricação de estruturas metálicas',
-      state_registration: '062.123.456.0012',
-      phone: '(31) 3594-5000',
-      email: 'contato@siderurgicadovale.com.br'
-    };
+IMPORTANTE: Busque dados reais e atualizados. Não invente informações.`,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            company_name: { type: "string", description: "Razão social oficial" },
+            trade_name: { type: "string", description: "Nome fantasia" },
+            cnpj: { type: "string", description: "CNPJ formatado" },
+            address: { type: "string", description: "Endereço completo" },
+            city: { type: "string", description: "Cidade" },
+            state: { type: "string", description: "Estado (UF)" },
+            zip_code: { type: "string", description: "CEP" },
+            segment: { type: "string", description: "Segmento de atuação" },
+            cnae: { type: "string", description: "CNAE principal" }
+          }
+        }
+      });
 
-    return mockData;
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar CNPJ:', error);
+      throw new Error('Erro ao buscar dados do CNPJ');
+    }
   };
 
   const handleSearch = async () => {
@@ -54,7 +74,7 @@ export default function CNPJLookup({ onDataFetched }) {
     setError('');
 
     try {
-      const data = await mockCNPJSearch(cleanCNPJ);
+      const data = await searchCNPJ(cnpj);
       onDataFetched(data);
     } catch (err) {
       setError('Erro ao buscar CNPJ. Verifique o número e tente novamente.');
