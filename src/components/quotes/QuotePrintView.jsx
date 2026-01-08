@@ -173,7 +173,7 @@ export default function QuotePrintView({ quote, representative, onClose }) {
             )}
             <p><strong>Finalidade da Venda:</strong> Industrialização</p>
             <p><strong>Contribuinte:</strong> SIM</p>
-            <p><strong>Modalidade do Frete:</strong> Destinatário (FOB)</p>
+            <p><strong>Modalidade do Frete:</strong> {quote.freight_type || 'FOB'}</p>
             {quote.client_address && (
               <p>
                 <strong>Local de Entrega:</strong> {quote.client_address} - {quote.client_city}/{quote.client_state}
