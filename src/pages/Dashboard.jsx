@@ -19,6 +19,7 @@ import StatsCard from '@/components/dashboard/StatsCard';
 import OpportunityCard from '@/components/dashboard/OpportunityCard';
 import AlertsPanel from '@/components/dashboard/AlertsPanel';
 import GoalsPanel from '@/components/dashboard/GoalsPanel';
+import PriorityClients from '@/components/dashboard/PriorityClients';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
@@ -178,6 +179,11 @@ export default function Dashboard() {
 
       {/* Goals Panel - Destaque */}
       <GoalsPanel orders={orders} quotes={quotes} />
+
+      {/* Priority Clients - NEW */}
+      {!isLoading && clients.length > 0 && (
+        <PriorityClients clients={clients} orders={orders} />
+      )}
 
       {/* Main Content */}
       <div className="grid lg:grid-cols-3 gap-6">
