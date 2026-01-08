@@ -46,6 +46,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import ConvertQuoteDialog from '@/components/orders/ConvertQuoteDialog';
 import QuotePrintView from '@/components/quotes/QuotePrintView';
+import QuotePDFExport from '@/components/quotes/QuotePDFExport';
 
 export default function Quotes() {
   const [search, setSearch] = useState('');
@@ -392,6 +393,9 @@ export default function Quotes() {
           </DialogHeader>
           {viewingQuote && (
             <div className="space-y-4">
+              <div className="flex justify-end mb-3">
+                <QuotePDFExport quote={viewingQuote} representative={representative[0]} />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-slate-500">Cliente</p>
