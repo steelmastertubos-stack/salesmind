@@ -8,10 +8,12 @@ import {
   TrendingUp,
   Calendar
 } from 'lucide-react';
+import SuggestedMessage from './SuggestedMessage';
 
-export default function ClientAlerts({ client, orders }) {
+export default function ClientAlerts({ client, orders, showMessages = true }) {
   const alerts = [];
   const today = new Date();
+  const lastOrder = orders.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
 
   // 1. Alerta de ciclo de compra
   if (client.last_purchase_date && client.average_purchase_cycle) {
@@ -106,17 +108,22 @@ export default function ClientAlerts({ client, orders }) {
       {alerts.map((alert, index) => {
         const Icon = alert.icon;
         return (
-          <div key={index} className={`rounded-xl p-4 border-2 ${alert.color}`}>
-            <div className="flex items-start gap-3">
-              <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h4 className="font-semibold mb-1">{alert.title}</h4>
-                <p className="text-sm mb-2">{alert.description}</p>
-                <Badge variant="outline" className="text-xs">
-                  💡 {alert.action}
-                </Badge>
+          <div key={index} className="space-y-3">
+            <div className={`rounded-xl p-4 border-2 ${alert.color}`}>
+              <div className="flex items-start gap-3">
+                <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold mb-1">{alert.title}</h4>
+                  <p className="text-sm mb-2">{alert.description}</p>
+                  <Badge variant="outline" className="text-xs">
+                    💡 {alert.action}
+                  </Badge>
+                </div>
               </div>
             </div>
+            {showMessages && (
+              <SuggestedMessage client={client} alert={alert} lastOrder={lastOrder} />
+            )}
           </div>
         );
       })}

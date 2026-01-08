@@ -36,6 +36,7 @@ import ClientForm from '@/components/forms/ClientForm';
 import PurchasePrediction from '@/components/ai/PurchasePrediction';
 import CrossSellSuggestions from '@/components/clients/CrossSellSuggestions';
 import ClientAlerts from '@/components/clients/ClientAlerts';
+import ClientScore from '@/components/clients/ClientScore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
@@ -182,16 +183,21 @@ export default function ClientDetails() {
 
   return (
     <div className="pb-20 lg:pb-6">
-      <PageHeader 
-        title={client.trade_name || client.company_name}
-        subtitle={client.cnpj}
-        backTo="Clients"
-      >
-        <Button variant="outline" onClick={() => setShowEditForm(true)}>
-          <Edit className="w-4 h-4 mr-2" />
-          Editar
-        </Button>
-      </PageHeader>
+      <div className="mb-4">
+        <PageHeader 
+          title={client.trade_name || client.company_name}
+          subtitle={client.cnpj}
+          backTo="Clients"
+        >
+          <Button variant="outline" onClick={() => setShowEditForm(true)}>
+            <Edit className="w-4 h-4 mr-2" />
+            Editar
+          </Button>
+        </PageHeader>
+        <div className="mt-3">
+          <ClientScore client={client} orders={orders} />
+        </div>
+      </div>
 
       {/* Client Header Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6">
@@ -277,8 +283,8 @@ export default function ClientDetails() {
         </div>
       </div>
 
-      {/* Alerts */}
-      <ClientAlerts client={client} orders={orders} />
+      {/* Alerts with Messages */}
+      <ClientAlerts client={client} orders={orders} showMessages={true} />
 
       {/* Cross-Sell Suggestions */}
       {orders.length > 0 && (
