@@ -219,6 +219,15 @@ export default function QuotePrintView({ quote, representative, onClose }) {
       {/* Linha De acordo */}
       <div className="mt-8 pt-8 border-t-2 border-black">
         <p className="text-center text-sm"><strong>De acordo</strong></p>
+        {representative?.signature_image_url && (
+          <div className="mt-4 flex justify-center">
+            <img 
+              src={representative.signature_image_url} 
+              alt="Assinatura" 
+              className="h-16 object-contain"
+            />
+          </div>
+        )}
       </div>
 
       {/* Close Button (not for print) */}

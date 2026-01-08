@@ -42,6 +42,7 @@ export default function Settings() {
     region: '',
     logo_url: '',
     signature: '',
+    signature_image_url: '',
     bank_name: '',
     bank_agency: '',
     bank_account: '',
@@ -59,6 +60,7 @@ export default function Settings() {
         region: rep.region || '',
         logo_url: rep.logo_url || '',
         signature: rep.signature || '',
+        signature_image_url: rep.signature_image_url || '',
         bank_name: rep.bank_name || '',
         bank_agency: rep.bank_agency || '',
         bank_account: rep.bank_account || '',
@@ -90,6 +92,19 @@ export default function Settings() {
         toast.success('Logo enviado com sucesso!');
       } catch (error) {
         toast.error('Erro ao enviar logo');
+      }
+    }
+  };
+
+  const handleSignatureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setRepData(prev => ({ ...prev, signature_image_url: file_url }));
+        toast.success('Assinatura enviada com sucesso!');
+      } catch (error) {
+        toast.error('Erro ao enviar assinatura');
       }
     }
   };
@@ -229,6 +244,34 @@ export default function Settings() {
                       placeholder="Sua assinatura padrão para propostas e orçamentos"
                       rows={3}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Assinatura em Imagem (PNG)</Label>
+                    <div className="flex items-center gap-4">
+                      {repData.signature_image_url && (
+                        <img 
+                          src={repData.signature_image_url} 
+                          alt="Assinatura"
+                          className="h-16 object-contain border border-slate-200 rounded-lg px-2"
+                        />
+                      )}
+                      <label className="cursor-pointer">
+                        <div className="px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition-colors">
+                          <Upload className="w-5 h-5 mx-auto mb-1 text-slate-400" />
+                          <span className="text-xs text-slate-600">Upload PNG</span>
+                        </div>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/png"
+                          onChange={handleSignatureUpload}
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Faça upload de uma imagem PNG transparente da sua assinatura
+                    </p>
                   </div>
 
                   <Button 
