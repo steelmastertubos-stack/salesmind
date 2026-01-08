@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { getICMSRate, getIPIRate, calculateItemTotals, calculateQuoteTotals, validateQuote } from '@/utils/steelCalculations';
+import { getICMSRate, getIPIRate, calculateItemTotals, calculateQuoteTotals, validateQuote } from '@/components/utils/steelCalculations';
 import { toast } from 'sonner';
 
 const STATES = [
