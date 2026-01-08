@@ -20,9 +20,9 @@ export default function QuotePrintView({ quote, representative, onClose }) {
     <div className="bg-white p-8 max-w-5xl mx-auto print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Header */}
       <div className="border-2 border-black mb-4">
-        <div className="flex items-start justify-between p-4">
+        <div className="flex items-start justify-between p-4 gap-4">
           {/* Logo e Dados do Representado */}
-          <div className="flex-1 pr-4">
+          <div className="flex-1">
             {quote.principal_logo_url && (
               <img 
                 src={quote.principal_logo_url} 
@@ -32,9 +32,6 @@ export default function QuotePrintView({ quote, representative, onClose }) {
             )}
             <div className="text-sm space-y-0.5">
               <p className="font-bold text-base">{quote.principal_name}</p>
-              {quote.principal_address && (
-                <p>{quote.principal_address}</p>
-              )}
               <p>CNPJ: {quote.principal_cnpj}</p>
               {quote.principal_state_registration && (
                 <p>I.E.: {quote.principal_state_registration}</p>
@@ -45,8 +42,33 @@ export default function QuotePrintView({ quote, representative, onClose }) {
             </div>
           </div>
 
+          {/* Dados do Representante Comercial */}
+          <div className="flex-1 border-2 border-black p-3">
+            <p className="font-bold text-sm mb-2 text-center">Representante Comercial</p>
+            {representative && (
+              <div className="text-xs space-y-0.5">
+                <p className="font-bold">{representative.name}</p>
+                {representative.document && (
+                  <p>CNPJ/CPF: {representative.document}</p>
+                )}
+                {representative.address && (
+                  <p>Endereço: {representative.address}</p>
+                )}
+                {representative.city && representative.state && (
+                  <p>{representative.city}/{representative.state}</p>
+                )}
+                {representative.phone && (
+                  <p>Telefone: {representative.phone}</p>
+                )}
+                {representative.email && (
+                  <p>E-mail: {representative.email}</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Caixa Orçamento */}
-          <div className="border-2 border-black p-3 text-center">
+          <div className="border-2 border-black p-3 text-center min-w-[140px]">
             <p className="font-bold text-lg mb-1">ORÇAMENTO</p>
             <p className="text-sm">Nº. {quote.quote_number}</p>
             <p className="text-sm">{formatDate(quote.created_date || new Date())}</p>

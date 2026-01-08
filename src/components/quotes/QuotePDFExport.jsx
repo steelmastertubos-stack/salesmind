@@ -19,7 +19,7 @@ export default function QuotePDFExport({ quote, representative }) {
       // Header - Logo e Dados do Representado
       doc.setFillColor(15, 42, 68); // #0F2A44
       doc.rect(0, 0, pageWidth, 15, 'F');
-      
+
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
@@ -30,7 +30,7 @@ export default function QuotePDFExport({ quote, representative }) {
       // Box do Representado
       doc.setDrawColor(15, 42, 68);
       doc.setLineWidth(0.5);
-      doc.rect(margin, y, pageWidth - 2 * margin - 50, 40);
+      doc.rect(margin, y, 65, 40);
 
       // Logo do Representado
       if (quote.principal_logo_url) {
@@ -42,23 +42,64 @@ export default function QuotePDFExport({ quote, representative }) {
       }
 
       doc.setTextColor(15, 42, 68);
-      doc.setFontSize(12);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.text(quote.principal_name || 'Representado', margin + (quote.principal_logo_url ? 36 : 3), y + 6);
-      
-      doc.setFontSize(9);
+
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(28, 28, 28);
-      
+
       let textY = y + 12;
       const textX = margin + (quote.principal_logo_url ? 36 : 3);
       if (quote.principal_cnpj) {
         doc.text(`CNPJ: ${quote.principal_cnpj}`, textX, textY);
-        textY += 5;
+        textY += 4;
       }
       if (quote.principal_state_registration) {
         doc.text(`I.E.: ${quote.principal_state_registration}`, textX, textY);
-        textY += 5;
+        textY += 4;
+      }
+      if (quote.principal_phone) {
+        doc.text(`Fone: ${quote.principal_phone}`, textX, textY);
+      }
+
+      // Box Representante Comercial
+      doc.setDrawColor(15, 42, 68);
+      doc.setLineWidth(0.5);
+      doc.rect(margin + 70, y, 85, 40);
+
+      doc.setTextColor(15, 42, 68);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Representante Comercial', margin + 112.5, y + 6, { align: 'center' });
+
+      if (representative) {
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(28, 28, 28);
+
+        let repY = y + 12;
+        doc.setFont('helvetica', 'bold');
+        doc.text(representative.name || '', margin + 73, repY);
+        repY += 4;
+
+        doc.setFont('helvetica', 'normal');
+        if (representative.document) {
+          doc.text(`CNPJ/CPF: ${representative.document}`, margin + 73, repY);
+          repY += 4;
+        }
+        if (representative.address) {
+          doc.text(`End: ${representative.address}`, margin + 73, repY);
+          repY += 4;
+        }
+        if (representative.phone) {
+          doc.text(`Tel: ${representative.phone}`, margin + 73, repY);
+          repY += 4;
+        }
+        if (representative.email) {
+          doc.text(`E-mail: ${representative.email}`, margin + 73, repY);
+        }
       }
 
       // Box Número do Orçamento
