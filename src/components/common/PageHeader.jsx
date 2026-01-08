@@ -33,7 +33,7 @@ export default function PageHeader({
         <div className="flex items-center gap-3">
           {children}
           {actionLabel && onAction && (
-            <Button onClick={onAction} className="bg-[#1e3a5f] hover:bg-[#2d4a6f]">
+            <Button onClick={onAction} className="bg-[#0F2A44] hover:bg-[#1F4E79]">
               <Plus className="w-4 h-4 mr-2" />
               {actionLabel}
             </Button>

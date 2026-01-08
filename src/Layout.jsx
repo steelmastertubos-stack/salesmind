@@ -51,20 +51,28 @@ export default function Layout({ children, currentPageName }) {
     <div className="min-h-screen bg-slate-50">
       <style>{`
         :root {
-          --primary: #1e3a5f;
-          --primary-light: #2d4a6f;
-          --success: #10b981;
-          --warning: #f59e0b;
-          --danger: #ef4444;
-          --info: #3b82f6;
+          --primary: #0F2A44;
+          --primary-hover: #1F4E79;
+          --action: #1DB954;
+          --success: #2ECC71;
+          --warning: #F1C40F;
+          --danger: #E74C3C;
+          --info: #3498DB;
+          --text-primary: #1C1C1C;
+          --bg-neutral: #F2F4F7;
+        }
+
+        body {
+          background-color: var(--bg-neutral);
+          color: var(--text-primary);
         }
       `}</style>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#1e3a5f] text-white px-4 py-3 flex items-center justify-between shadow-lg">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#0F2A44] text-white px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
-          <Zap className="w-7 h-7 text-emerald-400" />
-          <span className="font-bold text-lg">RepMax</span>
+          <Zap className="w-7 h-7 text-[#1DB954]" />
+          <span className="font-bold text-lg">SalesMind</span>
         </div>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -76,16 +84,16 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-40 h-full w-64 bg-[#1e3a5f] text-white transform transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 z-40 h-full w-64 bg-[#0F2A44] text-white transform transition-transform duration-300 ease-in-out
         lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-6 hidden lg:flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#1DB954] rounded-xl flex items-center justify-center">
             <Zap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-xl">RepMax</h1>
-            <p className="text-xs text-slate-300">Copiloto Comercial</p>
+            <h1 className="font-bold text-xl">SalesMind</h1>
+            <p className="text-xs text-slate-300">B2B Sales Intelligence</p>
           </div>
         </div>
 
@@ -98,8 +106,8 @@ export default function Layout({ children, currentPageName }) {
               className={`
                 flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                 ${isActive(item.page) 
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
-                  : 'text-slate-300 hover:bg-white/10 hover:text-white'}
+                  ? 'bg-[#1DB954] text-white shadow-lg' 
+                  : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
               `}
             >
               <item.icon className="w-5 h-5" />
@@ -132,7 +140,7 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen bg-[#F2F4F7]">
         <div className="p-4 lg:p-6">
           {children}
         </div>
@@ -148,7 +156,7 @@ export default function Layout({ children, currentPageName }) {
               className={`
                 flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all
                 ${isActive(item.page) 
-                  ? 'text-emerald-600' 
+                  ? 'text-[#1DB954]' 
                   : 'text-slate-500'}
               `}
             >
