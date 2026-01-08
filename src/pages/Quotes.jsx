@@ -40,7 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PageHeader from '@/components/common/PageHeader';
-import QuoteForm from '@/components/quotes/QuoteForm';
+import SteelQuoteForm from '@/components/quotes/SteelQuoteForm';
 import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -321,7 +321,7 @@ export default function Quotes() {
               {editingQuote ? 'Editar Orçamento' : 'Novo Orçamento'}
             </DialogTitle>
           </DialogHeader>
-          <QuoteForm
+          <SteelQuoteForm
             quote={editingQuote}
             clientId={clientIdFromUrl}
             onSave={handleSave}

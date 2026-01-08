@@ -1,27 +1,27 @@
-import Dashboard from './pages/Dashboard';
+import AIInsights from './pages/AIInsights';
+import ClientDetails from './pages/ClientDetails';
 import Clients from './pages/Clients';
+import Dashboard from './pages/Dashboard';
+import FieldMode from './pages/FieldMode';
+import Orders from './pages/Orders';
 import Principals from './pages/Principals';
 import Quotes from './pages/Quotes';
-import Orders from './pages/Orders';
-import FieldMode from './pages/FieldMode';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
-import ClientDetails from './pages/ClientDetails';
-import AIInsights from './pages/AIInsights';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
+    "AIInsights": AIInsights,
+    "ClientDetails": ClientDetails,
     "Clients": Clients,
+    "Dashboard": Dashboard,
+    "FieldMode": FieldMode,
+    "Orders": Orders,
     "Principals": Principals,
     "Quotes": Quotes,
-    "Orders": Orders,
-    "FieldMode": FieldMode,
     "Reports": Reports,
     "Settings": Settings,
-    "ClientDetails": ClientDetails,
-    "AIInsights": AIInsights,
 }
 
 export const pagesConfig = {
