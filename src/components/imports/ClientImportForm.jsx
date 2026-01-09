@@ -136,23 +136,24 @@ export default function ClientImportForm({ onSuccess }) {
         }
 
         // Preparar dados
-        const clients = rows.map(row => ({
-          company_name: row.company_name,
-          trade_name: row.trade_name || row.company_name,
-          cnpj: row.cnpj,
-          state_registration: row.state_registration || '',
-          address: row.address || '',
-          city: row.city || '',
-          state: row.state || '',
-          zip_code: row.zip_code || '',
-          phone: row.phone || '',
-          email: row.email || '',
-          contact_name: row.contact_name || '',
-          contact_role: row.contact_role || '',
-          segment: row.segment || '',
-          status: row.status || 'active',
-          is_active: row.is_active !== 'false'
-        }));
+         const clients = rows.map(row => ({
+           code: row.code || `CLI-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+           company_name: row.company_name,
+           trade_name: row.trade_name || row.company_name,
+           cnpj: row.cnpj,
+           email: row.email,
+           phone: row.phone,
+           whatsapp: row.whatsapp || row.phone || '',
+           address: row.address || '',
+           city: row.city || '',
+           state: row.state || '',
+           zip_code: row.zip || '',
+           country: row.country || 'Brasil',
+           contact_name: row.responsible_user || '',
+           status: (row.status || 'active').toLowerCase() === 'active' ? 'active' : 'inactive',
+           notes: row.notes || '',
+           is_active: (row.status || 'active').toLowerCase() === 'active'
+         }));
 
         // Importar em lotes
         const batchSize = 50;
