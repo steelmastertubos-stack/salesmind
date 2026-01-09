@@ -212,11 +212,12 @@ export default function Opportunities() {
 
       toast.success('Email enviado e pedido criado!');
       setShowEmailPreview(false);
-      
+
       // 4. Atualizar estágio da oportunidade
       updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['quotes']);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao processar');
