@@ -95,8 +95,8 @@ export default function IntegratedAlerts() {
       severity: 'medium',
       title: 'Cliente no Ciclo de Compra',
       description: `${client.trade_name || client.company_name} - Última compra há ${Math.floor((new Date() - new Date(client.last_purchase_date)) / (1000 * 60 * 60 * 24))} dias`,
-      action: 'Criar orçamento',
-      link: createPageUrl('Clients')
+      client: client,
+      hasMenu: true
     })),
     ...stagnantOpportunities.slice(0, 2).map(opp => ({
       id: `stagnant_${opp.id}`,
