@@ -4,6 +4,7 @@ import Clients from './pages/Clients';
 import Commissions from './pages/Commissions';
 import Dashboard from './pages/Dashboard';
 import FieldMode from './pages/FieldMode';
+import ImportData from './pages/ImportData';
 import Opportunities from './pages/Opportunities';
 import Orders from './pages/Orders';
 import Principals from './pages/Principals';
@@ -12,7 +13,6 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
-import ImportData from './pages/ImportData';
 import __Layout from './Layout.jsx';
 
 
@@ -23,6 +23,7 @@ export const PAGES = {
     "Commissions": Commissions,
     "Dashboard": Dashboard,
     "FieldMode": FieldMode,
+    "ImportData": ImportData,
     "Opportunities": Opportunities,
     "Orders": Orders,
     "Principals": Principals,
@@ -31,7 +32,6 @@ export const PAGES = {
     "Settings": Settings,
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
-    "ImportData": ImportData,
 }
 
 export const pagesConfig = {

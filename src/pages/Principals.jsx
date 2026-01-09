@@ -41,6 +41,7 @@ import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import VTKCommissionConfig from '@/components/vtk/VTKCommissionConfig';
+import CNPJLookup from '@/components/clients/CNPJLookup';
 
 export default function Principals() {
   const [search, setSearch] = useState('');
