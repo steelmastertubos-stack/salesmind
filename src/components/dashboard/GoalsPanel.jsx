@@ -276,9 +276,9 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
               </Button>
               <Button 
                 onClick={() => updateGoalMutation.mutate(parseFloat(newGoalValue))}
-                disabled={!newGoalValue || parseFloat(newGoalValue) <= 0}
+                disabled={updateGoalMutation.isPending}
               >
-                Salvar Meta
+                {updateGoalMutation.isPending ? 'Salvando...' : 'Salvar Meta'}
               </Button>
             </div>
           </div>
