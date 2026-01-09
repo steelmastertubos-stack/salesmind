@@ -414,24 +414,14 @@ export default function Quotes() {
                               <DropdownMenuSeparator />
                             </>
                           )}
-                          <DropdownMenuSeparator />
-                          {quote.status === 'rascunho' && (
+                          {quote.status === 'enviado' && (
                             <>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'emitido')}>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Emitir Orçamento
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')}>
+                              <DropdownMenuItem onClick={() => setSendingQuote(quote)} className="text-green-600">
                                 <Send className="w-4 h-4 mr-2" />
-                                Enviar ao Cliente
+                                📤 Reenviar ao Cliente
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                             </>
-                          )}
-                          {quote.status === 'emitido' && (
-                            <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')}>
-                              <Send className="w-4 h-4 mr-2" />
-                              Enviar ao Cliente
-                            </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
