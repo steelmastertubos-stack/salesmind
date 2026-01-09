@@ -193,7 +193,7 @@ export default function Opportunities() {
              order_id: order.id,
              order_number: order.order_number,
              principal_id: principal.id,
-             principal_name: principal.company_name,
+             principal_name: principal.trade_name || principal.company_name,
              client_id: opportunity.client_id,
              client_name: opportunity.client_name,
              invoice_value: quote.total_value || 0,
@@ -202,6 +202,7 @@ export default function Opportunities() {
              status: 'prevista',
              notes: 'Comissão gerada automaticamente ao criar pedido'
            });
+           queryClient.invalidateQueries({ queryKey: ['commissions'] });
          }
 
         // 3. Atualizar orçamento para convertido
