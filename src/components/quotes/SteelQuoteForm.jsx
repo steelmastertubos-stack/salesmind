@@ -157,15 +157,21 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       newItem.total_weight = newItem.quantity * newItem.weight_per_meter;
     }
 
-    // Try to find VTK cost
+    // Try to find VTK cost by bitola and description
     const vtkCost = vtkCosts.find(v => 
-      v.bitola === product.code && v.is_active
+      v.is_active && 
+      v.bitola && 
+      (product.code?.includes(v.bitola) || product.description?.includes(v.bitola))
     );
     
     if (vtkCost) {
       newItem.vtk_cost = vtkCost.cost_per_unit;
       newItem.vtk_aba = vtkCost.aba_name;
       newItem.vtk_cost_id = vtkCost.id;
+      newItem.vtk_margin_pct = 20; // Margem padrão 20%
+    } else {
+      newItem.vtk_cost = 0;
+      newItem.vtk_margin_pct = 30; // Margem padrão se não encontrar custo
     }
 
     if (newItem.total_weight > 0) {
