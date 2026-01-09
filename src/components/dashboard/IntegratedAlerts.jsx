@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import PurchaseCycleActionMenu from './PurchaseCycleActionMenu';
 
 export default function IntegratedAlerts() {
   const { data: clients = [] } = useQuery({
