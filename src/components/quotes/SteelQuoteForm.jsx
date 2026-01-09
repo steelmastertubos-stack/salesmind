@@ -491,23 +491,45 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                         )}
                       </td>
                       <td className="p-2">
-                        {item.unit === 'pc' || item.unit === 'na' ? (
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.total_weight}
-                            onChange={(e) => updateItem(index, 'total_weight', parseFloat(e.target.value) || 0)}
-                            className="w-24 h-8 text-right"
-                            placeholder="Manual"
-                          />
-                        ) : (
-                          <span className="font-semibold">{item.total_weight?.toFixed(2)}</span>
-                        )}
-                      </td>
-                      <td className="p-2 text-right font-medium">
-                        {formatCurrency(item.price_per_kg)}
-                      </td>
+                         {item.unit === 'pc' || item.unit === 'na' ? (
+                           <Input
+                             type="number"
+                             min="0"
+                             step="0.01"
+                             value={item.total_weight}
+                             onChange={(e) => updateItem(index, 'total_weight', parseFloat(e.target.value) || 0)}
+                             className="w-24 h-8 text-right"
+                             placeholder="Manual"
+                           />
+                         ) : (
+                           <span className="font-semibold">{item.total_weight?.toFixed(2)}</span>
+                         )}
+                       </td>
+                       <td className="p-2 text-right">
+                         {item.vtk_cost > 0 ? (
+                           <div className="text-sm font-semibold text-orange-600">
+                             {formatCurrency(item.vtk_cost)}
+                           </div>
+                         ) : (
+                           <span className="text-xs text-slate-400">Sem custo</span>
+                         )}
+                       </td>
+                       <td className="p-2">
+                         <Input
+                           type="number"
+                           min="0"
+                           max="99"
+                           step="0.1"
+                           value={item.vtk_margin_pct}
+                           onChange={(e) => updateItem(index, 'vtk_margin_pct', parseFloat(e.target.value) || 0)}
+                           className="w-20 h-8 text-right text-blue-600 font-bold"
+                           placeholder="0"
+                           disabled={!item.vtk_cost}
+                         />
+                       </td>
+                       <td className="p-2 text-right font-medium">
+                         {formatCurrency(item.price_per_kg)}
+                       </td>
                       <td className="p-2 text-center">
                         <Badge className="bg-blue-100 text-blue-700 text-[10px]">
                           {item.icms_rate}%
