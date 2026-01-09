@@ -54,9 +54,9 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
   return (
     <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 shadow-lg">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shrink-0">
               <Target className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -66,9 +66,13 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-emerald-900">{formatCurrency(goal)}</p>
-            <p className="text-xs text-emerald-700">Meta mensal</p>
+          <div className="bg-white rounded-xl px-4 py-2 shadow-sm border-2 border-emerald-200 min-w-[140px]">
+            <p className="text-xs text-slate-500 mb-0.5">Meta</p>
+            <p className="text-lg font-bold text-emerald-900">{formatCurrency(goal)}</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-bold text-emerald-600">{formatPercent(soldPercent)}</span>
+              <span className="text-xs text-slate-500">atingido</span>
+            </div>
           </div>
         </div>
       </CardHeader>
