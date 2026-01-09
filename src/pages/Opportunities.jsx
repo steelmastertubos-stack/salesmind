@@ -143,8 +143,8 @@ export default function Opportunities() {
         console.log('📧 Abrindo modal de email - Quote:', quoteData, 'Principal:', principalData);
 
         // Preparar dados do email
-        const emailSubject = `🎯 Oportunidade Ganha: ${opportunity.client_name}`;
-        const emailBody = `Prezados,\n\nTemos o prazer de comunicar que a oportunidade com ${opportunity.client_name} foi ganha!\n\nDetalhes:\n- Valor: ${formatCurrency(opportunity.total_value)}\n- Peso: ${opportunity.total_weight}kg\n\nEm breve, nosso pedido será enviado para processamento.\n\nAtenciosamente`;
+        const emailSubject = `Ganhamos mais um! 🎯 ${opportunity.client_name}`;
+        const emailBody = `Ganhamos mais um! 🎯\n\nCliente: ${opportunity.client_name}\nValor: ${formatCurrency(opportunity.total_value)}\nPeso: ${opportunity.total_weight}kg\nOrçamento: ${opportunity.quote_number}\n\nPreciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\nAbraço`;
 
         // Mostrar modal
         setEmailPreview({
