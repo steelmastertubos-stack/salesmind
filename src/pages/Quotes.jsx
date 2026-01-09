@@ -359,6 +359,29 @@ export default function Quotes() {
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
+                          {(quote.status === 'rascunho' || quote.status === 'draft') && (
+                            <>
+                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'emitido')} className="text-blue-600">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                ✅ Emitir Orçamento
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')} className="text-green-600">
+                                <Send className="w-4 h-4 mr-2" />
+                                📤 Enviar ao Cliente
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          {quote.status === 'emitido' && (
+                            <>
+                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')} className="text-green-600">
+                                <Send className="w-4 h-4 mr-2" />
+                                📤 Enviar ao Cliente
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuSeparator />
                           {quote.status === 'rascunho' && (
                             <>
                               <DropdownMenuItem onClick={() => handleStatusChange(quote, 'emitido')}>
