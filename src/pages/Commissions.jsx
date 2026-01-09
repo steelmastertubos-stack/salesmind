@@ -219,19 +219,6 @@ export default function Commissions() {
             ))}
           </SelectContent>
         </Select>
-
-        <Select value={monthFilter} onValueChange={setMonthFilter}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Mês" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="2026-01">Janeiro 2026</SelectItem>
-            <SelectItem value="2025-12">Dezembro 2025</SelectItem>
-            <SelectItem value="2025-11">Novembro 2025</SelectItem>
-            <SelectItem value="2025-10">Outubro 2025</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Detailed Table */}
