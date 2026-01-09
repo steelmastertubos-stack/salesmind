@@ -89,10 +89,24 @@ export default function Quotes() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const quoteNumber = `ORC-${Date.now().toString().slice(-6)}`;
-      return base44.entities.Quote.create({ ...data, quote_number: quoteNumber });
+      const quote = await base44.entities.Quote.create({ ...data, quote_number: quoteNumber });
+      
+      // AUTOMAÇÃO: Criar oportunidade se orçamento já criado como emitido/enviado
+      if ((data.status === 'emitido' || data.status === 'enviado')) {
+        const client = clients.find(c => c.id === data.client_id);
+        try {
+          await createOpportunityFromQuote(quote, client);
+          await base44.entities.Quote.update(quote.id, { is_locked: true });
+        } catch (error) {
+          console.error('Error creating opportunity:', error);
+        }
+      }
+      
+      return quote;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
       setShowForm(false);
       toast.success('Orçamento criado com sucesso!');
     }
