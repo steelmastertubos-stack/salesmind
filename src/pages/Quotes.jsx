@@ -394,7 +394,7 @@ export default function Quotes() {
                   </div>
 
                   {/* Margem e Comissão Info */}
-                  {commissionValue > 0 && (
+                  {(isVTK || commissionValue > 0) && (
                     <div className={`rounded-lg p-3 mb-3 border ${isVTK ? 'bg-orange-50 border-orange-200' : 'bg-amber-50 border-amber-200'}`}>
                       <div className="grid grid-cols-3 gap-3">
                         {isVTK && (
