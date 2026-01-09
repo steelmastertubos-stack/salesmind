@@ -676,7 +676,7 @@ export default function Opportunities() {
                                    order_id: newOrder.id,
                                    order_number: newOrder.order_number,
                                    principal_id: principal.id,
-                                   principal_name: principal.company_name,
+                                   principal_name: principal.trade_name || principal.company_name,
                                    client_id: opportunity.client_id,
                                    client_name: opportunity.client_name,
                                    invoice_value: quote.total_value || 0,
@@ -684,6 +684,7 @@ export default function Opportunities() {
                                    commission_value: expectedCommission,
                                    status: 'prevista'
                                  });
+                                 queryClient.invalidateQueries({ queryKey: ['commissions'] });
                                }
 
                               await base44.entities.Quote.update(quote.id, {
