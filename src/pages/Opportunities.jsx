@@ -174,17 +174,8 @@ export default function Opportunities() {
       console.log('📧 confirmSendEmail iniciado');
       const opportunity = opportunities.find(o => o.id === emailPreview.opportunityId);
       console.log('Oportunidade encontrada:', opportunity);
-      
-      // 1. Enviar email ao representado
-      console.log('📨 Enviando email para:', emailPreview.principalEmail);
-      await base44.integrations.Core.SendEmail({
-        to: emailPreview.principalEmail,
-        subject: emailPreview.subject,
-        body: editableEmailBody
-      });
-      console.log('✅ Email enviado com sucesso');
 
-      // 2. Criar pedido automaticamente
+      // 1. Criar pedido automaticamente
        const quote = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]);
 
        if (quote) {
