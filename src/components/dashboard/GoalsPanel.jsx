@@ -1,24 +1,103 @@
-import React from 'react';
-import { Target, TrendingUp, Clock, XCircle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Target, TrendingUp, Clock, XCircle, CheckCircle, Edit2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function GoalsPanel({ orders = [], quotes = [] }) {
+  const [showEditGoal, setShowEditGoal] = useState(false);
+  const [newGoalValue, setNewGoalValue] = useState('');
+  const queryClient = useQueryClient();
   // Calcular valores do mês atual
   const now = new Date();
-  const currentMonth = now.getMonth();
+  const currentMonth = now.getMonth() + 1; // 1-12
   const currentYear = now.getFullYear();
+
+  // Buscar meta do mês atual
+  const { data: currentGoalData } = useQuery({
+    queryKey: ['monthlyGoal', currentYear, currentMonth],
+    queryFn: async () => {
+      const goals = await base44.entities.MonthlyGoal.filter({ 
+        year: currentYear, 
+        month: currentMonth 
+      }, '', 1);
+      return goals[0] || null;
+    }
+  });
+
+  const updateGoalMutation = useMutation({
+    mutationFn: async (goalValue) => {
+      if (currentGoalData) {
+        return base44.entities.MonthlyGoal.update(currentGoalData.id, { goal_value: goalValue });
+      } else {
+        return base44.entities.MonthlyGoal.create({
+          year: currentYear,
+          month: currentMonth,
+          goal_value: goalValue,
+          achieved_value: 0,
+          is_achieved: false
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['monthlyGoal']);
+      toast.success('Meta atualizada!');
+      setShowEditGoal(false);
+    }
+  });
+
+  const checkAndCreateNextGoalMutation = useMutation({
+    mutationFn: async ({ achievedValue }) => {
+      // Marcar meta atual como atingida
+      await base44.entities.MonthlyGoal.update(currentGoalData.id, {
+        is_achieved: true,
+        achieved_value: achievedValue,
+        achieved_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Calcular próxima meta (10% acima do valor atingido)
+      const nextGoalValue = Math.round(achievedValue * 1.1);
+      
+      // Criar meta do próximo mês
+      const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+      const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+
+      const existingNextGoal = await base44.entities.MonthlyGoal.filter({
+        year: nextYear,
+        month: nextMonth
+      }, '', 1);
+
+      if (existingNextGoal.length === 0) {
+        await base44.entities.MonthlyGoal.create({
+          year: nextYear,
+          month: nextMonth,
+          goal_value: nextGoalValue,
+          achieved_value: 0,
+          is_achieved: false
+        });
+        toast.success(`🎉 Meta batida! Próxima meta criada: ${formatCurrency(nextGoalValue)}`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['monthlyGoal']);
+    }
+  });
 
   const thisMonthOrders = orders.filter(o => {
     const orderDate = new Date(o.created_date);
-    return orderDate.getMonth() === currentMonth && 
+    return orderDate.getMonth() + 1 === currentMonth && 
            orderDate.getFullYear() === currentYear &&
            o.status !== 'cancelled';
   });
 
   const thisMonthQuotes = quotes.filter(q => {
     const quoteDate = new Date(q.created_date);
-    return quoteDate.getMonth() === currentMonth && 
+    return quoteDate.getMonth() + 1 === currentMonth && 
            quoteDate.getFullYear() === currentYear;
   });
 
@@ -31,8 +110,8 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
     .filter(q => q.status === 'lost')
     .reduce((sum, q) => sum + (q.total_value || 0), 0);
 
-  // Meta (pode ser configurável, por enquanto 100k)
-  const goal = 100000;
+  // Meta do mês atual
+  const goal = currentGoalData?.goal_value || 100000;
   
   const soldPercent = (sold / goal) * 100;
   const negotiatingPercent = (negotiating / goal) * 100;
@@ -51,6 +130,13 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
     return `${value.toFixed(1)}%`;
   };
 
+  // Verificar se meta foi batida e criar próxima meta
+  useEffect(() => {
+    if (currentGoalData && !currentGoalData.is_achieved && sold >= goal) {
+      checkAndCreateNextGoalMutation.mutate({ achievedValue: sold });
+    }
+  }, [sold, goal, currentGoalData]);
+
   return (
     <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 shadow-lg">
       <CardHeader className="pb-3">
@@ -66,7 +152,18 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
               </p>
             </div>
           </div>
-          <div className="bg-white rounded-xl px-4 py-2 shadow-sm border-2 border-emerald-200 min-w-[140px]">
+          <div className="bg-white rounded-xl px-4 py-2 shadow-sm border-2 border-emerald-200 min-w-[140px] relative group">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute -top-2 -right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-md"
+              onClick={() => {
+                setNewGoalValue(goal.toString());
+                setShowEditGoal(true);
+              }}
+            >
+              <Edit2 className="w-3 h-3" />
+            </Button>
             <p className="text-xs text-slate-500 mb-0.5">Meta</p>
             <p className="text-lg font-bold text-emerald-900">{formatCurrency(goal)}</p>
             <div className="flex items-baseline gap-2 mt-1">
@@ -156,6 +253,37 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
           </div>
         </div>
       </CardContent>
+
+      {/* Edit Goal Dialog */}
+      <Dialog open={showEditGoal} onOpenChange={setShowEditGoal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Meta do Mês</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Novo valor da meta</label>
+              <Input
+                type="number"
+                value={newGoalValue}
+                onChange={(e) => setNewGoalValue(e.target.value)}
+                placeholder="100000"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowEditGoal(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => updateGoalMutation.mutate(parseFloat(newGoalValue))}
+                disabled={!newGoalValue || parseFloat(newGoalValue) <= 0}
+              >
+                Salvar Meta
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
