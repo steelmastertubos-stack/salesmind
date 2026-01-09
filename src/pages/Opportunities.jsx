@@ -616,51 +616,71 @@ export default function Opportunities() {
                             });
 
                             const opportunity = opportunities.find(o => o.id === email.opportunity_id);
-                            const quote = await base44.entities.Quote.filter({ id: opportunity?.quote_id }, '', 1).then(r => r[0]);
-                            
-                            if (quote) {
-                              const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
-                              const newOrder = await base44.entities.Order.create({
-                                order_number: orderNumber,
-                                quote_id: quote.id,
-                                client_id: opportunity.client_id,
-                                client_name: opportunity.client_name,
-                                principal_id: opportunity.principal_id,
-                                principal_name: opportunity.principal_name,
-                                items: quote.items,
-                                total_value: quote.total_value,
-                                total_weight: opportunity.total_weight,
-                                total_icms: quote.total_icms,
-                                total_ipi: quote.total_ipi,
-                                payment_terms: quote.payment_terms,
-                                notes: quote.notes,
-                                status: 'em_analise',
-                                commission_rate: 5,
-                                expected_commission: (quote.total_value || 0) * 0.05,
-                                commission_status: 'pending',
-                                status_history: [{
-                                  status: 'em_analise',
-                                  date: new Date().toISOString(),
-                                  notes: 'Pedido criado ao enviar email ao representado'
-                                }]
-                              });
+                             const quote = await base44.entities.Quote.filter({ id: opportunity?.quote_id }, '', 1).then(r => r[0]);
 
-                              // Criar comissão automaticamente
-                              const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
-                              if (principal && newOrder) {
-                                await base44.entities.Commission.create({
-                                  order_id: newOrder.id,
-                                  order_number: newOrder.order_number,
-                                  principal_id: principal.id,
-                                  principal_name: principal.company_name,
-                                  client_id: opportunity.client_id,
-                                  client_name: opportunity.client_name,
-                                  invoice_value: quote.total_value || 0,
-                                  commission_rate: 5,
-                                  commission_value: (quote.total_value || 0) * 0.05,
-                                  status: 'prevista'
-                                });
-                              }
+                             if (quote) {
+                               const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
+
+                               // Calcular margem e comissão corretamente
+                               let totalCost = 0;
+                               let totalSale = 0;
+
+                               quote.items?.forEach(item => {
+                                 const weight = item.total_weight || item.quantity || 0;
+                                 if (item.vtk_cost > 0 && item.vtk_margin_pct > 0) {
+                                   totalCost += item.vtk_cost * weight;
+                                   totalSale += item.item_total || 0;
+                                 } else {
+                                   totalCost += (item.cost_per_kg || 0) * weight;
+                                   totalSale += item.item_total || 0;
+                                 }
+                               });
+
+                               const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
+                               const commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
+                               const expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
+
+                               const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
+                               const newOrder = await base44.entities.Order.create({
+                                 order_number: orderNumber,
+                                 quote_id: quote.id,
+                                 client_id: opportunity.client_id,
+                                 client_name: opportunity.client_name,
+                                 principal_id: opportunity.principal_id,
+                                 principal_name: opportunity.principal_name,
+                                 items: quote.items,
+                                 total_value: quote.total_value,
+                                 total_weight: opportunity.total_weight,
+                                 total_icms: quote.total_icms,
+                                 total_ipi: quote.total_ipi,
+                                 payment_terms: quote.payment_terms,
+                                 notes: quote.notes,
+                                 status: 'em_analise',
+                                 commission_rate: commissionRate,
+                                 expected_commission: expectedCommission,
+                                 commission_status: 'pending',
+                                 status_history: [{
+                                   status: 'em_analise',
+                                   date: new Date().toISOString(),
+                                   notes: 'Pedido criado ao enviar email ao representado'
+                                 }]
+                               });
+
+                               // Criar comissão automaticamente
+                               if (principal && newOrder) {
+                                 await base44.entities.Commission.create({
+                                   order_id: newOrder.id,
+                                   order_number: newOrder.order_number,
+                                   principal_id: principal.id,
+                                   principal_name: principal.company_name,
+                                   client_id: opportunity.client_id,
+                                   client_name: opportunity.client_name,
+                                   invoice_value: quote.total_value || 0,
+                                   commission_rate: commissionRate,
+                                   commission_value: expectedCommission,
+                                   status: 'prevista'
+                                 });
+                               }
 
                               await base44.entities.Quote.update(quote.id, {
                                 status: 'convertido',
