@@ -143,10 +143,11 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
 
       // 2. Criar pedido automaticamente
       const quote = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]);
+      const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
       
-      if (quote) {
+      if (quote && principal) {
         const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
-        await base44.entities.Order.create({
+        const order = await base44.entities.Order.create({
           order_number: orderNumber,
           quote_id: quote.id,
           client_id: opportunity.client_id,
@@ -170,7 +171,26 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
           }]
         });
 
-        // 3. Atualizar orçamento para convertido
+        // 3. Criar comissão automaticamente
+        try {
+          await base44.entities.Commission.create({
+            order_id: order.id,
+            order_number: order.order_number,
+            principal_id: principal.id,
+            principal_name: principal.trade_name || principal.company_name,
+            client_id: opportunity.client_id,
+            client_name: opportunity.client_name,
+            invoice_value: quote.total_value || 0,
+            commission_rate: 5,
+            commission_value: (quote.total_value || 0) * 0.05,
+            status: 'prevista',
+            notes: 'Comissão gerada automaticamente ao criar pedido'
+          });
+        } catch (commError) {
+          console.error('Erro ao criar comissão:', commError);
+        }
+
+        // 4. Atualizar orçamento para convertido
         await base44.entities.Quote.update(quote.id, {
           status: 'convertido',
           approved_date: new Date().toISOString().split('T')[0]
@@ -180,7 +200,7 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
       toast.success('Email enviado e pedido criado!');
       setShowEmailPreview(false);
 
-      // 4. Atualizar estágio
+      // 5. Atualizar estágio
       const timeline = opportunity.timeline || [];
       timeline.push({
         date: new Date().toISOString(),
