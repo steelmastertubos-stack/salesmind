@@ -13,6 +13,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
+import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import __Layout from './Layout.jsx';
 
 
@@ -32,6 +33,7 @@ export const PAGES = {
     "Settings": Settings,
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
+    "VTKMarginAuditReport": VTKMarginAuditReport,
 }
 
 export const pagesConfig = {
