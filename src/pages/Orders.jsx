@@ -162,7 +162,6 @@ export default function Orders() {
   // Commission Summary
   const commissionSummary = {
     pending: orders.filter(o => o.commission_status === 'pending').reduce((s, o) => s + (o.expected_commission || 0), 0),
-    invoiced: orders.filter(o => o.commission_status === 'invoiced').reduce((s, o) => s + (o.expected_commission || 0), 0),
     paid: orders.filter(o => o.commission_status === 'paid').reduce((s, o) => s + (o.commission_paid_value || o.expected_commission || 0), 0),
     atRisk: orders.filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status)).reduce((s, o) => s + (o.expected_commission || 0), 0)
   };
@@ -183,14 +182,10 @@ export default function Orders() {
       </PageHeader>
 
       {/* Commission Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <div className="bg-white rounded-xl p-4 border border-slate-100">
           <p className="text-xs text-slate-500 mb-1">Comissão Pendente</p>
           <p className="text-lg font-bold text-slate-900">{formatCurrency(commissionSummary.pending)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-slate-100">
-          <p className="text-xs text-slate-500 mb-1">Comissão Faturada</p>
-          <p className="text-lg font-bold text-blue-600">{formatCurrency(commissionSummary.invoiced)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-slate-100">
           <p className="text-xs text-slate-500 mb-1">Comissão Paga</p>

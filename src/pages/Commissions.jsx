@@ -120,7 +120,6 @@ export default function Commissions() {
 
   const totals = {
     prevista: filteredCommissions.filter(c => c.status === 'prevista').reduce((sum, c) => sum + (c.commission_value || 0), 0),
-    faturada: filteredCommissions.filter(c => c.status === 'faturada').reduce((sum, c) => sum + (c.commission_value || 0), 0),
     a_receber: filteredCommissions.filter(c => c.status === 'a_receber').reduce((sum, c) => sum + (c.commission_value || 0), 0),
     recebida: filteredCommissions.filter(c => c.status === 'recebida').reduce((sum, c) => sum + (c.commission_value || 0), 0)
   };
@@ -173,14 +172,10 @@ export default function Commissions() {
       />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4">
           <p className="text-xs text-slate-600 mb-1">Prevista</p>
           <p className="text-2xl font-bold text-slate-900">{formatCurrency(totals.prevista)}</p>
-        </div>
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
-          <p className="text-xs text-blue-600 mb-1">Faturada</p>
-          <p className="text-2xl font-bold text-blue-900">{formatCurrency(totals.faturada)}</p>
         </div>
         <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4">
           <p className="text-xs text-amber-600 mb-1">A Receber</p>
@@ -201,10 +196,8 @@ export default function Commissions() {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="prevista">Prevista</SelectItem>
-            <SelectItem value="faturada">Faturada</SelectItem>
             <SelectItem value="a_receber">A Receber</SelectItem>
             <SelectItem value="recebida">Recebida</SelectItem>
-            <SelectItem value="atrasada">Atrasada</SelectItem>
           </SelectContent>
         </Select>
 
