@@ -315,13 +315,15 @@ export default function Quotes() {
     let totalSale = 0;
 
     quote.items?.forEach(item => {
-      const itemCost = (item.cost_per_kg || 0) * (item.total_weight || item.quantity || 0);
+      // Usar vtk_cost se disponível, senão usar cost_per_kg
+      const costPerUnit = item.vtk_cost || item.cost_per_kg || 0;
+      const itemCost = costPerUnit * (item.total_weight || item.quantity || 0);
       const itemSale = item.item_total || item.total_price || 0;
       totalCost += itemCost;
       totalSale += itemSale;
     });
 
-    const margin = totalCost > 0 ? ((totalSale - totalCost) / totalCost) * 100 : 0;
+    const margin = totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
     const commissionRate = getVTKCommissionRate(margin);
     const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
     
