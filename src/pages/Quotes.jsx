@@ -49,6 +49,8 @@ import QuotePrintView from '@/components/quotes/QuotePrintView';
 import QuotePDFExport from '@/components/quotes/QuotePDFExport';
 import SendQuoteDialog from '@/components/quotes/SendQuoteDialog';
 import { createOpportunityFromQuote } from '@/components/utils/opportunityHelpers';
+import { automateQuoteToOpportunity } from '@/components/utils/fluxoAutomation';
+import { QUOTE_STATUS } from '@/components/utils/fluxoConstants';
 import { jsPDF } from 'jspdf';
 
 export default function Quotes() {
@@ -99,15 +101,15 @@ export default function Quotes() {
       const quoteNumber = `ORC-${Date.now().toString().slice(-6)}`;
       const quote = await base44.entities.Quote.create({ ...data, quote_number: quoteNumber });
       
-      // AUTOMAÇÃO: Criar oportunidade se orçamento já criado como emitido/enviado
-      if ((data.status === 'emitido' || data.status === 'enviado')) {
-        const client = clients.find(c => c.id === data.client_id);
-        try {
-          await createOpportunityFromQuote(quote, client);
-          await base44.entities.Quote.update(quote.id, { is_locked: true });
-        } catch (error) {
-          console.error('Error creating opportunity:', error);
-        }
+      // AUTOMAÇÃO: Calcular e salvar commission_rate na Quote
+      if (data.principal_id && quote.items?.length > 0) {
+        const { margin, commissionRate } = calculateMarginAndCommission({ ...quote, items: data.items });
+        
+        // Atualizar quote com commission_rate calculado
+        await base44.entities.Quote.update(quote.id, {
+          commission_rate: commissionRate,
+          notes: `${quote.notes || ''}\n[Sistema] Comissão: ${commissionRate.toFixed(2)}% | Margem: ${margin.toFixed(2)}%`
+        });
       }
       
       return quote;
@@ -122,24 +124,22 @@ export default function Quotes() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
+      const quote = quotes.find(q => q.id === id);
+      const client = clients.find(c => c.id === quote?.client_id);
+      const principal = principals.find(p => p.id === quote?.principal_id);
+
       const updated = await base44.entities.Quote.update(id, data);
       
-      // AUTOMAÇÃO: Criar oportunidade se status mudou para emitido/enviado
-            if ((data.status === 'emitido' || data.status === 'enviado')) {
-              const quote = quotes.find(q => q.id === id);
-              const client = clients.find(c => c.id === quote?.client_id);
-
-              if (quote && !quote.is_locked) {
-                try {
-                  await createOpportunityFromQuote({ ...quote, ...data }, client);
-                  await base44.entities.Quote.update(id, { is_locked: true });
-                  toast.success('Orçamento atualizado e oportunidade criada automaticamente!');
-                } catch (error) {
-                  console.error('Error creating opportunity:', error);
-                  toast.error('Erro ao criar oportunidade');
-                }
-              }
-            }
+      // AUTOMAÇÃO: Se status mudou para SENT → Criar Opportunity automaticamente
+      if (data.status === QUOTE_STATUS.SENT && quote?.status !== QUOTE_STATUS.SENT) {
+        try {
+          await automateQuoteToOpportunity({ ...quote, ...data }, client, principal);
+          toast.success('Orçamento enviado! Oportunidade criada no CRM.');
+        } catch (error) {
+          console.error('Erro ao criar oportunidade:', error);
+          toast.error('Orçamento enviado mas erro ao criar oportunidade');
+        }
+      }
       
       return updated;
     },
