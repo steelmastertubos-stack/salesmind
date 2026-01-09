@@ -654,10 +654,14 @@ export default function Opportunities() {
                   Cancelar
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     const emailContent = `Para: ${emailPreview.principalEmail}\nAssunto: ${emailPreview.subject}\n\n${editableEmailBody}`;
-                    navigator.clipboard.writeText(emailContent);
-                    toast.success('Email copiado! Cole no Outlook');
+                    try {
+                      await navigator.clipboard.writeText(emailContent);
+                      toast.success('✅ Email copiado! Cole no Outlook', { duration: 5000 });
+                    } catch {
+                      alert('Email copiado para a área de transferência! Cole no Outlook.');
+                    }
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
