@@ -35,7 +35,7 @@ Retorne os dados EXATOS e OFICIAIS da empresa:
 - Estado (UF)
 - CEP
 - CNAE principal com descrição
-- Segmento de atuação
+${type === 'principal' ? '- Telefone\n- E-mail' : '- Segmento de atuação'}
 
 IMPORTANTE: Busque dados reais e atualizados. Não invente informações.`,
         add_context_from_internet: true,
