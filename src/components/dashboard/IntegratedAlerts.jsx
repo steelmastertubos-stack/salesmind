@@ -71,7 +71,7 @@ export default function IntegratedAlerts() {
 
   const allAlerts = [
     ...overdueFollowUps.map(opp => ({
-      id: opp.id,
+      id: `follow_up_${opp.id}`,
       type: 'follow_up',
       severity: 'high',
       title: 'Follow-up Atrasado',
@@ -80,7 +80,7 @@ export default function IntegratedAlerts() {
       link: createPageUrl('Opportunities')
     })),
     ...expiringQuotes.map(quote => ({
-      id: quote.id,
+      id: `expiring_${quote.id}`,
       type: 'expiring_quote',
       severity: 'high',
       title: 'Orçamento Vencendo',
@@ -89,7 +89,7 @@ export default function IntegratedAlerts() {
       link: createPageUrl('Quotes')
     })),
     ...clientsInPurchaseCycle.slice(0, 3).map(client => ({
-      id: client.id,
+      id: `cycle_${client.id}`,
       type: 'purchase_cycle',
       severity: 'medium',
       title: 'Cliente no Ciclo de Compra',
@@ -98,7 +98,7 @@ export default function IntegratedAlerts() {
       link: createPageUrl('Clients')
     })),
     ...stagnantOpportunities.slice(0, 2).map(opp => ({
-      id: opp.id,
+      id: `stagnant_${opp.id}`,
       type: 'stagnant',
       severity: 'medium',
       title: 'Oportunidade Parada',
@@ -107,7 +107,7 @@ export default function IntegratedAlerts() {
       link: createPageUrl('Opportunities')
     })),
     ...clientsAtRisk.slice(0, 2).map(client => ({
-      id: client.id,
+      id: `risk_${client.id}`,
       type: 'client_risk',
       severity: 'medium',
       title: 'Cliente em Risco',
