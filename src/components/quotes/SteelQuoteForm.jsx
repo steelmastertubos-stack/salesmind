@@ -199,9 +199,16 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
     if ((field === 'vtk_margin_pct' || field === 'vtk_cost') && newItems[index].vtk_cost > 0) {
       const costPerUnit = newItems[index].vtk_cost;
       const marginPct = newItems[index].vtk_margin_pct / 100;
-      // price = cost / (1 - margin%)
-      const pricePerUnit = marginPct < 1 ? costPerUnit / (1 - marginPct) : costPerUnit;
-      newItems[index].price_per_kg = pricePerUnit;
+
+      // Para unidades em MT: pricePerKg = vtk_cost x peso_por_metro
+      let basePricePerKg;
+      if (newItems[index].unit === 'mt' && newItems[index].weight_per_meter > 0) {
+        basePricePerKg = costPerUnit * newItems[index].weight_per_meter;
+      } else {
+        // price = cost / (1 - margin%)
+        basePricePerKg = marginPct < 1 ? costPerUnit / (1 - marginPct) : costPerUnit;
+      }
+      newItems[index].price_per_kg = basePricePerKg;
     }
 
     // Recalculate when relevant fields change
