@@ -42,6 +42,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' },
     { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
     { name: 'Representados', icon: Building2, page: 'Principals' },
+    { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
     { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
     { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
     { name: 'Configurações', icon: Settings, page: 'Settings' },
