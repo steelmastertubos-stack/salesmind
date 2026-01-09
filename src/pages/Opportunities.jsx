@@ -146,8 +146,8 @@ export default function Opportunities() {
         const isPrimeiraVenda = !clientData?.purchase_count || clientData.purchase_count === 0;
         
         // Preparar dados do email
-        const emailSubject = `Ganhamos mais um! 🎯 ${opportunity.client_name}`;
-        let emailBody = `Ganhamos mais um! 🎯\n\nCliente: ${opportunity.client_name}\nValor: ${formatCurrency(opportunity.total_value)}\nPeso: ${opportunity.total_weight}kg\nOrçamento: ${opportunity.quote_number}\n\n`;
+        const emailSubject = `${quoteData?.quote_number} - ${opportunity.client_name}`;
+        let emailBody = `Ganhamos mais um! 🎯\n\nCliente: ${opportunity.client_name}\nValor: ${formatCurrency(opportunity.total_value)}\nPeso: ${opportunity.total_weight}kg\nOrçamento: ${quoteData?.quote_number}\n\n`;
         
         if (isPrimeiraVenda) {
           emailBody += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
