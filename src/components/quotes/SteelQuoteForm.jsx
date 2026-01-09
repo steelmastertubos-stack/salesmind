@@ -137,6 +137,8 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       total_weight: 0,
       base_price_per_kg: product.base_price_per_kg || 0,
       cost_per_kg: product.cost_per_kg || 0,
+      vtk_cost: 0,
+      vtk_margin_pct: 0,
       icms_rate: icmsRate,
       icms_st_rate: product.icms_st_rate || 0,
       ipi_rate: ipiRate,
