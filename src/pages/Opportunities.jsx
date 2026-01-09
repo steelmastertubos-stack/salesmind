@@ -244,7 +244,16 @@ export default function Opportunities() {
          // 3. Criar comissão automaticamente
          if (principal && order) {
            try {
-             await base44.entities.Commission.create({
+             console.log('🎯 Criando comissão:', {
+               order_id: order.id,
+               principal_id: principal.id,
+               invoice_value: quote.total_value,
+               commission_rate: commissionRate,
+               commission_value: expectedCommission,
+               status: 'prevista'
+             });
+
+             const commission = await base44.entities.Commission.create({
                order_id: order.id,
                order_number: order.order_number,
                principal_id: principal.id,
@@ -257,9 +266,12 @@ export default function Opportunities() {
                status: 'prevista',
                notes: 'Comissão gerada automaticamente ao criar pedido'
              });
+
+             console.log('✅ Comissão criada com sucesso:', commission);
+             await new Promise(r => setTimeout(r, 500)); // Aguarda um pouco
              queryClient.invalidateQueries({ queryKey: ['commissions'] });
            } catch (commError) {
-             console.error('Erro ao criar comissão:', commError);
+             console.error('❌ Erro ao criar comissão:', commError);
            }
          }
 
