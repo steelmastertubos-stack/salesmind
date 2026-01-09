@@ -16,119 +16,95 @@ export default function QuotePDFExport({ quote, representative }) {
       const margin = 15;
       let y = 20;
 
-      // Header - Logo e Dados do Representado
-      doc.setFillColor(15, 42, 68); // #0F2A44
-      doc.rect(0, 0, pageWidth, 15, 'F');
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ORÇAMENTO', pageWidth / 2, 10, { align: 'center' });
-
-      y = 25;
+      // Header compacto
+      y = 15;
 
       // Box do Representado
-      doc.setDrawColor(15, 42, 68);
+      doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
-      doc.rect(margin, y, 65, 40);
+      doc.rect(margin, y, 90, 35);
 
       // Logo do Representado
       if (quote.principal_logo_url) {
         try {
-          doc.addImage(quote.principal_logo_url, 'PNG', margin + 3, y + 3, 30, 15);
+          doc.addImage(quote.principal_logo_url, 'PNG', margin + 2, y + 2, 25, 12);
         } catch (e) {
           console.log('Could not add principal logo');
         }
       }
 
-      doc.setTextColor(15, 42, 68);
-      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text(quote.principal_name || 'Representado', margin + (quote.principal_logo_url ? 36 : 3), y + 6);
+      const principalNameLines = doc.splitTextToSize(quote.principal_name || 'Representado', 85);
+      doc.text(principalNameLines, margin + 2, y + (quote.principal_logo_url ? 17 : 6));
 
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(28, 28, 28);
 
-      let textY = y + 12;
-      const textX = margin + (quote.principal_logo_url ? 36 : 3);
+      let textY = y + (quote.principal_logo_url ? 22 : 11);
       if (quote.principal_cnpj) {
-        doc.text(`CNPJ: ${quote.principal_cnpj}`, textX, textY);
-        textY += 4;
-      }
-      if (quote.principal_state_registration) {
-        doc.text(`I.E.: ${quote.principal_state_registration}`, textX, textY);
-        textY += 4;
+        doc.text(`CNPJ: ${quote.principal_cnpj}`, margin + 2, textY);
+        textY += 3.5;
       }
       if (quote.principal_phone) {
-        doc.text(`Fone: ${quote.principal_phone}`, textX, textY);
+        doc.text(`Fone: ${quote.principal_phone}`, margin + 2, textY);
       }
 
       // Box Representante Comercial
-      doc.setDrawColor(15, 42, 68);
+      doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
-      doc.rect(margin + 70, y, 85, 40);
+      doc.rect(margin + 95, y, 65, 35);
 
       // Header do box
-      doc.setFillColor(240, 240, 240);
-      doc.rect(margin + 70, y, 85, 8, 'F');
-      doc.setDrawColor(15, 42, 68);
-      doc.setLineWidth(0.5);
-      doc.line(margin + 70, y + 8, margin + 155, y + 8);
+      doc.setFillColor(220, 220, 220);
+      doc.rect(margin + 95, y, 65, 6, 'F');
+      doc.line(margin + 95, y + 6, margin + 160, y + 6);
 
-      doc.setTextColor(15, 42, 68);
-      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.text('Representante Comercial', margin + 112.5, y + 5.5, { align: 'center' });
+      doc.text('Representante Comercial', margin + 127.5, y + 4, { align: 'center' });
 
       if (representative) {
-        doc.setTextColor(28, 28, 28);
+        doc.setTextColor(0, 0, 0);
 
-        let repY = y + 14;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(representative.name || '', margin + 73, repY);
-        repY += 5;
-
+        let repY = y + 11;
         doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(representative.name || '', margin + 97, repY);
+        repY += 4;
+
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         if (representative.document) {
-          doc.setFont('helvetica', 'bold');
-          doc.text('CNPJ/CPF:', margin + 73, repY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(representative.document, margin + 95, repY);
-          repY += 4;
+          doc.text(`CNPJ/CPF: ${representative.document}`, margin + 97, repY);
+          repY += 3.5;
         }
         if (representative.phone) {
-          doc.setFont('helvetica', 'bold');
-          doc.text('Telefone:', margin + 73, repY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(representative.phone, margin + 95, repY);
-          repY += 4;
+          doc.text(`Telefone: ${representative.phone}`, margin + 97, repY);
+          repY += 3.5;
         }
         if (representative.email) {
-          doc.setFont('helvetica', 'bold');
-          doc.text('E-mail:', margin + 73, repY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(representative.email, margin + 95, repY);
+          doc.text(`E-mail: ${representative.email}`, margin + 97, repY);
         }
       }
 
       // Box Número do Orçamento
       doc.setFillColor(15, 42, 68);
-      doc.rect(pageWidth - margin - 45, y, 45, 40, 'FD');
+      doc.rect(pageWidth - margin - 35, y, 35, 35, 'FD');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text('ORÇAMENTO', pageWidth - margin - 22.5, y + 8, { align: 'center' });
-      doc.setFontSize(11);
-      doc.text(quote.quote_number || 'N/A', pageWidth - margin - 22.5, y + 16, { align: 'center' });
-      doc.setFontSize(8);
+      doc.text('ORÇAMENTO', pageWidth - margin - 17.5, y + 6, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(quote.quote_number ? `Nº. ${quote.quote_number}` : 'N/A', pageWidth - margin - 17.5, y + 12, { align: 'center' });
+      doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       const date = new Date(quote.created_date || new Date()).toLocaleDateString('pt-BR');
-      doc.text(date, pageWidth - margin - 22.5, y + 24, { align: 'center' });
+      doc.text(date, pageWidth - margin - 17.5, y + 18, { align: 'center' });
 
-      y += 50;
+      y += 40;
 
       // Cliente
       doc.setFillColor(242, 244, 247);
