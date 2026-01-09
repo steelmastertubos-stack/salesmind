@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import OpportunityDetail from '@/components/opportunities/OpportunityDetail';
+import { calculateCommission, isFixedCommissionRepresentative } from '@/components/utils/commissionCalculator';
 
 const getVTKCommissionRate = (margin) => {
   const vtkTable = [
@@ -184,24 +185,35 @@ export default function Opportunities() {
        if (quote) {
          const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
 
-         // Calcular margem e comissão corretamente
-         let totalCost = 0;
-         let totalSale = 0;
+         // Calcular comissão baseado no tipo de representado
+         let commissionRate = 0;
+         let expectedCommission = 0;
 
-         quote.items?.forEach(item => {
-           const weight = item.total_weight || item.quantity || 0;
-           if (item.vtk_cost > 0 && item.vtk_margin_pct > 0) {
-             totalCost += item.vtk_cost * weight;
-             totalSale += item.item_total || 0;
-           } else {
-             totalCost += (item.cost_per_kg || 0) * weight;
-             totalSale += item.item_total || 0;
-           }
-         });
+         if (isFixedCommissionRepresentative(principal?.trade_name || principal?.company_name)) {
+           // Comissão fixa (tabelado)
+           const commission = calculateCommission(principal, quote.total_value, quote.items);
+           commissionRate = commission.rate;
+           expectedCommission = commission.value;
+         } else {
+           // Comissão VTK ou do representado
+           let totalCost = 0;
+           let totalSale = 0;
 
-         const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
-         const commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
-         const expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
+           quote.items?.forEach(item => {
+             const weight = item.total_weight || item.quantity || 0;
+             if (item.vtk_cost > 0 && item.vtk_margin_pct > 0) {
+               totalCost += item.vtk_cost * weight;
+               totalSale += item.item_total || 0;
+             } else {
+               totalCost += (item.cost_per_kg || 0) * weight;
+               totalSale += item.item_total || 0;
+             }
+           });
+
+           const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
+           commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
+           expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
+         }
 
          const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
          const order = await base44.entities.Order.create({
@@ -665,26 +677,35 @@ export default function Opportunities() {
                              const quote = await base44.entities.Quote.filter({ id: opportunity?.quote_id }, '', 1).then(r => r[0]);
 
                              if (quote) {
-                               const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
+                                const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
 
-                               // Calcular margem e comissão corretamente
-                               let totalCost = 0;
-                               let totalSale = 0;
+                                // Calcular comissão baseado no tipo de representado
+                                let commissionRate = 0;
+                                let expectedCommission = 0;
 
-                               quote.items?.forEach(item => {
-                                 const weight = item.total_weight || item.quantity || 0;
-                                 if (item.vtk_cost > 0 && item.vtk_margin_pct > 0) {
-                                   totalCost += item.vtk_cost * weight;
-                                   totalSale += item.item_total || 0;
-                                 } else {
-                                   totalCost += (item.cost_per_kg || 0) * weight;
-                                   totalSale += item.item_total || 0;
-                                 }
-                               });
+                                if (isFixedCommissionRepresentative(principal?.trade_name || principal?.company_name)) {
+                                  const commission = calculateCommission(principal, quote.total_value, quote.items);
+                                  commissionRate = commission.rate;
+                                  expectedCommission = commission.value;
+                                } else {
+                                  let totalCost = 0;
+                                  let totalSale = 0;
 
-                               const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
-                               const commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
-                               const expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
+                                  quote.items?.forEach(item => {
+                                    const weight = item.total_weight || item.quantity || 0;
+                                    if (item.vtk_cost > 0 && item.vtk_margin_pct > 0) {
+                                      totalCost += item.vtk_cost * weight;
+                                      totalSale += item.item_total || 0;
+                                    } else {
+                                      totalCost += (item.cost_per_kg || 0) * weight;
+                                      totalSale += item.item_total || 0;
+                                    }
+                                  });
+
+                                  const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
+                                  commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
+                                  expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
+                                }
 
                                const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
                                const newOrder = await base44.entities.Order.create({
