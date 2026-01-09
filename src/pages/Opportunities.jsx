@@ -161,6 +161,7 @@ export default function Opportunities() {
           body: emailBody,
           principalEmail: principalData?.email || '',
           opportunityId: draggableId,
+          quoteNumber: quoteData?.quote_number,
           newStage: 'ganho'
         });
         setEditableEmailBody(emailBody);
