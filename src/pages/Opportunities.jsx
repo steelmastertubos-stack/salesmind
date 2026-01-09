@@ -656,8 +656,8 @@ export default function Opportunities() {
                   onClick={confirmSendEmail}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Enviar Agora
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Criar Pedido e Comissão
                 </Button>
               </div>
             </div>
