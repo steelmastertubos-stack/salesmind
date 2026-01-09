@@ -253,7 +253,7 @@ export default function VTKCostManager() {
                 <Input
                   value={formData.bitola}
                   onChange={(e) => setFormData({...formData, bitola: e.target.value})}
-                  placeholder="ex: 12\", 1/2\""
+                  placeholder='ex: 12", 1/2"'
                 />
               </div>
 
