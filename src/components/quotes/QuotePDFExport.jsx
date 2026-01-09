@@ -70,11 +70,12 @@ export default function QuotePDFExport({ quote, representative }) {
         doc.text('Representante Comercial', margin + 115.5, y + 4, { align: 'center' });
 
         if (representative) {
-          let repY = y + 12;
+          let repY = y + 11;
           doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
-          doc.text(representative.name || '', margin + 80, repY);
-          repY += 4.5;
+          const repNameLines = doc.splitTextToSize(representative.name || '', 70);
+          doc.text(repNameLines, margin + 80, repY);
+          repY += repNameLines.length * 4;
 
           doc.setFontSize(7);
           doc.setFont('helvetica', 'normal');
@@ -92,9 +93,9 @@ export default function QuotePDFExport({ quote, representative }) {
         }
 
         // Box 3: Número do Orçamento (direita)
-        doc.setFillColor(15, 42, 68);
+        doc.setFillColor(255, 255, 255);
         doc.rect(margin + 156, y, 44, 42, 'FD');
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.text('ORÇAMENTO', margin + 178, y + 8, { align: 'center' });
@@ -159,10 +160,11 @@ export default function QuotePDFExport({ quote, representative }) {
       y += 6;
 
       // Table Header
-      doc.setFillColor(255, 255, 255);
+      doc.setFillColor(240, 240, 240);
       doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
       doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.3);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y + 7, pageWidth - margin, y + 7);
 
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(7);
@@ -182,7 +184,6 @@ export default function QuotePDFExport({ quote, representative }) {
       doc.text('Entrega*', colX[9], y + 4.5);
 
       y += 7;
-      doc.line(margin, y, pageWidth - margin, y);
 
       // Items
       doc.setFont('helvetica', 'normal');
@@ -195,7 +196,6 @@ export default function QuotePDFExport({ quote, representative }) {
         }
 
         const rowHeight = 12;
-        doc.rect(margin, y, pageWidth - 2 * margin, rowHeight);
 
         doc.text(String(index + 1), colX[0] + 2, y + 5);
         doc.text(item.quantity.toFixed(3), colX[1] + 1, y + 5);
@@ -216,6 +216,10 @@ export default function QuotePDFExport({ quote, representative }) {
         doc.text(item.ipi_rate.toFixed(2), colX[7] + 1, y + 5);
         doc.text(formatCurrency(item.item_total), colX[8] + 1, y + 5);
         doc.text(item.delivery_days > 0 ? `${item.delivery_days}` : '-', colX[9] + 2, y + 5);
+
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
 
         y += rowHeight;
       });
