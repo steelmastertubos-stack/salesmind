@@ -36,6 +36,8 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     cnpj: client?.cnpj || '',
     state_registration: client?.state_registration || '',
     segment: client?.segment || '',
+    complexity: client?.complexity || '',
+    main_applications: client?.main_applications || [],
     cnae: client?.cnae || '',
     address: client?.address || '',
     city: client?.city || '',
@@ -65,6 +67,8 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     status: client?.status || 'active',
     is_active: client?.is_active !== false
   });
+
+  const [errors, setErrors] = useState({});
 
   const handleCNPJData = (data) => {
     setFormData(prev => ({
