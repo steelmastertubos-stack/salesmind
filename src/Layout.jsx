@@ -13,7 +13,8 @@ import {
     X,
     Zap,
     MapPin,
-    Target
+    Target,
+    Upload
   } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
@@ -45,7 +46,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
     { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
     { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
-    { name: 'Importar Dados', icon: FileText, page: 'ImportData' },
+    { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
     { name: 'Configurações', icon: Settings, page: 'Settings' },
   ];
 
