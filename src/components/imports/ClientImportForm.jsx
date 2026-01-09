@@ -43,9 +43,9 @@ const parseExcel = (fileContent) => {
 };
 
 const downloadTemplate = () => {
-  const content = `company_name,trade_name,cnpj,state_registration,address,city,state,zip_code,phone,email,contact_name,contact_role,segment,status
-Empresa Ltda,Empresa,12.345.678/0001-99,123.456.789.012,Rua A 100,São Paulo,SP,01234567,1133334444,contato@empresa.com,João Silva,Gerente,Indústria,active
-Outro Negócio,Outro,98.765.432/0001-00,987.654.321.098,Rua B 200,Rio de Janeiro,RJ,20234567,2133334444,contato@outro.com,Maria Santos,Diretora,Varejo,active`;
+  const content = `code,company_name,trade_name,cnpj,email,phone,whatsapp,address,city,state,zip,country,responsible_user,status,notes
+CLI001,Empresa Ltda,Empresa,12.345.678/0001-99,contato@empresa.com,1133334444,11987654321,Rua A 100,São Paulo,SP,01234567,Brasil,João Silva,active,Cliente prioritário
+CLI002,Outro Negócio,Outro,98.765.432/0001-00,contato@outro.com,2133334444,21987654321,Rua B 200,Rio de Janeiro,RJ,20234567,Brasil,Maria Santos,active,`;
   
   const element = document.createElement('a');
   element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
