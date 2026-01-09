@@ -72,6 +72,7 @@ export default function Opportunities() {
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreview, setEmailPreview] = useState({ subject: '', body: '', principalEmail: '', opportunityId: '', newStage: '' });
   const [editableEmailBody, setEditableEmailBody] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState([]);
   const [showPendingEmails, setShowPendingEmails] = useState(false);
   const queryClient = useQueryClient();
 
