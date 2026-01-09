@@ -45,6 +45,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
     { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
     { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
+    { name: 'Importar Dados', icon: FileText, page: 'ImportData' },
     { name: 'Configurações', icon: Settings, page: 'Settings' },
   ];
 
