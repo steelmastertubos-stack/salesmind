@@ -176,7 +176,9 @@ export function getVTKCommissionRate(marginPct, commissionTable = null) {
 export function calculateCompleteVTKCommission({
   saleValue,
   costTotal,
-  averagePaymentDays = 30
+  averagePaymentDays = 30,
+  commissionTable = null,
+  useCustomTable = false
 }) {
   // 1. Calcular margem original
   const margin = calculateVTKMargin(saleValue, costTotal);
@@ -192,7 +194,9 @@ export function calculateCompleteVTKCommission({
   const adjustment = applyPaymentTermsAdjustment(margin.margin_pct, averagePaymentDays);
 
   // 3. Buscar comissão conforme margem ajustada
-  const commission = getVTKCommissionRate(adjustment.adjusted_margin);
+  const commission = useCustomTable && commissionTable 
+    ? getVTKCommissionRate(adjustment.adjusted_margin, commissionTable)
+    : getVTKCommissionRate(adjustment.adjusted_margin);
 
   // 4. Calcular valor de comissão
   const commissionValue = saleValue * (commission.commission_rate / 100);
@@ -206,8 +210,10 @@ export function calculateCompleteVTKCommission({
     commission_rate: commission.commission_rate,
     commission_value: commissionValue,
     bracket: commission.bracket_info,
+    bracket_name: commission.bracket_name,
     cost_total: costTotal,
-    sale_value: saleValue
+    sale_value: saleValue,
+    from_custom_table: commission.from_custom_table
   };
 }
 
