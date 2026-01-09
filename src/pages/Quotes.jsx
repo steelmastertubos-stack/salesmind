@@ -448,21 +448,13 @@ export default function Quotes() {
                             <FileText className="w-4 h-4 mr-2" />
                             Imprimir Formato
                           </DropdownMenuItem>
-                          {!quote.is_locked && (
-                            <DropdownMenuItem onClick={() => {
-                              setEditingQuote(quote);
-                              setShowForm(true);
-                            }}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                          )}
-                          {quote.is_locked && (
-                            <DropdownMenuItem disabled>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Travado (Oportunidade criada)
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem onClick={() => {
+                            setEditingQuote(quote);
+                            setShowForm(true);
+                          }}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar Itens
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {(quote.status === 'rascunho' || quote.status === 'draft') && (
                             <>

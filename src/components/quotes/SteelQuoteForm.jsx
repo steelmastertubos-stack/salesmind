@@ -127,7 +127,9 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       weight_per_meter: product.weight_per_meter || 0,
       total_weight: 0,
       base_price_per_kg: product.base_price_per_kg || 0,
+      cost_per_kg: product.cost_per_kg || 0,
       icms_rate: icmsRate,
+      icms_st_rate: product.icms_st_rate || 0,
       ipi_rate: ipiRate,
       price_per_kg: 0,
       item_subtotal: 0,
@@ -405,9 +407,16 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                     <tr key={index} className="border-b hover:bg-slate-50">
                       <td className="p-2">
                         <div className="text-xs font-mono">{item.product_code}</div>
-                        <Badge variant="outline" className="text-[10px] mt-1">
-                          {getCategoryLabel(item.category)}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="outline" className="text-[10px]">
+                            {getCategoryLabel(item.category)}
+                          </Badge>
+                          {item.icms_st_rate > 0 && (
+                            <Badge className="bg-orange-100 text-orange-700 text-[10px]">
+                              ST {item.icms_st_rate}%
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2">
                         <div className="font-medium">{item.product_name}</div>
@@ -645,12 +654,17 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                   >
                     <div className="flex justify-between items-start mb-1">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-slate-900">{product.name}</p>
-                          <Badge variant="outline" className="text-[10px]">
-                            {getCategoryLabel(product.category)}
-                          </Badge>
-                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                               <p className="font-medium text-slate-900">{product.name}</p>
+                               <Badge variant="outline" className="text-[10px]">
+                                 {getCategoryLabel(product.category)}
+                               </Badge>
+                               {product.icms_st_rate > 0 && (
+                                 <Badge className="bg-orange-100 text-orange-700 text-[10px]">
+                                   ICMS ST {product.icms_st_rate}%
+                                 </Badge>
+                               )}
+                             </div>
                         {product.code && (
                           <p className="text-xs text-slate-500 font-mono">Cód: {product.code}</p>
                         )}
