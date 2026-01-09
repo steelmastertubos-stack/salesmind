@@ -26,6 +26,9 @@ import OpportunityDetail from '@/components/opportunities/OpportunityDetail';
 
 export default function Opportunities() {
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailPreview, setEmailPreview] = useState({ subject: '', body: '', principalEmail: '', opportunityId: '', newStage: '' });
+  const [editableEmailBody, setEditableEmailBody] = useState('');
   const queryClient = useQueryClient();
 
   const { data: opportunities = [], isLoading } = useQuery({
@@ -34,49 +37,7 @@ export default function Opportunities() {
   });
 
   const updateStageMutation = useMutation({
-    mutationFn: async ({ id, newStage, opportunity }) => {
-      // Se mudou para GANHO, enviar email para representado
-      if (newStage === 'ganho' && opportunity?.stage !== 'ganho') {
-        try {
-          const [principal, client] = await Promise.all([
-            base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]),
-            base44.entities.Client.filter({ id: opportunity.client_id }, '', 1).then(r => r[0])
-          ]);
-
-          if (principal?.email) {
-            const isPrimeiraVenda = !client?.purchase_count || client.purchase_count === 0;
-            const representativeName = await base44.auth.me().then(u => u.full_name).catch(() => 'Representante');
-            
-            const subject = isPrimeiraVenda 
-              ? `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Análise de Crédito`
-              : `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-
-            let body = `Olá ${principal.trade_name || principal.company_name},\n\nFechamos mais um! 🎯\n\n`;
-            body += `Cliente: ${opportunity.client_name}\n`;
-            body += `Valor: R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-            body += `Peso: ${(opportunity.total_weight || 0).toFixed(0)} kg\n`;
-            body += `Orçamento: ${opportunity.quote_number}\n\n`;
-            
-            if (isPrimeiraVenda) {
-              body += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
-            }
-            
-            body += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\n`;
-            body += `Abraço,\n${representativeName}`;
-
-            await base44.integrations.Core.SendEmail({
-              to: principal.email,
-              subject: subject,
-              body: body
-            });
-
-            toast.success('Email enviado ao representado!');
-          }
-        } catch (error) {
-          console.error('Erro ao enviar email:', error);
-        }
-      }
-
+    mutationFn: async ({ id, newStage }) => {
       return base44.entities.Opportunity.update(id, { stage: newStage });
     },
     onSuccess: () => {
@@ -107,14 +68,71 @@ export default function Opportunities() {
     { id: 'perdido', label: 'Perdido', icon: XCircle, color: 'bg-red-500', textColor: 'text-red-600' }
   ];
 
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     if (!result.destination) return;
     
     const { draggableId, destination } = result;
     const newStage = destination.droppableId;
     const opportunity = opportunities.find(o => o.id === draggableId);
     
-    updateStageMutation.mutate({ id: draggableId, newStage, opportunity });
+    // Se mudou para GANHO, mostrar preview do email
+    if (newStage === 'ganho' && opportunity?.stage !== 'ganho') {
+      try {
+        const [principal, client] = await Promise.all([
+          base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]),
+          base44.entities.Client.filter({ id: opportunity.client_id }, '', 1).then(r => r[0])
+        ]);
+
+        if (principal?.email) {
+          const isPrimeiraVenda = !client?.purchase_count || client.purchase_count === 0;
+          const representativeName = await base44.auth.me().then(u => u.full_name).catch(() => 'Representante');
+          
+          const subject = isPrimeiraVenda 
+            ? `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Análise de Crédito`
+            : `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+          let body = `Olá ${principal.trade_name || principal.company_name},\n\nFechamos mais um! 🎯\n\n`;
+          body += `Cliente: ${opportunity.client_name}\n`;
+          body += `Valor: R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+          body += `Peso: ${(opportunity.total_weight || 0).toFixed(0)} kg\n`;
+          body += `Orçamento: ${opportunity.quote_number}\n\n`;
+          
+          if (isPrimeiraVenda) {
+            body += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
+          }
+          
+          body += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\n`;
+          body += `Abraço,\n${representativeName}`;
+
+          setEmailPreview({ subject, body, principalEmail: principal.email, opportunityId: draggableId, newStage });
+          setEditableEmailBody(body);
+          setShowEmailPreview(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao preparar email:', error);
+      }
+    }
+    
+    updateStageMutation.mutate({ id: draggableId, newStage });
+  };
+
+  const confirmSendEmail = async () => {
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: emailPreview.principalEmail,
+        subject: emailPreview.subject,
+        body: editableEmailBody
+      });
+
+      toast.success('Email enviado ao representado!');
+      setShowEmailPreview(false);
+      
+      updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
+    } catch (error) {
+      console.error('Erro ao enviar email:', error);
+      toast.error('Erro ao enviar email ao representado');
+    }
   };
 
   // Priority opportunities (high score, overdue follow-ups)
@@ -338,6 +356,60 @@ export default function Opportunities() {
             setSelectedOpportunity(null);
           }}
         />
+      )}
+
+      {/* Email Preview Dialog - Drag to Ganho */}
+      {showEmailPreview && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+            <h3 className="text-xl font-bold mb-4">📧 Prévia do Email ao Representado</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-slate-600 font-medium">Para:</label>
+                <p className="font-medium">{emailPreview.principalEmail}</p>
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-600 font-medium">Assunto:</label>
+                <p className="font-medium">{emailPreview.subject}</p>
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-600 font-medium mb-2 block">Mensagem (editável):</label>
+                <textarea
+                  value={editableEmailBody}
+                  onChange={(e) => setEditableEmailBody(e.target.value)}
+                  rows={12}
+                  className="w-full p-3 border border-slate-300 rounded-lg font-mono text-sm"
+                />
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-xs text-amber-800">
+                  📎 Lembre-se de anexar os documentos do cliente ao email (dados cadastrais, contrato social, notas)
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEmailPreview(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={confirmSendEmail}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Enviar Email
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
