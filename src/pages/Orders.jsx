@@ -61,6 +61,7 @@ export default function Orders() {
 
   const handleCommissionStatusChange = (order, newStatus) => {
     updateMutation.mutate({ id: order.id, data: { commission_status: newStatus } });
+    toast.success('Status da comissão atualizado!');
   };
 
   const handleInvoiceSubmit = () => {

@@ -146,8 +146,11 @@ export default function Commissions() {
   };
 
   const handleSaveEdit = () => {
-    const newStatus = editData.value_received >= editingCommission.commission_value ? 'recebida' : 'a_receber';
-    const difference = (editingCommission.commission_value || 0) - (editData.value_received || 0);
+    const commission = commissions.find(c => c.id === editingId);
+    if (!commission) return;
+    
+    const newStatus = editData.value_received >= commission.commission_value ? 'recebida' : 'a_receber';
+    const difference = (commission.commission_value || 0) - (editData.value_received || 0);
 
     updateCommissionMutation.mutate({
       id: editingId,
@@ -155,8 +158,7 @@ export default function Commissions() {
         payment_date: editData.payment_date,
         value_received: parseFloat(editData.value_received) || 0,
         status: newStatus,
-        notes: editData.notes,
-        difference: difference
+        notes: editData.notes
       }
     });
   };
@@ -352,7 +354,7 @@ export default function Commissions() {
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-600 mb-1">Saldo Pendente</p>
                 <p className="text-lg font-bold text-amber-600">
-                  {formatCurrency((editingCommission.commission_value || 0) - (editData.value_received || 0))}
+                  {formatCurrency((commission.commission_value || 0) - (editData.value_received || 0))}
                 </p>
               </div>
               <div className="flex gap-3 pt-4">
