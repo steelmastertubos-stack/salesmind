@@ -184,9 +184,12 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="segment">Segmento</Label>
-            <Select value={formData.segment} onValueChange={(v) => handleChange('segment', v)}>
-              <SelectTrigger>
+            <Label htmlFor="segment">Segmento de Atuação *</Label>
+            <Select value={formData.segment} onValueChange={(v) => {
+              handleChange('segment', v);
+              setErrors(prev => ({ ...prev, segment: '' }));
+            }}>
+              <SelectTrigger className={errors.segment ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Selecione o segmento" />
               </SelectTrigger>
               <SelectContent>
@@ -195,6 +198,50 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
                 ))}
               </SelectContent>
             </Select>
+            {errors.segment && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.segment}
+              </p>
+            )}
+            {formData.segment && (
+              <p className="text-xs text-slate-500">
+                Código: <Badge variant="outline" className="text-[10px]">{getSegmentCode(formData.segment)}</Badge>
+              </p>
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="complexity">Porte / Complexidade</Label>
+              <Select value={formData.complexity} onValueChange={(v) => handleChange('complexity', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMPLEXITY_OPTIONS.map(opt => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-3 bg-slate-50 p-4 rounded-lg">
+            <Label>Aplicação Principal (selecione as que se aplicam)</Label>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {APPLICATIONS.map(app => (
+                <div key={app} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`app-${app}`}
+                    checked={formData.main_applications?.includes(app) || false}
+                    onCheckedChange={() => toggleApplication(app)}
+                  />
+                  <Label htmlFor={`app-${app}`} className="font-normal cursor-pointer">
+                    {app}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">
