@@ -609,9 +609,29 @@ export default function Opportunities() {
                 />
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-xs text-amber-800">
-                  📎 Lembre-se de anexar os documentos do cliente ao email (dados cadastrais, contrato social, notas)
+              <div>
+                <label className="text-sm text-slate-600 font-medium mb-2 block">📎 Documentos para Anexar (se necessário)</label>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-slate-400 transition-colors">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => setAttachedFiles(Array.from(e.target.files || []))}
+                    className="w-full cursor-pointer"
+                  />
+                  {attachedFiles.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {attachedFiles.map((file, idx) => (
+                        <div key={idx} className="text-xs text-slate-600">✓ {file.name}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">Dados cadastrais, contrato social, notas de crédito, etc.</p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-800">
+                  ℹ️ O email será preparado para você enviar manualmente com os anexos
                 </p>
               </div>
 
