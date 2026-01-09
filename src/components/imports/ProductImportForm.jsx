@@ -4,7 +4,37 @@ import { Upload, Download, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { parseCSV, downloadTemplate } from '@/utils/csvParser';
+
+const parseCSV = (fileContent) => {
+  const lines = fileContent.trim().split('\n');
+  if (lines.length < 2) return { headers: [], rows: [] };
+  
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((header, i) => {
+      row[header] = values[i] || '';
+    });
+    return row;
+  });
+  
+  return { headers, rows };
+};
+
+const downloadTemplate = () => {
+  const content = `code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
+TUBO-001,Tubo 1/2",Tubo sem costura,tubos_redondos,mt,0.5,150.00,120.00,12.5,true
+TUBO-002,Tubo 3/4",Tubo sem costura,tubos_redondos,mt,0.75,180.00,145.00,12.5,true`;
+  
+  const element = document.createElement('a');
+  element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
+  element.setAttribute('download', 'template-produtos.csv');
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+};
 
 export default function ProductImportForm({ onSuccess }) {
   const [file, setFile] = useState(null);
@@ -114,7 +144,7 @@ export default function ProductImportForm({ onSuccess }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => downloadTemplate('products')}
+          onClick={downloadTemplate}
           className="flex items-center gap-2"
         >
           <Download className="w-4 h-4" />

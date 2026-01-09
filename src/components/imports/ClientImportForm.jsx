@@ -4,7 +4,37 @@ import { Upload, Download, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { parseCSV, downloadTemplate } from '@/utils/csvParser';
+
+const parseCSV = (fileContent) => {
+  const lines = fileContent.trim().split('\n');
+  if (lines.length < 2) return { headers: [], rows: [] };
+  
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((header, i) => {
+      row[header] = values[i] || '';
+    });
+    return row;
+  });
+  
+  return { headers, rows };
+};
+
+const downloadTemplate = () => {
+  const content = `company_name,trade_name,cnpj,state_registration,address,city,state,zip_code,phone,email,contact_name,contact_role,segment,status
+Empresa Ltda,Empresa,12.345.678/0001-99,123.456.789.012,Rua A 100,São Paulo,SP,01234567,1133334444,contato@empresa.com,João Silva,Gerente,Indústria,active
+Outro Negócio,Outro,98.765.432/0001-00,987.654.321.098,Rua B 200,Rio de Janeiro,RJ,20234567,2133334444,contato@outro.com,Maria Santos,Diretora,Varejo,active`;
+  
+  const element = document.createElement('a');
+  element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
+  element.setAttribute('download', 'template-clientes.csv');
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+};
 
 export default function ClientImportForm({ onSuccess }) {
   const [file, setFile] = useState(null);
@@ -121,7 +151,7 @@ export default function ClientImportForm({ onSuccess }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => downloadTemplate('clients')}
+          onClick={downloadTemplate}
           className="flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
