@@ -19,12 +19,12 @@ export default function ImportData() {
     <div className="pb-20 lg:pb-6">
       <PageHeader 
         title="Importação em Massa" 
-        subtitle="Importe produtos e clientes via CSV"
+        subtitle="Importe produtos, clientes e estoque via CSV"
       />
 
-      <div className="max-w-2xl mx-auto">
-        <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+      <div className="w-full">
+        <Tabs defaultValue="products" className="space-y-6 w-full">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
               Produtos
