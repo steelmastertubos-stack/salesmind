@@ -6,7 +6,7 @@ import { Search, Loader2, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { base44 } from '@/api/base44Client';
 
-export default function CNPJLookup({ onDataFetched }) {
+export default function CNPJLookup({ onDataFetched, type = 'client' }) {
   const [cnpj, setCnpj] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
