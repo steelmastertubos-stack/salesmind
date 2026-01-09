@@ -354,6 +354,12 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
           </TabsContent>
 
           <TabsContent value="stage" className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-xs text-blue-800">
+                💡 Você pode mover a oportunidade para qualquer estágio, inclusive voltar para etapas anteriores se necessário.
+              </p>
+            </div>
+            
             <div>
               <Label>Novo Estágio</Label>
               <Select value={newStage} onValueChange={setNewStage}>
@@ -361,10 +367,10 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="proposta_enviada">Proposta Enviada</SelectItem>
-                  <SelectItem value="em_negociacao">Em Negociação</SelectItem>
-                  <SelectItem value="ganho">Ganho</SelectItem>
-                  <SelectItem value="perdido">Perdido</SelectItem>
+                  <SelectItem value="proposta_enviada">⬅️ Proposta Enviada</SelectItem>
+                  <SelectItem value="em_negociacao">🔄 Em Negociação</SelectItem>
+                  <SelectItem value="ganho">✅ Ganho</SelectItem>
+                  <SelectItem value="perdido">❌ Perdido</SelectItem>
                 </SelectContent>
               </Select>
             </div>

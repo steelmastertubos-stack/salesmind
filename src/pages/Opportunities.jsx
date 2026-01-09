@@ -29,7 +29,14 @@ export default function Opportunities() {
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreview, setEmailPreview] = useState({ subject: '', body: '', principalEmail: '', opportunityId: '', newStage: '' });
   const [editableEmailBody, setEditableEmailBody] = useState('');
+  const [showPendingEmails, setShowPendingEmails] = useState(false);
   const queryClient = useQueryClient();
+
+  const { data: pendingEmails = [] } = useQuery({
+    queryKey: ['pendingEmails'],
+    queryFn: () => base44.entities.PendingEmail.filter({ status: 'pending' }, '-created_date', 100),
+    refetchInterval: 60000 // Atualiza a cada 1 minuto
+  });
 
   const { data: opportunities = [], isLoading } = useQuery({
     queryKey: ['opportunities'],
@@ -177,6 +184,37 @@ export default function Opportunities() {
     }
   };
 
+  const handleSendLater = async () => {
+    try {
+      const opportunity = opportunities.find(o => o.id === emailPreview.opportunityId);
+      const now = new Date();
+      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+
+      await base44.entities.PendingEmail.create({
+        opportunity_id: emailPreview.opportunityId,
+        opportunity_name: opportunity.client_name,
+        recipient_email: emailPreview.principalEmail,
+        subject: emailPreview.subject,
+        body: editableEmailBody,
+        scheduled_for: now.toISOString(),
+        next_reminder: oneHourLater.toISOString(),
+        reminder_count: 0,
+        status: 'pending'
+      });
+
+      toast.success('Lembrete criado! Você será notificado em 1 hora');
+      setShowEmailPreview(false);
+      
+      // Atualizar estágio mesmo assim
+      updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['quotes']);
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error('Erro ao criar lembrete');
+    }
+  };
+
   // Priority opportunities (high score, overdue follow-ups)
   const priorityOpportunities = opportunities.filter(opp => {
     if (opp.stage === 'ganho' || opp.stage === 'perdido') return false;
@@ -215,12 +253,46 @@ export default function Opportunities() {
     );
   }
 
+  const overdueReminders = pendingEmails.filter(email => {
+    const nextReminder = new Date(email.next_reminder);
+    return nextReminder <= new Date();
+  });
+
   return (
     <div className="space-y-6 pb-6">
       <PageHeader 
         title="CRM" 
         subtitle="Funil de vendas e acompanhamento comercial"
-      />
+      >
+        {pendingEmails.length > 0 && (
+          <Button variant="outline" onClick={() => setShowPendingEmails(true)}>
+            <Clock className="w-4 h-4 mr-2" />
+            Emails Pendentes ({overdueReminders.length})
+          </Button>
+        )}
+      </PageHeader>
+
+      {/* Pending Emails Alert */}
+      {overdueReminders.length > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-orange-900">⏰ {overdueReminders.length} email(s) aguardando envio</h3>
+              <p className="text-sm text-orange-700 mt-1">
+                Você tem emails pendentes para representados. Clique para revisar e enviar.
+              </p>
+              <Button 
+                size="sm" 
+                className="mt-3 bg-orange-600 hover:bg-orange-700"
+                onClick={() => setShowPendingEmails(true)}
+              >
+                Ver Pendências
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -442,13 +514,146 @@ export default function Opportunities() {
                   Cancelar
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={handleSendLater}
+                  className="flex-1"
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  Enviar Depois
+                </Button>
+                <Button
                   onClick={confirmSendEmail}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
                   <Mail className="w-4 h-4 mr-2" />
-                  Enviar Email
+                  Enviar Agora
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Emails Dialog */}
+      {showPendingEmails && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">📧 Emails Pendentes de Envio</h3>
+              <Button variant="ghost" size="icon" onClick={() => setShowPendingEmails(false)}>
+                <XCircle className="w-5 h-5" />
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {pendingEmails.map(email => {
+                const isOverdue = new Date(email.next_reminder) <= new Date();
+                return (
+                  <div key={email.id} className={`border rounded-lg p-4 ${isOverdue ? 'border-orange-300 bg-orange-50' : 'border-slate-200'}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900">{email.opportunity_name}</h4>
+                        <p className="text-sm text-slate-600">{email.recipient_email}</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {email.reminder_count} lembrete(s) • 
+                          Próximo: {new Date(email.next_reminder).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                      {isOverdue && (
+                        <Badge className="bg-orange-600 text-white">Atrasado</Badge>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={async () => {
+                          try {
+                            await base44.integrations.Core.SendEmail({
+                              to: email.recipient_email,
+                              subject: email.subject,
+                              body: email.body
+                            });
+
+                            const opportunity = opportunities.find(o => o.id === email.opportunity_id);
+                            const quote = await base44.entities.Quote.filter({ id: opportunity?.quote_id }, '', 1).then(r => r[0]);
+                            
+                            if (quote) {
+                              const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
+                              await base44.entities.Order.create({
+                                order_number: orderNumber,
+                                quote_id: quote.id,
+                                client_id: opportunity.client_id,
+                                client_name: opportunity.client_name,
+                                principal_id: opportunity.principal_id,
+                                principal_name: opportunity.principal_name,
+                                items: quote.items,
+                                total_value: quote.total_value,
+                                total_weight: opportunity.total_weight,
+                                total_icms: quote.total_icms,
+                                total_ipi: quote.total_ipi,
+                                payment_terms: quote.payment_terms,
+                                notes: quote.notes,
+                                status: 'em_analise',
+                                commission_rate: 5,
+                                expected_commission: (quote.total_value || 0) * 0.05,
+                                status_history: [{
+                                  status: 'em_analise',
+                                  date: new Date().toISOString(),
+                                  notes: 'Pedido criado ao enviar email ao representado'
+                                }]
+                              });
+
+                              await base44.entities.Quote.update(quote.id, {
+                                status: 'convertido',
+                                approved_date: new Date().toISOString().split('T')[0]
+                              });
+                            }
+
+                            await base44.entities.PendingEmail.update(email.id, { status: 'sent' });
+                            toast.success('Email enviado e pedido criado!');
+                            queryClient.invalidateQueries(['pendingEmails']);
+                            queryClient.invalidateQueries(['orders']);
+                          } catch (error) {
+                            toast.error('Erro ao enviar email');
+                          }
+                        }}
+                      >
+                        <Mail className="w-4 h-4 mr-1" />
+                        Enviar Agora
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const nextReminder = new Date(new Date().getTime() + 60 * 60 * 1000);
+                          await base44.entities.PendingEmail.update(email.id, {
+                            next_reminder: nextReminder.toISOString(),
+                            reminder_count: (email.reminder_count || 0) + 1
+                          });
+                          toast.success('Lembrete adiado por 1 hora');
+                          queryClient.invalidateQueries(['pendingEmails']);
+                        }}
+                      >
+                        <Clock className="w-4 h-4 mr-1" />
+                        +1 hora
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          await base44.entities.PendingEmail.update(email.id, { status: 'cancelled' });
+                          toast.success('Email cancelado');
+                          queryClient.invalidateQueries(['pendingEmails']);
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
