@@ -72,6 +72,14 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
     queryFn: () => base44.entities.Representative.list('-created_date', 1)
   });
 
+  const { data: vtkCosts = [] } = useQuery({
+    queryKey: ['vtkCosts', formData.principal_id],
+    queryFn: () => formData.principal_id 
+      ? base44.entities.VTKCost.filter({ is_active: true }, '-aba_date', 500)
+      : [],
+    enabled: !!formData.principal_id
+  });
+
   // Auto-populate client data when selected
   useEffect(() => {
     if (formData.client_id && clients.length > 0) {
