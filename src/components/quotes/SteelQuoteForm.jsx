@@ -425,6 +425,8 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                     <th className="text-right p-2 font-medium">Qtd</th>
                     <th className="text-right p-2 font-medium">Peso/mt</th>
                     <th className="text-right p-2 font-medium">Peso Total</th>
+                    <th className="text-right p-2 font-medium text-orange-600">Custo VTK</th>
+                    <th className="text-right p-2 font-medium text-blue-600">Margem %</th>
                     <th className="text-right p-2 font-medium">R$/kg</th>
                     <th className="text-center p-2 font-medium">ICMS</th>
                     <th className="text-center p-2 font-medium">IPI</th>
