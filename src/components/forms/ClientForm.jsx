@@ -95,10 +95,19 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validação: Segmento é obrigatório
+    // Validação: Segmento, Nome de Contato, Telefone e Email obrigatórios
     const newErrors = {};
     if (!formData.segment) {
       newErrors.segment = 'Segmento de Atuação é obrigatório';
+    }
+    if (!formData.contact_name?.trim()) {
+      newErrors.contact_name = 'Nome do Contato é obrigatório';
+    }
+    if (!formData.phone?.trim()) {
+      newErrors.phone = 'Telefone é obrigatório';
+    }
+    if (!formData.email?.trim()) {
+      newErrors.email = 'Email é obrigatório';
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -290,15 +299,31 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
         </TabsContent>
 
         <TabsContent value="contact" className="space-y-4">
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-900">
+              Nome do Contato, Telefone e Email são obrigatórios
+            </AlertDescription>
+          </Alert>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="contact_name">Nome do Contato</Label>
+              <Label htmlFor="contact_name">Nome do Contato *</Label>
               <Input
                 id="contact_name"
                 value={formData.contact_name}
-                onChange={(e) => handleChange('contact_name', e.target.value)}
+                onChange={(e) => {
+                  handleChange('contact_name', e.target.value);
+                  setErrors(prev => ({ ...prev, contact_name: '' }));
+                }}
                 placeholder="Nome do contato principal"
+                className={errors.contact_name ? 'border-red-500' : ''}
               />
+              {errors.contact_name && (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.contact_name}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="contact_role">Cargo</Label>
@@ -313,13 +338,22 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">Telefone *</Label>
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
+                onChange={(e) => {
+                  handleChange('phone', e.target.value);
+                  setErrors(prev => ({ ...prev, phone: '' }));
+                }}
                 placeholder="(00) 0000-0000"
+                className={errors.phone ? 'border-red-500' : ''}
               />
+              {errors.phone && (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.phone}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="whatsapp">WhatsApp</Label>
@@ -333,14 +367,23 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">E-mail *</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
+              onChange={(e) => {
+                handleChange('email', e.target.value);
+                setErrors(prev => ({ ...prev, email: '' }));
+              }}
               placeholder="email@empresa.com.br"
+              className={errors.email ? 'border-red-500' : ''}
             />
+            {errors.email && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.email}
+              </p>
+            )}
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t">
