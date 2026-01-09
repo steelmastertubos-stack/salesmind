@@ -301,33 +301,41 @@ export default function Quotes() {
 
   const calculateMarginAndCommission = (quote) => {
     const principal = principals.find(p => p.id === quote.principal_id);
-    const isVTK = principal?.use_vtk_commission_table;
+    const hasCustomTable = principal?.use_vtk_commission_table && principal?.vtk_commission_table?.length > 0;
+    const hasSimpleCommission = principal?.commission_percentage > 0 && !hasCustomTable;
     
-    if (!isVTK) {
-      // Para outros representados, apenas comissão simples
-      const commissionRate = principal?.commission_percentage || 0;
+    // Se tem comissão simples, usar direto
+    if (hasSimpleCommission) {
+      const commissionRate = principal.commission_percentage;
       const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
       return { commissionValue, commissionRate, isVTK: false, margin: 0 };
     }
 
-    // Para VTK, calcular margem baseada nos itens
+    // Calcular margem baseada nos itens (com ou sem tabela VTK)
+    let totalSale = quote.total_value || 0;
     let totalCost = 0;
-    let totalSale = 0;
 
     quote.items?.forEach(item => {
-      // Usar vtk_cost se disponível, senão usar cost_per_kg
-      const costPerUnit = item.vtk_cost || item.cost_per_kg || 0;
-      const itemCost = costPerUnit * (item.total_weight || item.quantity || 0);
-      const itemSale = item.item_total || item.total_price || 0;
-      totalCost += itemCost;
-      totalSale += itemSale;
+      // Usar vtk_cost ou price_per_kg conforme disponível
+      const costPerUnit = item.vtk_cost || item.price_per_kg || item.cost_per_kg || 0;
+      const weight = item.total_weight || item.quantity || 0;
+      
+      // Se é vtk_cost, recalcular o custo sem margem
+      if (item.vtk_cost && item.vtk_margin_pct) {
+        // custo = preco / (1 + ipi%) / (1 - margem%)
+        const priceWithIPI = item.item_total || 0;
+        const costBeforeMargin = priceWithIPI / (1 + (item.ipi_rate || 0) / 100) / (1 + (item.vtk_margin_pct || 0) / 100);
+        totalCost += costBeforeMargin;
+      } else {
+        totalCost += costPerUnit * weight;
+      }
     });
 
-    const margin = totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
-    const commissionRate = getVTKCommissionRate(margin);
-    const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
+    const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
+    const commissionRate = hasCustomTable || (margin >= 15) ? getVTKCommissionRate(margin) : 0;
+    const commissionValue = totalSale * (commissionRate / 100);
     
-    return { margin, commissionValue, commissionRate, isVTK: true };
+    return { margin, commissionValue, commissionRate, isVTK: hasCustomTable };
   };
 
   const getStatusConfig = (status) => {
