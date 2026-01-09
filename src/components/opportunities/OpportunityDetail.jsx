@@ -68,7 +68,7 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
     setNextActionDate('');
   };
 
-  const handleStageChange = () => {
+  const handleStageChange = async () => {
     if (newStage === 'perdido' && !lossReason.trim()) {
       toast.error('Informe o motivo da perda');
       return;
@@ -81,6 +81,49 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
       description: `Mudou para: ${stages[newStage].label}${newStage === 'perdido' ? ` - ${lossReason}` : ''}`,
       user: 'user'
     });
+
+    // Se mudou para GANHO, enviar email para representado
+    if (newStage === 'ganho' && opportunity.stage !== 'ganho') {
+      try {
+        const [principal, client] = await Promise.all([
+          base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]),
+          base44.entities.Client.filter({ id: opportunity.client_id }, '', 1).then(r => r[0])
+        ]);
+
+        if (principal?.email) {
+          const isPrimeiraVenda = !client?.purchase_count || client.purchase_count === 0;
+          const representativeName = await base44.auth.me().then(u => u.full_name).catch(() => 'Representante');
+          
+          const subject = isPrimeiraVenda 
+            ? `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Análise de Crédito`
+            : `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+          let body = `Olá ${principal.trade_name || principal.company_name},\n\nFechamos mais um! 🎯\n\n`;
+          body += `Cliente: ${opportunity.client_name}\n`;
+          body += `Valor: R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+          body += `Peso: ${(opportunity.total_weight || 0).toFixed(0)} kg\n`;
+          body += `Orçamento: ${opportunity.quote_number}\n\n`;
+          
+          if (isPrimeiraVenda) {
+            body += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
+          }
+          
+          body += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\n`;
+          body += `Abraço,\n${representativeName}`;
+
+          await base44.integrations.Core.SendEmail({
+            to: principal.email,
+            subject: subject,
+            body: body
+          });
+
+          toast.success('Email enviado ao representado!');
+        }
+      } catch (error) {
+        console.error('Erro ao enviar email:', error);
+        toast.error('Erro ao enviar email ao representado');
+      }
+    }
 
     updateOpportunityMutation.mutate({
       stage: newStage,

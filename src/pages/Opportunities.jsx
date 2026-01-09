@@ -34,7 +34,51 @@ export default function Opportunities() {
   });
 
   const updateStageMutation = useMutation({
-    mutationFn: ({ id, newStage }) => base44.entities.Opportunity.update(id, { stage: newStage }),
+    mutationFn: async ({ id, newStage, opportunity }) => {
+      // Se mudou para GANHO, enviar email para representado
+      if (newStage === 'ganho' && opportunity?.stage !== 'ganho') {
+        try {
+          const [principal, client] = await Promise.all([
+            base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]),
+            base44.entities.Client.filter({ id: opportunity.client_id }, '', 1).then(r => r[0])
+          ]);
+
+          if (principal?.email) {
+            const isPrimeiraVenda = !client?.purchase_count || client.purchase_count === 0;
+            const representativeName = await base44.auth.me().then(u => u.full_name).catch(() => 'Representante');
+            
+            const subject = isPrimeiraVenda 
+              ? `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Análise de Crédito`
+              : `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+            let body = `Olá ${principal.trade_name || principal.company_name},\n\nFechamos mais um! 🎯\n\n`;
+            body += `Cliente: ${opportunity.client_name}\n`;
+            body += `Valor: R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+            body += `Peso: ${(opportunity.total_weight || 0).toFixed(0)} kg\n`;
+            body += `Orçamento: ${opportunity.quote_number}\n\n`;
+            
+            if (isPrimeiraVenda) {
+              body += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
+            }
+            
+            body += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\n`;
+            body += `Abraço,\n${representativeName}`;
+
+            await base44.integrations.Core.SendEmail({
+              to: principal.email,
+              subject: subject,
+              body: body
+            });
+
+            toast.success('Email enviado ao representado!');
+          }
+        } catch (error) {
+          console.error('Erro ao enviar email:', error);
+        }
+      }
+
+      return base44.entities.Opportunity.update(id, { stage: newStage });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['opportunities']);
       toast.success('Estágio atualizado!');
@@ -68,8 +112,9 @@ export default function Opportunities() {
     
     const { draggableId, destination } = result;
     const newStage = destination.droppableId;
+    const opportunity = opportunities.find(o => o.id === draggableId);
     
-    updateStageMutation.mutate({ id: draggableId, newStage });
+    updateStageMutation.mutate({ id: draggableId, newStage, opportunity });
   };
 
   // Priority opportunities (high score, overdue follow-ups)
