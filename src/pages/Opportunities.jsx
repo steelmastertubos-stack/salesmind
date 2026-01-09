@@ -24,6 +24,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import OpportunityDetail from '@/components/opportunities/OpportunityDetail';
 import { calculateCommission, isFixedCommissionRepresentative } from '@/components/utils/commissionCalculator';
+import { automateOpportunityToOrderAndCommission } from '@/components/utils/fluxoAutomation';
+import { OPPORTUNITY_STAGE, ORDER_STATUS, COMMISSION_STATUS } from '@/components/utils/fluxoConstants';
 
 const getVTKCommissionRate = (margin) => {
   const vtkTable = [
@@ -128,44 +130,32 @@ export default function Opportunities() {
     const opportunity = opportunities.find(o => o.id === draggableId);
     
     // Se mudou para GANHO, mostrar preview do email
-    if (newStage === 'ganho' && opportunity?.stage !== 'ganho') {
-      console.log('🎯 Movendo para GANHO - preparando preview de email');
-      try {
-        const [principal, client] = await Promise.all([
-          base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]),
-          base44.entities.Client.filter({ id: opportunity.client_id }, '', 1).then(r => r[0])
-        ]);
+    if (newStage === OPPORTUNITY_STAGE.WON && opportunity?.stage !== OPPORTUNITY_STAGE.WON) {
+        console.log('🎯 Movendo para GANHO - criar pedido e comissão automaticamente');
+        try {
+          const [quote, principal] = await Promise.all([
+            base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]),
+            base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0])
+          ]);
 
-        if (principal?.email) {
-          const isPrimeiraVenda = !client?.purchase_count || client.purchase_count === 0;
-          const representativeName = await base44.auth.me().then(u => u.full_name).catch(() => 'Representante');
-          
-          const subject = isPrimeiraVenda 
-            ? `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Análise de Crédito`
-            : `Pedido Fechado - ${opportunity.client_name} - R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+          // AUTOMAÇÃO: Criar Order + Commission
+          const result = await automateOpportunityToOrderAndCommission(opportunity, quote, principal);
 
-          let body = `Olá ${principal.trade_name || principal.company_name},\n\nFechamos mais um! 🎯\n\n`;
-          body += `Cliente: ${opportunity.client_name}\n`;
-          body += `Valor: R$ ${(opportunity.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-          body += `Peso: ${(opportunity.total_weight || 0).toFixed(0)} kg\n`;
-          body += `Orçamento: ${opportunity.quote_number}\n\n`;
-          
-          if (isPrimeiraVenda) {
-            body += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
+          if (result?.order && result?.commission) {
+            setShowEmailPreview(false);
+            toast.success('✅ Pedido e comissão criados automaticamente!');
+
+            // Atualizar estágio
+            updateStageMutation.mutate({ id: draggableId, newStage: OPPORTUNITY_STAGE.WON });
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            queryClient.invalidateQueries({ queryKey: ['commissions'] });
+            return;
           }
-          
-          body += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\n`;
-          body += `Abraço,\n${representativeName}`;
-
-          setEmailPreview({ subject, body, principalEmail: principal.email, opportunityId: draggableId, newStage });
-          setEditableEmailBody(body);
-          setShowEmailPreview(true);
-          return;
+        } catch (error) {
+          console.error('Erro ao criar pedido/comissão:', error);
+          toast.error('Erro ao criar pedido/comissão automaticamente');
         }
-      } catch (error) {
-        console.error('Erro ao preparar email:', error);
       }
-    }
     
     updateStageMutation.mutate({ id: draggableId, newStage });
   };
