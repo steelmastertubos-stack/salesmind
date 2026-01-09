@@ -30,6 +30,9 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
   const [nextActionType, setNextActionType] = useState('whatsapp');
   const [newStage, setNewStage] = useState(opportunity.stage);
   const [lossReason, setLossReason] = useState('');
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailPreview, setEmailPreview] = useState({ subject: '', body: '' });
+  const [editableEmailBody, setEditableEmailBody] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -74,15 +77,7 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
       return;
     }
 
-    const timeline = opportunity.timeline || [];
-    timeline.push({
-      date: new Date().toISOString(),
-      type: 'stage_change',
-      description: `Mudou para: ${stages[newStage].label}${newStage === 'perdido' ? ` - ${lossReason}` : ''}`,
-      user: 'user'
-    });
-
-    // Se mudou para GANHO, enviar email para representado
+    // Se mudou para GANHO, mostrar preview do email
     if (newStage === 'ganho' && opportunity.stage !== 'ganho') {
       try {
         const [principal, client] = await Promise.all([
@@ -111,25 +106,60 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
           body += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\n`;
           body += `Abraço,\n${representativeName}`;
 
-          await base44.integrations.Core.SendEmail({
-            to: principal.email,
-            subject: subject,
-            body: body
-          });
-
-          toast.success('Email enviado ao representado!');
+          setEmailPreview({ subject, body, principalEmail: principal.email });
+          setEditableEmailBody(body);
+          setShowEmailPreview(true);
+          return;
         }
       } catch (error) {
-        console.error('Erro ao enviar email:', error);
-        toast.error('Erro ao enviar email ao representado');
+        console.error('Erro ao preparar email:', error);
       }
     }
+
+    // Continuar com atualização normal
+    const timeline = opportunity.timeline || [];
+    timeline.push({
+      date: new Date().toISOString(),
+      type: 'stage_change',
+      description: `Mudou para: ${stages[newStage].label}${newStage === 'perdido' ? ` - ${lossReason}` : ''}`,
+      user: 'user'
+    });
 
     updateOpportunityMutation.mutate({
       stage: newStage,
       timeline,
       loss_reason: newStage === 'perdido' ? lossReason : null
     });
+  };
+
+  const confirmSendEmail = async () => {
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: emailPreview.principalEmail,
+        subject: emailPreview.subject,
+        body: editableEmailBody
+      });
+
+      toast.success('Email enviado ao representado!');
+      setShowEmailPreview(false);
+
+      // Atualizar estágio
+      const timeline = opportunity.timeline || [];
+      timeline.push({
+        date: new Date().toISOString(),
+        type: 'stage_change',
+        description: `Mudou para: Ganho`,
+        user: 'user'
+      });
+
+      updateOpportunityMutation.mutate({
+        stage: 'ganho',
+        timeline
+      });
+    } catch (error) {
+      console.error('Erro ao enviar email:', error);
+      toast.error('Erro ao enviar email ao representado');
+    }
   };
 
   const handleWhatsApp = () => {
@@ -348,6 +378,60 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Email Preview Dialog */}
+        {showEmailPreview && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+              <h3 className="text-xl font-bold mb-4">📧 Prévia do Email ao Representado</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-slate-600">Para:</Label>
+                  <p className="font-medium">{emailPreview.principalEmail}</p>
+                </div>
+
+                <div>
+                  <Label className="text-slate-600">Assunto:</Label>
+                  <p className="font-medium">{emailPreview.subject}</p>
+                </div>
+
+                <div>
+                  <Label className="text-slate-600">Mensagem (editável):</Label>
+                  <Textarea
+                    value={editableEmailBody}
+                    onChange={(e) => setEditableEmailBody(e.target.value)}
+                    rows={12}
+                    className="mt-2 font-mono text-sm"
+                  />
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-xs text-amber-800">
+                    📎 Lembre-se de anexar os documentos do cliente ao email (dados cadastrais, contrato social, notas)
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowEmailPreview(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={confirmSendEmail}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Enviar Email
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
