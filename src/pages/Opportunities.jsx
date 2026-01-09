@@ -48,8 +48,8 @@ export default function Opportunities() {
       return base44.entities.Opportunity.update(id, { stage: newStage });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      queryClient.refetchQueries({ queryKey: ['opportunities'] });
+      queryClient.refetchQueries({ queryKey: ['commissions'] });
       toast.success('Estágio atualizado!');
     }
   });
