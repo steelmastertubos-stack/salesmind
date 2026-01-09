@@ -24,6 +24,48 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import OpportunityDetail from '@/components/opportunities/OpportunityDetail';
 
+const getVTKCommissionRate = (margin) => {
+  const vtkTable = [
+    { minMargin: 15, maxMargin: 19.99, rate: 0.50 },
+    { minMargin: 20, maxMargin: 20.49, rate: 0.60 },
+    { minMargin: 20.5, maxMargin: 20.99, rate: 0.67 },
+    { minMargin: 21, maxMargin: 21.49, rate: 0.74 },
+    { minMargin: 21.5, maxMargin: 21.99, rate: 0.81 },
+    { minMargin: 22, maxMargin: 22.49, rate: 0.88 },
+    { minMargin: 22.5, maxMargin: 22.99, rate: 0.95 },
+    { minMargin: 23, maxMargin: 23.49, rate: 1.02 },
+    { minMargin: 23.5, maxMargin: 23.99, rate: 1.09 },
+    { minMargin: 24, maxMargin: 24.49, rate: 1.16 },
+    { minMargin: 24.5, maxMargin: 24.99, rate: 1.23 },
+    { minMargin: 25, maxMargin: 25.49, rate: 1.30 },
+    { minMargin: 25.5, maxMargin: 25.99, rate: 1.37 },
+    { minMargin: 26, maxMargin: 26.49, rate: 1.44 },
+    { minMargin: 26.5, maxMargin: 26.99, rate: 1.51 },
+    { minMargin: 27, maxMargin: 27.49, rate: 1.58 },
+    { minMargin: 27.5, maxMargin: 27.99, rate: 1.65 },
+    { minMargin: 28, maxMargin: 28.49, rate: 1.72 },
+    { minMargin: 28.5, maxMargin: 28.99, rate: 1.79 },
+    { minMargin: 29, maxMargin: 29.49, rate: 1.86 },
+    { minMargin: 29.5, maxMargin: 29.99, rate: 1.93 },
+    { minMargin: 30, maxMargin: 30.49, rate: 2.00 },
+    { minMargin: 30.5, maxMargin: 30.99, rate: 2.10 },
+    { minMargin: 31, maxMargin: 31.49, rate: 2.20 },
+    { minMargin: 31.5, maxMargin: 31.99, rate: 2.30 },
+    { minMargin: 32, maxMargin: 32.49, rate: 2.40 },
+    { minMargin: 32.5, maxMargin: 32.99, rate: 2.50 },
+    { minMargin: 33, maxMargin: 33.49, rate: 2.60 },
+    { minMargin: 33.5, maxMargin: 33.99, rate: 2.70 },
+    { minMargin: 34, maxMargin: 34.49, rate: 2.80 },
+    { minMargin: 34.5, maxMargin: 34.99, rate: 2.90 },
+    { minMargin: 35, maxMargin: 49.99, rate: 3.00 },
+    { minMargin: 50, maxMargin: 64.99, rate: 4.00 },
+    { minMargin: 65, maxMargin: Infinity, rate: 5.00 }
+  ];
+
+  const bracket = vtkTable.find(b => margin >= b.minMargin && margin <= b.maxMargin);
+  return bracket?.rate || 0;
+};
+
 export default function Opportunities() {
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
