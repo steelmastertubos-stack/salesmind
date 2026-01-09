@@ -257,6 +257,48 @@ export default function Quotes() {
     }).format(value || 0);
   };
 
+  const getVTKCommissionRate = (margin) => {
+    const vtkTable = [
+      { minMargin: 15, maxMargin: 19.99, rate: 0.50 },
+      { minMargin: 20, maxMargin: 20, rate: 0.60 },
+      { minMargin: 20.5, maxMargin: 20.5, rate: 0.67 },
+      { minMargin: 21, maxMargin: 21, rate: 0.74 },
+      { minMargin: 21.5, maxMargin: 21.5, rate: 0.81 },
+      { minMargin: 22, maxMargin: 22, rate: 0.88 },
+      { minMargin: 22.5, maxMargin: 22.5, rate: 0.95 },
+      { minMargin: 23, maxMargin: 23, rate: 1.02 },
+      { minMargin: 23.5, maxMargin: 23.5, rate: 1.09 },
+      { minMargin: 24, maxMargin: 24, rate: 1.16 },
+      { minMargin: 24.5, maxMargin: 24.5, rate: 1.23 },
+      { minMargin: 25, maxMargin: 25, rate: 1.30 },
+      { minMargin: 25.5, maxMargin: 25.5, rate: 1.37 },
+      { minMargin: 26, maxMargin: 26, rate: 1.44 },
+      { minMargin: 26.5, maxMargin: 26.5, rate: 1.51 },
+      { minMargin: 27, maxMargin: 27, rate: 1.58 },
+      { minMargin: 27.5, maxMargin: 27.5, rate: 1.65 },
+      { minMargin: 28, maxMargin: 28, rate: 1.72 },
+      { minMargin: 28.5, maxMargin: 28.5, rate: 1.79 },
+      { minMargin: 29, maxMargin: 29, rate: 1.86 },
+      { minMargin: 29.5, maxMargin: 29.5, rate: 1.93 },
+      { minMargin: 30, maxMargin: 30, rate: 2.00 },
+      { minMargin: 30.5, maxMargin: 30.5, rate: 2.10 },
+      { minMargin: 31, maxMargin: 31, rate: 2.20 },
+      { minMargin: 31.5, maxMargin: 31.5, rate: 2.30 },
+      { minMargin: 32, maxMargin: 32, rate: 2.40 },
+      { minMargin: 32.5, maxMargin: 32.5, rate: 2.50 },
+      { minMargin: 33, maxMargin: 33, rate: 2.60 },
+      { minMargin: 33.5, maxMargin: 33.5, rate: 2.70 },
+      { minMargin: 34, maxMargin: 34, rate: 2.80 },
+      { minMargin: 34.5, maxMargin: 34.5, rate: 2.90 },
+      { minMargin: 35, maxMargin: 49.99, rate: 3.00 },
+      { minMargin: 50, maxMargin: 64.99, rate: 4.00 },
+      { minMargin: 65, maxMargin: Infinity, rate: 5.00 }
+    ];
+
+    const bracket = vtkTable.find(b => margin >= b.minMargin && margin <= b.maxMargin);
+    return bracket?.rate || 0;
+  };
+
   const calculateMarginAndCommission = (quote) => {
     const principal = principals.find(p => p.id === quote.principal_id);
     const isVTK = principal?.use_vtk_commission_table;
@@ -265,7 +307,7 @@ export default function Quotes() {
       // Para outros representados, apenas comissão simples
       const commissionRate = principal?.commission_percentage || 0;
       const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
-      return { commissionValue, commissionRate, isVTK: false };
+      return { commissionValue, commissionRate, isVTK: false, margin: 0 };
     }
 
     // Para VTK, calcular margem baseada nos itens
@@ -280,17 +322,7 @@ export default function Quotes() {
     });
 
     const margin = totalCost > 0 ? ((totalSale - totalCost) / totalCost) * 100 : 0;
-    
-    // Buscar comissão na tabela VTK
-    let commissionRate = 0;
-    if (principal.vtk_commission_table && principal.vtk_commission_table.length > 0) {
-      const bracket = principal.vtk_commission_table.find(
-        b => margin >= b.min_margin && margin <= b.max_margin
-      );
-      // Se não encontrou bracket exato, usar o primeiro que a margem é >= min_margin
-      commissionRate = bracket?.commission_rate || principal.vtk_commission_table[0]?.commission_rate || 0;
-    }
-
+    const commissionRate = getVTKCommissionRate(margin);
     const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
     
     return { margin, commissionValue, commissionRate, isVTK: true };
