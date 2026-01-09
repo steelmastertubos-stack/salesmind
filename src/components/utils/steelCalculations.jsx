@@ -70,6 +70,8 @@ export function calculateItemTotals(item) {
     weight_per_meter,
     total_weight: manualWeight,
     base_price_per_kg,
+    vtk_cost,
+    vtk_margin_pct,
     icms_rate,
     ipi_rate
   } = item;
@@ -88,20 +90,33 @@ export function calculateItemTotals(item) {
     throw new Error('Peso total inválido');
   }
 
-  // 2. Recalcular preço por kg com ICMS correto
-  const priceCalc = recalculatePrice(base_price_per_kg, icms_rate);
+  // 2. Determinar preço por kg
+  let pricePerKgBase;
+  
+  // Se tem custo VTK, usar ele com margem
+  if (vtk_cost > 0) {
+    const marginPct = (vtk_margin_pct || 0) / 100;
+    // price = cost / (1 - margin%)
+    pricePerKgBase = marginPct < 1 ? vtk_cost / (1 - marginPct) : vtk_cost;
+  } else {
+    // Usar preço base do produto
+    pricePerKgBase = base_price_per_kg;
+  }
+
+  // 3. Recalcular preço com ICMS correto
+  const priceCalc = recalculatePrice(pricePerKgBase, icms_rate);
   const pricePerKg = priceCalc.priceWithICMS;
 
-  // 3. Calcular subtotal (produtos)
+  // 4. Calcular subtotal (produtos)
   const itemSubtotal = totalWeight * pricePerKg;
 
-  // 4. Calcular ICMS
+  // 5. Calcular ICMS
   const icmsValue = totalWeight * priceCalc.icmsValue;
 
-  // 5. Calcular IPI sobre o subtotal
+  // 6. Calcular IPI sobre o subtotal
   const ipiValue = itemSubtotal * (ipi_rate / 100);
 
-  // 6. Total do item
+  // 7. Total do item
   const itemTotal = itemSubtotal + ipiValue;
 
   return {
