@@ -133,18 +133,27 @@ export default function Opportunities() {
 
     // Se mudou para GANHO, mostrar modal de email
     if (newStage === 'ganho' && opportunity.stage !== 'ganho') {
-      const quote = opportunities.find(o => o.id === draggableId);
-      const principal = opportunities.find(o => o.id === draggableId);
-      
       try {
-        const quoteData = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r?.[0]);
-        const principalData = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r?.[0]);
+        const [quoteData, principalData, clientData] = await Promise.all([
+          base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r?.[0]),
+          base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r?.[0]),
+          base44.entities.Client.filter({ id: opportunity.client_id }, '', 1).then(r => r?.[0])
+        ]);
 
-        console.log('📧 Abrindo modal de email - Quote:', quoteData, 'Principal:', principalData);
+        console.log('📧 Abrindo modal de email - Quote:', quoteData, 'Principal:', principalData, 'Client:', clientData);
 
+        // Verificar se é primeira venda
+        const isPrimeiraVenda = !clientData?.purchase_count || clientData.purchase_count === 0;
+        
         // Preparar dados do email
         const emailSubject = `Ganhamos mais um! 🎯 ${opportunity.client_name}`;
-        const emailBody = `Ganhamos mais um! 🎯\n\nCliente: ${opportunity.client_name}\nValor: ${formatCurrency(opportunity.total_value)}\nPeso: ${opportunity.total_weight}kg\nOrçamento: ${opportunity.quote_number}\n\nPreciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\nAbraço`;
+        let emailBody = `Ganhamos mais um! 🎯\n\nCliente: ${opportunity.client_name}\nValor: ${formatCurrency(opportunity.total_value)}\nPeso: ${opportunity.total_weight}kg\nOrçamento: ${opportunity.quote_number}\n\n`;
+        
+        if (isPrimeiraVenda) {
+          emailBody += `⚠️ Cliente novo - dados cadastrais, contrato social e notas em anexo para análise de crédito.\n\n`;
+        }
+        
+        emailBody += `Preciso confirmar prazo de entrega. Pode me retornar assim que possível?\n\nAbraço`;
 
         // Mostrar modal
         setEmailPreview({
