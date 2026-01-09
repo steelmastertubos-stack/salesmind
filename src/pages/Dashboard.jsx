@@ -178,6 +178,9 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Integrated Alerts */}
+      <IntegratedAlerts />
+
       {/* Goals Panel - Destaque */}
       <GoalsPanel orders={orders} quotes={quotes} />
 
