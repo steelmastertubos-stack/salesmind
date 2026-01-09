@@ -80,6 +80,13 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
     enabled: !!formData.principal_id
   });
 
+  const isFixedCommissionPrincipal = () => {
+    const principalName = principals.find(p => p.id === formData.principal_id)?.trade_name || 
+                         principals.find(p => p.id === formData.principal_id)?.company_name || '';
+    return principalName.toLowerCase().includes('new aço') || 
+           principalName.toLowerCase().includes('intersteel');
+  };
+
   // Auto-populate client data when selected
   useEffect(() => {
     if (formData.client_id && clients.length > 0) {
@@ -157,21 +164,29 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       newItem.total_weight = newItem.quantity * newItem.weight_per_meter;
     }
 
-    // Try to find VTK cost by bitola and description
-    const vtkCost = vtkCosts.find(v => 
-      v.is_active && 
-      v.bitola && 
-      (product.code?.includes(v.bitola) || product.description?.includes(v.bitola))
-    );
-    
-    if (vtkCost) {
-      newItem.vtk_cost = vtkCost.cost_per_unit;
-      newItem.vtk_aba = vtkCost.aba_name;
-      newItem.vtk_cost_id = vtkCost.id;
-      newItem.vtk_margin_pct = 20; // Margem padrão 20%
-    } else {
+    // Para representados com comissão tabelada, usar preço base
+    if (isFixedCommissionPrincipal()) {
+      newItem.price_per_kg = product.base_price_per_kg || 0;
       newItem.vtk_cost = 0;
-      newItem.vtk_margin_pct = 30; // Margem padrão se não encontrar custo
+      newItem.vtk_margin_pct = 0;
+      newItem.vtk_aba = 'Preço Tabelado';
+    } else {
+      // Para VTK, buscar custo
+      const vtkCost = vtkCosts.find(v => 
+        v.is_active && 
+        v.bitola && 
+        (product.code?.includes(v.bitola) || product.description?.includes(v.bitola))
+      );
+
+      if (vtkCost) {
+        newItem.vtk_cost = vtkCost.cost_per_unit;
+        newItem.vtk_aba = vtkCost.aba_name;
+        newItem.vtk_cost_id = vtkCost.id;
+        newItem.vtk_margin_pct = 20; // Margem padrão 20%
+      } else {
+        newItem.vtk_cost = 0;
+        newItem.vtk_margin_pct = 30; // Margem padrão se não encontrar custo
+      }
     }
 
     if (newItem.total_weight > 0) {
@@ -428,6 +443,13 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
         {/* Items Table */}
         {formData.items.length > 0 && (
           <div className="border rounded-xl overflow-hidden">
+            {isFixedCommissionPrincipal() && (
+              <div className="bg-blue-50 border-b border-blue-200 p-3">
+                <p className="text-xs text-blue-900 font-medium">
+                  ℹ️ Representado com <strong>preço tabelado</strong> - comissão fixa ({isFixedCommissionPrincipal() ? (principals.find(p => p.id === formData.principal_id)?.trade_name || '').includes('new') ? '3%' : '4%' : ''}%)
+                </p>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b">
@@ -438,8 +460,12 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                     <th className="text-right p-2 font-medium">Qtd</th>
                     <th className="text-right p-2 font-medium">Peso/mt</th>
                     <th className="text-right p-2 font-medium">Peso Total</th>
-                    <th className="text-right p-2 font-medium text-orange-600">Custo VTK</th>
-                    <th className="text-right p-2 font-medium text-blue-600">Margem %</th>
+                    {!isFixedCommissionPrincipal() && (
+                      <>
+                        <th className="text-right p-2 font-medium text-orange-600">Custo VTK</th>
+                        <th className="text-right p-2 font-medium text-blue-600">Margem %</th>
+                      </>
+                    )}
                     <th className="text-right p-2 font-medium">R$/kg</th>
                     <th className="text-center p-2 font-medium">ICMS</th>
                     <th className="text-center p-2 font-medium">IPI</th>
@@ -518,29 +544,33 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                            <span className="font-semibold">{item.total_weight?.toFixed(2)}</span>
                          )}
                        </td>
-                       <td className="p-2">
-                         <Input
-                           type="number"
-                           min="0"
-                           step="0.01"
-                           value={item.vtk_cost}
-                           onChange={(e) => updateItem(index, 'vtk_cost', parseFloat(e.target.value) || 0)}
-                           className="w-24 h-8 text-right text-orange-600 font-bold"
-                           placeholder="0,00"
-                         />
-                       </td>
-                       <td className="p-2">
-                         <Input
-                           type="number"
-                           min="0"
-                           max="99"
-                           step="0.1"
-                           value={item.vtk_margin_pct}
-                           onChange={(e) => updateItem(index, 'vtk_margin_pct', parseFloat(e.target.value) || 0)}
-                           className="w-20 h-8 text-right text-blue-600 font-bold"
-                           placeholder="0"
-                         />
-                       </td>
+                       {!isFixedCommissionPrincipal() && (
+                         <>
+                           <td className="p-2">
+                             <Input
+                               type="number"
+                               min="0"
+                               step="0.01"
+                               value={item.vtk_cost}
+                               onChange={(e) => updateItem(index, 'vtk_cost', parseFloat(e.target.value) || 0)}
+                               className="w-24 h-8 text-right text-orange-600 font-bold"
+                               placeholder="0,00"
+                             />
+                           </td>
+                           <td className="p-2">
+                             <Input
+                               type="number"
+                               min="0"
+                               max="99"
+                               step="0.1"
+                               value={item.vtk_margin_pct}
+                               onChange={(e) => updateItem(index, 'vtk_margin_pct', parseFloat(e.target.value) || 0)}
+                               className="w-20 h-8 text-right text-blue-600 font-bold"
+                               placeholder="0"
+                             />
+                           </td>
+                         </>
+                       )}
                        <td className="p-2 text-right font-medium">
                          {formatCurrency(item.price_per_kg)}
                        </td>
