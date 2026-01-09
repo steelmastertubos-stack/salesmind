@@ -283,11 +283,12 @@ export default function Quotes() {
     
     // Buscar comissão na tabela VTK
     let commissionRate = 0;
-    if (principal.vtk_commission_table) {
+    if (principal.vtk_commission_table && principal.vtk_commission_table.length > 0) {
       const bracket = principal.vtk_commission_table.find(
         b => margin >= b.min_margin && margin <= b.max_margin
       );
-      commissionRate = bracket?.commission_rate || 0;
+      // Se não encontrou bracket exato, usar o primeiro que a margem é >= min_margin
+      commissionRate = bracket?.commission_rate || principal.vtk_commission_table[0]?.commission_rate || 0;
     }
 
     const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
