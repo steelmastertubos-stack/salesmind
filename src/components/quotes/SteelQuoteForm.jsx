@@ -195,12 +195,12 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
     const newItems = [...formData.items];
     newItems[index] = { ...newItems[index], [field]: value };
 
-    // Recalculate price when margin changes
-    if (field === 'vtk_margin_pct' && newItems[index].vtk_cost > 0) {
+    // Recalculate price when margin or cost changes
+    if ((field === 'vtk_margin_pct' || field === 'vtk_cost') && newItems[index].vtk_cost > 0) {
       const costPerUnit = newItems[index].vtk_cost;
-      const marginPct = value / 100;
+      const marginPct = newItems[index].vtk_margin_pct / 100;
       // price = cost / (1 - margin%)
-      const pricePerUnit = costPerUnit / (1 - marginPct);
+      const pricePerUnit = marginPct < 1 ? costPerUnit / (1 - marginPct) : costPerUnit;
       newItems[index].price_per_kg = pricePerUnit;
     }
 
