@@ -103,23 +103,39 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         <nav className="mt-20 lg:mt-4 px-3 space-y-1">
-          {navigation.map((item) => (
-            <Link
-              key={item.page}
-              to={createPageUrl(item.page)}
-              onClick={() => setSidebarOpen(false)}
-              className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                ${isActive(item.page) 
-                  ? 'bg-[#1DB954] text-white shadow-lg' 
-                  : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
-              `}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.name}</span>
-            </Link>
-          ))}
-        </nav>
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.page}
+                      to={createPageUrl(item.page)}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                        ${isActive(item.page) 
+                          ? 'bg-[#1DB954] text-white shadow-lg' 
+                          : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
+                      `}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  ))}
+                  {/* Auditoria - Nova Opção */}
+                  <div className="mt-6 pt-6 border-t border-slate-600">
+                    <Link
+                      to={createPageUrl('AuditFluxo')}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                        ${isActive('AuditFluxo') 
+                          ? 'bg-[#1DB954] text-white shadow-lg' 
+                          : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
+                      `}
+                    >
+                      <Zap className="w-5 h-5" />
+                      <span className="font-medium text-sm">🔍 Auditoria</span>
+                    </Link>
+                  </div>
+                </nav>
 
         {user && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
