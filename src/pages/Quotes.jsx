@@ -400,29 +400,24 @@ export default function Quotes() {
                     </div>
                   </div>
 
-                  {/* Comissão Info */}
+                  {/* Margem e Comissão Info */}
                   {commissionValue > 0 && (
-                    <div className="bg-amber-50 rounded-lg p-2 mb-3 border border-amber-200">
-                      <div className="flex items-center justify-between text-xs">
-                        {isVTK ? (
-                          <>
-                            <span className="text-amber-700 font-medium">
-                              Margem: {margin.toFixed(2)}% • Comissão: {commissionRate}%
-                            </span>
-                            <span className="text-amber-900 font-bold">
-                              {formatCurrency(commissionValue)}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-amber-700 font-medium">
-                              Comissão: {commissionRate}%
-                            </span>
-                            <span className="text-amber-900 font-bold">
-                              {formatCurrency(commissionValue)}
-                            </span>
-                          </>
+                    <div className={`rounded-lg p-3 mb-3 border ${isVTK ? 'bg-orange-50 border-orange-200' : 'bg-amber-50 border-amber-200'}`}>
+                      <div className="grid grid-cols-3 gap-3">
+                        {isVTK && (
+                          <div>
+                            <p className={`text-xs font-medium ${isVTK ? 'text-orange-700' : 'text-amber-700'}`}>Margem</p>
+                            <p className={`text-sm font-bold ${isVTK ? 'text-orange-900' : 'text-amber-900'}`}>{margin.toFixed(1)}%</p>
+                          </div>
                         )}
+                        <div>
+                          <p className={`text-xs font-medium ${isVTK ? 'text-orange-700' : 'text-amber-700'}`}>Taxa Comissão</p>
+                          <p className={`text-sm font-bold ${isVTK ? 'text-orange-900' : 'text-amber-900'}`}>{commissionRate}%</p>
+                        </div>
+                        <div>
+                          <p className={`text-xs font-medium ${isVTK ? 'text-orange-700' : 'text-amber-700'}`}>Comissão Estimada</p>
+                          <p className={`text-sm font-bold ${isVTK ? 'text-orange-900' : 'text-amber-900'}`}>{formatCurrency(commissionValue)}</p>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -559,21 +554,34 @@ export default function Quotes() {
               </div>
 
               <div>
-                <p className="text-xs text-slate-500 mb-2">Itens</p>
-                <div className="space-y-2">
-                  {viewingQuote.items?.map((item, i) => (
-                    <div key={i} className="bg-slate-50 rounded-lg p-3 flex justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{item.product_name}</p>
-                        <p className="text-xs text-slate-500">
-                          {item.quantity} {item.unit} x {formatCurrency(item.unit_price)}
-                        </p>
-                      </div>
-                      <p className="font-semibold">{formatCurrency(item.total_price)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                 <p className="text-xs text-slate-500 mb-2">Itens</p>
+                 <div className="space-y-2">
+                   {viewingQuote.items?.map((item, i) => {
+                     const product = principals.find(p => p.id === viewingQuote.principal_id)?.name;
+                     const itemCost = (item.cost_per_kg || 0) * (item.total_weight || item.quantity || 0);
+                     const itemMargin = itemCost > 0 ? ((item.item_total - itemCost) / itemCost) * 100 : 0;
+
+                     return (
+                       <div key={i} className="bg-slate-50 rounded-lg p-3">
+                         <div className="flex justify-between mb-2">
+                           <div>
+                             <p className="font-medium text-sm">{item.product_name}</p>
+                             <p className="text-xs text-slate-500">
+                               {item.unit === 'na' ? 'UN' : item.unit.toUpperCase()} • {item.quantity} {item.unit === 'na' ? 'un' : item.unit === 'mt' ? 'mt' : 'kg'}
+                             </p>
+                           </div>
+                           <p className="font-semibold">{formatCurrency(item.item_total)}</p>
+                         </div>
+                         {item.cost_per_kg > 0 && (
+                           <div className="text-xs text-slate-600 border-t pt-1">
+                             Margem: {itemMargin.toFixed(1)}%
+                           </div>
+                         )}
+                       </div>
+                     );
+                   })}
+                 </div>
+               </div>
 
               <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">

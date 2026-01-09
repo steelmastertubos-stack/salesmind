@@ -436,6 +436,7 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                             <SelectItem value="kg">KG</SelectItem>
                             <SelectItem value="mt">MT</SelectItem>
                             <SelectItem value="pc">PÇ</SelectItem>
+                            <SelectItem value="na">N/A</SelectItem>
                           </SelectContent>
                         </Select>
                       </td>
@@ -457,7 +458,7 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                         )}
                       </td>
                       <td className="p-2">
-                        {item.unit === 'pc' ? (
+                        {item.unit === 'pc' || item.unit === 'na' ? (
                           <Input
                             type="number"
                             min="0"
