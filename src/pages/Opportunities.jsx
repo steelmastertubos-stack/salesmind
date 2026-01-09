@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   Target, 
   TrendingUp, 
@@ -14,25 +15,30 @@ import {
   AlertTriangle,
   Calendar,
   DollarSign,
-  Weight
+  Weight,
+  Send
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import OpportunityCard from '@/components/opportunities/OpportunityCard';
 import OpportunityDetail from '@/components/opportunities/OpportunityDetail';
 
 export default function Opportunities() {
-  const [selectedStage, setSelectedStage] = useState('all');
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: opportunities = [], isLoading } = useQuery({
     queryKey: ['opportunities'],
-    queryFn: () => base44.entities.Opportunity.list('-created_date', 500)
+    queryFn: () => base44.entities.Opportunity.list('-priority_score', 500)
+  });
+
+  const updateStageMutation = useMutation({
+    mutationFn: ({ id, newStage }) => base44.entities.Opportunity.update(id, { stage: newStage }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['opportunities']);
+      toast.success('Estágio atualizado!');
+    }
   });
 
   // Update days without contact
@@ -50,16 +56,21 @@ export default function Opportunities() {
     });
   }, [opportunities]);
 
-  const stages = {
-    proposta_enviada: { label: 'Proposta Enviada', icon: Target, color: 'bg-blue-500' },
-    em_negociacao: { label: 'Em Negociação', icon: TrendingUp, color: 'bg-yellow-500' },
-    ganho: { label: 'Ganho', icon: CheckCircle2, color: 'bg-green-500' },
-    perdido: { label: 'Perdido', icon: XCircle, color: 'bg-red-500' }
-  };
+  const stages = [
+    { id: 'proposta_enviada', label: 'Proposta Enviada', icon: Send, color: 'bg-blue-500', textColor: 'text-blue-600' },
+    { id: 'em_negociacao', label: 'Em Negociação', icon: TrendingUp, color: 'bg-yellow-500', textColor: 'text-yellow-600' },
+    { id: 'ganho', label: 'Ganho', icon: CheckCircle2, color: 'bg-green-500', textColor: 'text-green-600' },
+    { id: 'perdido', label: 'Perdido', icon: XCircle, color: 'bg-red-500', textColor: 'text-red-600' }
+  ];
 
-  const filteredOpportunities = selectedStage === 'all' 
-    ? opportunities 
-    : opportunities.filter(opp => opp.stage === selectedStage);
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const { draggableId, destination } = result;
+    const newStage = destination.droppableId;
+    
+    updateStageMutation.mutate({ id: draggableId, newStage });
+  };
 
   // Priority opportunities (high score, overdue follow-ups)
   const priorityOpportunities = opportunities.filter(opp => {
@@ -100,7 +111,7 @@ export default function Opportunities() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-6">
       <PageHeader 
         title="Oportunidades" 
         subtitle="Funil de vendas e acompanhamento comercial"
@@ -108,7 +119,7 @@ export default function Opportunities() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Total Ativo</CardTitle>
           </CardHeader>
@@ -118,62 +129,32 @@ export default function Opportunities() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              Proposta Enviada
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.proposta_enviada}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-600 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Em Negociação
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.em_negociacao}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-600 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Ganho
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.ganho}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
-              <XCircle className="w-4 h-4" />
-              Perdido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.perdido}</div>
-          </CardContent>
-        </Card>
+        {stages.map(stage => {
+          const Icon = stage.icon;
+          const count = stats[stage.id];
+          return (
+            <Card key={stage.id} className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className={`text-sm font-medium ${stage.textColor} flex items-center gap-2`}>
+                  <Icon className="w-4 h-4" />
+                  {stage.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{count}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Priority Alerts */}
       {priorityOpportunities.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-orange-800 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              🎯 Oportunidades Prioritárias para Contato Hoje ({priorityOpportunities.length})
+              🎯 Oportunidades Prioritárias ({priorityOpportunities.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -198,44 +179,109 @@ export default function Opportunities() {
         </Card>
       )}
 
-      {/* Filter Tabs */}
-      <Tabs value={selectedStage} onValueChange={setSelectedStage}>
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="all">Todas ({opportunities.length})</TabsTrigger>
-          <TabsTrigger value="proposta_enviada">
-            Proposta Enviada ({stats.proposta_enviada})
-          </TabsTrigger>
-          <TabsTrigger value="em_negociacao">
-            Em Negociação ({stats.em_negociacao})
-          </TabsTrigger>
-          <TabsTrigger value="ganho">
-            Ganho ({stats.ganho})
-          </TabsTrigger>
-          <TabsTrigger value="perdido">
-            Perdido ({stats.perdido})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {/* Opportunities Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredOpportunities.map(opp => (
-          <OpportunityCard 
-            key={opp.id}
-            opportunity={opp}
-            onClick={() => setSelectedOpportunity(opp)}
-          />
-        ))}
-      </div>
-
-      {filteredOpportunities.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Target className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500">Nenhuma oportunidade neste estágio</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Kanban Board */}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {stages.map(stage => {
+            const Icon = stage.icon;
+            const stageOpportunities = opportunities.filter(opp => opp.stage === stage.id);
+            const stageValue = stageOpportunities.reduce((sum, opp) => sum + (opp.total_value || 0), 0);
+            
+            return (
+              <div key={stage.id} className="flex flex-col">
+                <div className={`${stage.color} text-white rounded-t-xl p-3`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-5 h-5" />
+                      <h3 className="font-semibold">{stage.label}</h3>
+                    </div>
+                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                      {stageOpportunities.length}
+                    </Badge>
+                  </div>
+                  <p className="text-xs opacity-90">{formatCurrency(stageValue)}</p>
+                </div>
+                
+                <Droppable droppableId={stage.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`flex-1 bg-slate-50 rounded-b-xl p-3 space-y-3 min-h-[300px] border-2 border-t-0 transition-colors ${
+                        snapshot.isDraggingOver ? 'border-blue-400 bg-blue-50' : 'border-slate-200'
+                      }`}
+                    >
+                      {stageOpportunities.map((opp, index) => (
+                        <Draggable key={opp.id} draggableId={opp.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`bg-white rounded-lg p-3 border border-slate-200 shadow-sm cursor-pointer hover:shadow-md transition-all ${
+                                snapshot.isDragging ? 'shadow-xl rotate-2' : ''
+                              }`}
+                              onClick={() => setSelectedOpportunity(opp)}
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-semibold text-sm text-slate-900 flex-1 line-clamp-1">
+                                  {opp.client_name}
+                                </h4>
+                                {opp.priority_score >= 70 && (
+                                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                                    {opp.priority_score}
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              <p className="text-xs text-slate-500 mb-2 line-clamp-1">{opp.principal_name}</p>
+                              
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-emerald-600">
+                                  {formatCurrency(opp.total_value)}
+                                </span>
+                                {opp.total_weight > 0 && (
+                                  <span className="text-slate-500 flex items-center gap-1">
+                                    <Weight className="w-3 h-3" />
+                                    {opp.total_weight.toFixed(0)}kg
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {opp.next_action_date && (
+                                <div className="flex items-center gap-1 mt-2 pt-2 border-t border-slate-100">
+                                  <Calendar className="w-3 h-3 text-slate-400" />
+                                  <span className="text-[10px] text-slate-500">
+                                    {new Date(opp.next_action_date).toLocaleDateString('pt-BR')}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {opp.days_without_contact >= 5 && (
+                                <Badge variant="outline" className="mt-2 text-[10px] border-orange-300 text-orange-600">
+                                  {opp.days_without_contact} dias sem contato
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                      
+                      {stageOpportunities.length === 0 && (
+                        <div className="text-center py-8 text-slate-400">
+                          <Icon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-xs">Nenhuma oportunidade</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
+      </DragDropContext>
 
       {/* Opportunity Detail Dialog */}
       {selectedOpportunity && (
