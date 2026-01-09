@@ -258,6 +258,9 @@ export default function Quotes() {
   };
 
   const getVTKCommissionRate = (margin) => {
+    // Arredondar margem para até 2 casas decimais para comparação
+    const roundedMargin = Math.round(margin * 100) / 100;
+    
     const vtkTable = [
       { minMargin: 15, maxMargin: 19.99, rate: 0.50 },
       { minMargin: 20, maxMargin: 20, rate: 0.60 },
@@ -295,7 +298,7 @@ export default function Quotes() {
       { minMargin: 65, maxMargin: Infinity, rate: 5.00 }
     ];
 
-    const bracket = vtkTable.find(b => margin >= b.minMargin && margin <= b.maxMargin);
+    const bracket = vtkTable.find(b => roundedMargin >= b.minMargin && roundedMargin <= b.maxMargin);
     return bracket?.rate || 0;
   };
 
