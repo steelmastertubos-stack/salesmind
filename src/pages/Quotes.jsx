@@ -47,6 +47,7 @@ import { toast } from 'sonner';
 import ConvertQuoteDialog from '@/components/orders/ConvertQuoteDialog';
 import QuotePrintView from '@/components/quotes/QuotePrintView';
 import QuotePDFExport from '@/components/quotes/QuotePDFExport';
+import { createOpportunityFromQuote } from '@/components/utils/opportunityHelpers';
 
 export default function Quotes() {
   const [search, setSearch] = useState('');
@@ -80,6 +81,11 @@ export default function Quotes() {
     queryFn: () => base44.entities.Representative.list('-created_date', 1)
   });
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => base44.entities.Client.list('company_name', 500)
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const quoteNumber = `ORC-${Date.now().toString().slice(-6)}`;
@@ -93,12 +99,32 @@ export default function Quotes() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Quote.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const updated = await base44.entities.Quote.update(id, data);
+      
+      // AUTOMAÇÃO: Criar oportunidade se status mudou para emitido/enviado
+      if ((data.status === 'emitido' || data.status === 'enviado') && !data.is_locked) {
+        const quote = quotes.find(q => q.id === id);
+        const client = clients.find(c => c.id === quote?.client_id);
+        
+        if (quote) {
+          try {
+            await createOpportunityFromQuote({ ...quote, ...data }, client);
+            await base44.entities.Quote.update(id, { is_locked: true });
+            toast.success('Orçamento atualizado e oportunidade criada automaticamente!');
+          } catch (error) {
+            console.error('Error creating opportunity:', error);
+          }
+        }
+      }
+      
+      return updated;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
       setShowForm(false);
       setEditingQuote(null);
-      toast.success('Orçamento atualizado com sucesso!');
     }
   });
 
@@ -187,18 +213,21 @@ export default function Quotes() {
 
   const getStatusConfig = (status) => {
     switch (status) {
+      case 'rascunho':
+        return { color: 'bg-slate-100 text-slate-700', label: 'Rascunho' };
+      case 'emitido':
+        return { color: 'bg-blue-100 text-blue-700', label: 'Emitido' };
+      case 'enviado':
+        return { color: 'bg-indigo-100 text-indigo-700', label: 'Enviado' };
+      case 'convertido':
+        return { color: 'bg-green-100 text-green-700', label: 'Convertido' };
+      case 'cancelado':
+        return { color: 'bg-red-100 text-red-700', label: 'Cancelado' };
+      // Fallback para status antigos
       case 'draft':
         return { color: 'bg-slate-100 text-slate-700', label: 'Rascunho' };
       case 'sent':
         return { color: 'bg-blue-100 text-blue-700', label: 'Enviado' };
-      case 'negotiating':
-        return { color: 'bg-amber-100 text-amber-700', label: 'Em Negociação' };
-      case 'approved':
-        return { color: 'bg-emerald-100 text-emerald-700', label: 'Aprovado' };
-      case 'lost':
-        return { color: 'bg-red-100 text-red-700', label: 'Perdido' };
-      case 'converted':
-        return { color: 'bg-purple-100 text-purple-700', label: 'Convertido' };
       default:
         return { color: 'bg-slate-100 text-slate-700', label: status };
     }
@@ -234,12 +263,11 @@ export default function Quotes() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="draft">Rascunho</SelectItem>
-            <SelectItem value="sent">Enviado</SelectItem>
-            <SelectItem value="negotiating">Em Negociação</SelectItem>
-            <SelectItem value="approved">Aprovado</SelectItem>
-            <SelectItem value="lost">Perdido</SelectItem>
-            <SelectItem value="converted">Convertido</SelectItem>
+            <SelectItem value="rascunho">Rascunho</SelectItem>
+            <SelectItem value="emitido">Emitido</SelectItem>
+            <SelectItem value="enviado">Enviado</SelectItem>
+            <SelectItem value="convertido">Convertido</SelectItem>
+            <SelectItem value="cancelado">Cancelado</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -300,40 +328,38 @@ export default function Quotes() {
                             <FileText className="w-4 h-4 mr-2" />
                             Imprimir Formato
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setEditingQuote(quote);
-                            setShowForm(true);
-                          }}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {quote.status === 'draft' && (
-                            <DropdownMenuItem onClick={() => handleStatusChange(quote, 'sent')}>
-                              <Send className="w-4 h-4 mr-2" />
-                              Marcar como Enviado
+                          {!quote.is_locked && (
+                            <DropdownMenuItem onClick={() => {
+                              setEditingQuote(quote);
+                              setShowForm(true);
+                            }}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
                             </DropdownMenuItem>
                           )}
-                          {(quote.status === 'sent' || quote.status === 'negotiating') && (
+                          {quote.is_locked && (
+                            <DropdownMenuItem disabled>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Travado (Oportunidade criada)
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          {quote.status === 'rascunho' && (
                             <>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'negotiating')}>
-                                <MessageCircle className="w-4 h-4 mr-2" />
-                                Em Negociação
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'approved')}>
+                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'emitido')}>
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Marcar como Aprovado
+                                Emitir Orçamento
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'lost')}>
-                                <XCircle className="w-4 h-4 mr-2" />
-                                Marcar como Perdido
+                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')}>
+                                <Send className="w-4 h-4 mr-2" />
+                                Enviar ao Cliente
                               </DropdownMenuItem>
                             </>
                           )}
-                          {quote.status === 'approved' && (
-                            <DropdownMenuItem onClick={() => setConvertingQuote(quote)}>
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              Converter em Pedido
+                          {quote.status === 'emitido' && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')}>
+                              <Send className="w-4 h-4 mr-2" />
+                              Enviar ao Cliente
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />

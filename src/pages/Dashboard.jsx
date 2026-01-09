@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import IntegratedAlerts from '@/components/dashboard/IntegratedAlerts';
 import { 
   Users, 
   FileText, 
