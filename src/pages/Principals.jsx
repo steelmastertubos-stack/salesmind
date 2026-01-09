@@ -416,12 +416,14 @@ export default function Principals() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>E-mail</Label>
+                <Label>E-mail(s)</Label>
                 <Input
-                  type="email"
+                  type="text"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@exemplo.com; outro@exemplo.com"
                 />
+                <p className="text-xs text-slate-500">Separe múltiplos emails com ponto e vírgula (;)</p>
               </div>
             </div>
 
