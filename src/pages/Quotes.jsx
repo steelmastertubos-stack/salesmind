@@ -47,7 +47,9 @@ import { toast } from 'sonner';
 import ConvertQuoteDialog from '@/components/orders/ConvertQuoteDialog';
 import QuotePrintView from '@/components/quotes/QuotePrintView';
 import QuotePDFExport from '@/components/quotes/QuotePDFExport';
+import SendQuoteDialog from '@/components/quotes/SendQuoteDialog';
 import { createOpportunityFromQuote } from '@/components/utils/opportunityHelpers';
+import { jsPDF } from 'jspdf';
 
 export default function Quotes() {
   const [search, setSearch] = useState('');
@@ -59,6 +61,7 @@ export default function Quotes() {
   const [clientIdFromUrl, setClientIdFromUrl] = useState(null);
   const [convertingQuote, setConvertingQuote] = useState(null);
   const [printingQuote, setPrintingQuote] = useState(null);
+  const [sendingQuote, setSendingQuote] = useState(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -160,14 +163,44 @@ export default function Quotes() {
     }
   };
 
-  const handleStatusChange = (quote, newStatus) => {
+  const handleStatusChange = async (quote, newStatus) => {
     const updateData = { status: newStatus };
-    if (newStatus === 'sent') {
+    
+    if (newStatus === 'emitido') {
+      // Gerar PDF automaticamente
+      toast.info('Gerando PDF...');
+      // Aguardar um pouco para garantir que o toast apareça
+      setTimeout(() => {
+        generateQuotePDF(quote);
+      }, 300);
+    } else if (newStatus === 'enviado') {
+      // Abrir modal de envio
+      setSendingQuote(quote);
       updateData.sent_date = new Date().toISOString().split('T')[0];
-    } else if (newStatus === 'approved') {
-      updateData.approved_date = new Date().toISOString().split('T')[0];
     }
+    
     updateMutation.mutate({ id: quote.id, data: updateData });
+  };
+
+  const generateQuotePDF = (quote) => {
+    try {
+      const doc = new jsPDF();
+      const rep = representative[0];
+      
+      // Simplified PDF generation
+      doc.setFontSize(16);
+      doc.text(`Orçamento ${quote.quote_number}`, 20, 20);
+      doc.setFontSize(10);
+      doc.text(`Cliente: ${quote.client_name}`, 20, 35);
+      doc.text(`Representado: ${quote.principal_name}`, 20, 42);
+      doc.text(`Valor Total: ${formatCurrency(quote.total_value)}`, 20, 49);
+      
+      doc.save(`Orcamento_${quote.quote_number}.pdf`);
+      toast.success('PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Erro ao gerar PDF');
+    }
   };
 
   const convertToOrderMutation = useMutation({
@@ -528,6 +561,16 @@ export default function Quotes() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Send Quote Dialog */}
+      {sendingQuote && (
+        <SendQuoteDialog
+          quote={sendingQuote}
+          client={clients.find(c => c.id === sendingQuote.client_id)}
+          representative={representative[0]}
+          onClose={() => setSendingQuote(null)}
+        />
+      )}
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
