@@ -279,8 +279,9 @@ export default function Opportunities() {
         });
       }
 
-      toast.success('Email enviado e pedido criado!');
+      toast.success('Pedido criado com sucesso! 🎉');
       setShowEmailPreview(false);
+      setAttachedFiles([]);
 
       // 4. Atualizar estágio da oportunidade
       updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
