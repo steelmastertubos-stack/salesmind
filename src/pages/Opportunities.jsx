@@ -645,19 +645,21 @@ export default function Opportunities() {
                   Cancelar
                 </Button>
                 <Button
-                  variant="outline"
-                  onClick={handleSendLater}
-                  className="flex-1"
+                  onClick={() => {
+                    const mailtoLink = `mailto:${emailPreview.principalEmail}?subject=${encodeURIComponent(emailPreview.subject)}&body=${encodeURIComponent(editableEmailBody)}`;
+                    window.location.href = mailtoLink;
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
-                  <Clock className="w-4 h-4 mr-2" />
-                  Enviar Depois
+                  <Mail className="w-4 h-4 mr-2" />
+                  Enviar Agora
                 </Button>
                 <Button
                   onClick={confirmSendEmail}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Criar Pedido e Comissão
+                  Criar Pedido
                 </Button>
               </div>
             </div>
