@@ -40,12 +40,14 @@ import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import VTKCommissionConfig from '@/components/vtk/VTKCommissionConfig';
 
 export default function Principals() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingPrincipal, setEditingPrincipal] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showVTKConfig, setShowVTKConfig] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -111,6 +113,7 @@ export default function Principals() {
       queryClient.invalidateQueries({ queryKey: ['principals'] });
       setShowForm(false);
       setEditingPrincipal(null);
+      setShowVTKConfig(null);
       resetForm();
       toast.success('Representado atualizado com sucesso!');
     }
@@ -267,6 +270,10 @@ export default function Principals() {
                       <DropdownMenuItem onClick={() => handleEdit(principal)}>
                         <Edit className="w-4 h-4 mr-2" />
                         Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowVTKConfig(principal)}>
+                        <Package className="w-4 h-4 mr-2" />
+                        Config VTK
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="text-red-600"
@@ -515,6 +522,28 @@ export default function Principals() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* VTK Config Dialog */}
+      <Dialog open={!!showVTKConfig} onOpenChange={() => setShowVTKConfig(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Configuração VTK - {showVTKConfig?.trade_name || showVTKConfig?.company_name}
+            </DialogTitle>
+          </DialogHeader>
+          {showVTKConfig && (
+            <VTKCommissionConfig
+              principal={showVTKConfig}
+              onSave={(vtkData) => {
+                updateMutation.mutate({
+                  id: showVTKConfig.id,
+                  data: vtkData
+                });
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
