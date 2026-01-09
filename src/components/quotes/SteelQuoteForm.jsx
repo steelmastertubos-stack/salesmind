@@ -396,6 +396,7 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                     <th className="text-center p-2 font-medium">ICMS</th>
                     <th className="text-center p-2 font-medium">IPI</th>
                     <th className="text-right p-2 font-medium">Total</th>
+                    <th className="text-center p-2 font-medium">Prazo</th>
                     <th className="p-2"></th>
                   </tr>
                 </thead>
@@ -476,6 +477,17 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                       </td>
                       <td className="p-2 text-right font-bold text-emerald-600">
                         {formatCurrency(item.item_total)}
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={item.delivery_days}
+                          onChange={(e) => updateItem(index, 'delivery_days', parseInt(e.target.value) || 0)}
+                          className="w-16 h-8 text-center"
+                          placeholder="0"
+                        />
                       </td>
                       <td className="p-2">
                         <Button

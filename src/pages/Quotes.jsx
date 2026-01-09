@@ -117,20 +117,21 @@ export default function Quotes() {
       const updated = await base44.entities.Quote.update(id, data);
       
       // AUTOMAÇÃO: Criar oportunidade se status mudou para emitido/enviado
-      if ((data.status === 'emitido' || data.status === 'enviado') && !data.is_locked) {
-        const quote = quotes.find(q => q.id === id);
-        const client = clients.find(c => c.id === quote?.client_id);
-        
-        if (quote) {
-          try {
-            await createOpportunityFromQuote({ ...quote, ...data }, client);
-            await base44.entities.Quote.update(id, { is_locked: true });
-            toast.success('Orçamento atualizado e oportunidade criada automaticamente!');
-          } catch (error) {
-            console.error('Error creating opportunity:', error);
-          }
-        }
-      }
+            if ((data.status === 'emitido' || data.status === 'enviado')) {
+              const quote = quotes.find(q => q.id === id);
+              const client = clients.find(c => c.id === quote?.client_id);
+
+              if (quote && !quote.is_locked) {
+                try {
+                  await createOpportunityFromQuote({ ...quote, ...data }, client);
+                  await base44.entities.Quote.update(id, { is_locked: true });
+                  toast.success('Orçamento atualizado e oportunidade criada automaticamente!');
+                } catch (error) {
+                  console.error('Error creating opportunity:', error);
+                  toast.error('Erro ao criar oportunidade');
+                }
+              }
+            }
       
       return updated;
     },
