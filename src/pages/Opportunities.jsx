@@ -243,20 +243,24 @@ export default function Opportunities() {
 
          // 3. Criar comissão automaticamente
          if (principal && order) {
-           await base44.entities.Commission.create({
-           order_id: order.id,
-           order_number: order.order_number,
-           principal_id: principal.id,
-           principal_name: principal.trade_name || principal.company_name,
-           client_id: opportunity.client_id,
-           client_name: opportunity.client_name,
-           invoice_value: quote.total_value || 0,
-           commission_rate: commissionRate,
-           commission_value: expectedCommission,
-           status: 'prevista',
-           notes: 'Comissão gerada automaticamente ao criar pedido'
-           });
-           queryClient.invalidateQueries({ queryKey: ['commissions'] });
+           try {
+             await base44.entities.Commission.create({
+               order_id: order.id,
+               order_number: order.order_number,
+               principal_id: principal.id,
+               principal_name: principal.trade_name || principal.company_name,
+               client_id: opportunity.client_id,
+               client_name: opportunity.client_name,
+               invoice_value: quote.total_value || 0,
+               commission_rate: commissionRate,
+               commission_value: expectedCommission,
+               status: 'prevista',
+               notes: 'Comissão gerada automaticamente ao criar pedido'
+             });
+             queryClient.invalidateQueries({ queryKey: ['commissions'] });
+           } catch (commError) {
+             console.error('Erro ao criar comissão:', commError);
+           }
          }
 
         // 3. Atualizar orçamento para convertido
