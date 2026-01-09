@@ -48,6 +48,11 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Order.list('-created_date', 100)
   });
 
+  const { data: commissions = [] } = useQuery({
+    queryKey: ['commissions'],
+    queryFn: () => base44.entities.Commission.list('-created_date', 500)
+  });
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me()
@@ -92,9 +97,9 @@ export default function Dashboard() {
   const pendingQuotes = quotes.filter(q => ['draft', 'sent', 'negotiating'].includes(q.status));
   const pendingQuotesValue = pendingQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
 
-  const pendingCommission = orders
-    .filter(o => o.commission_status === 'pending' || o.commission_status === 'invoiced')
-    .reduce((sum, o) => sum + (o.expected_commission || 0), 0);
+  const pendingCommission = commissions
+    .filter(c => ['pending', 'prevista', 'invoiced', 'faturada'].includes(c.status))
+    .reduce((sum, c) => sum + (c.commission_value || 0), 0);
 
   const blockedCommission = orders
     .filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status))
