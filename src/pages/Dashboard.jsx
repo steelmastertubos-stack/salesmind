@@ -98,7 +98,7 @@ export default function Dashboard() {
   const pendingQuotesValue = pendingQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
 
   const pendingCommission = commissions
-    .filter(c => ['pending', 'prevista', 'invoiced', 'faturada'].includes(c.status))
+    .filter(c => ['prevista', 'faturada'].includes(c.status))
     .reduce((sum, c) => sum + (c.commission_value || 0), 0);
 
   const blockedCommission = orders

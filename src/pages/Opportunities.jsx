@@ -253,7 +253,7 @@ export default function Opportunities() {
            invoice_value: quote.total_value || 0,
            commission_rate: commissionRate,
            commission_value: expectedCommission,
-           status: 'pending',
+           status: 'prevista',
            notes: 'Comissão gerada automaticamente ao criar pedido'
            });
            queryClient.invalidateQueries({ queryKey: ['commissions'] });
@@ -745,7 +745,7 @@ export default function Opportunities() {
                                    invoice_value: quote.total_value || 0,
                                    commission_rate: commissionRate,
                                    commission_value: expectedCommission,
-                                   status: 'pending'
+                                   status: 'prevista'
                                  });
                                  queryClient.invalidateQueries({ queryKey: ['commissions'] });
                                }
