@@ -119,19 +119,61 @@ export default function Opportunities() {
 
   const confirmSendEmail = async () => {
     try {
+      const opportunity = opportunities.find(o => o.id === emailPreview.opportunityId);
+      
+      // 1. Enviar email ao representado
       await base44.integrations.Core.SendEmail({
         to: emailPreview.principalEmail,
         subject: emailPreview.subject,
         body: editableEmailBody
       });
 
-      toast.success('Email enviado ao representado!');
+      // 2. Criar pedido automaticamente
+      const quote = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]);
+      
+      if (quote) {
+        const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
+        await base44.entities.Order.create({
+          order_number: orderNumber,
+          quote_id: quote.id,
+          client_id: opportunity.client_id,
+          client_name: opportunity.client_name,
+          principal_id: opportunity.principal_id,
+          principal_name: opportunity.principal_name,
+          items: quote.items,
+          total_value: quote.total_value,
+          total_weight: opportunity.total_weight,
+          total_icms: quote.total_icms,
+          total_ipi: quote.total_ipi,
+          payment_terms: quote.payment_terms,
+          notes: quote.notes,
+          status: 'em_analise',
+          commission_rate: 5,
+          expected_commission: (quote.total_value || 0) * 0.05,
+          status_history: [{
+            status: 'em_analise',
+            date: new Date().toISOString(),
+            notes: 'Pedido criado automaticamente ao ganhar oportunidade'
+          }]
+        });
+
+        // 3. Atualizar orçamento para convertido
+        await base44.entities.Quote.update(quote.id, {
+          status: 'convertido',
+          approved_date: new Date().toISOString().split('T')[0]
+        });
+      }
+
+      toast.success('Email enviado e pedido criado!');
       setShowEmailPreview(false);
       
+      // 4. Atualizar estágio da oportunidade
       updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['quotes']);
     } catch (error) {
-      console.error('Erro ao enviar email:', error);
-      toast.error('Erro ao enviar email ao representado');
+      console.error('Erro:', error);
+      toast.error('Erro ao processar');
     }
   };
 

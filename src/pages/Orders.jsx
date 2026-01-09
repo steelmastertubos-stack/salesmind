@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 export default function Orders() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
   const [viewingOrder, setViewingOrder] = useState(null);
   const [invoiceDialog, setInvoiceDialog] = useState(null);
   const [invoiceData, setInvoiceData] = useState({ invoice_number: '', invoice_date: '', invoiced_value: '' });
@@ -83,7 +84,19 @@ export default function Orders() {
     
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    let matchesPeriod = true;
+    if (periodFilter === 'month') {
+      const orderDate = new Date(order.created_date);
+      const now = new Date();
+      matchesPeriod = orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+    } else if (periodFilter === 'week') {
+      const orderDate = new Date(order.created_date);
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      matchesPeriod = orderDate >= weekAgo;
+    }
+    
+    return matchesSearch && matchesStatus && matchesPeriod;
   });
 
   const formatCurrency = (value) => {
@@ -158,7 +171,15 @@ export default function Orders() {
       <PageHeader 
         title="Pedidos" 
         subtitle={`${orders.length} pedidos`}
-      />
+      >
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.href = '/Reports'}
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Ver Relatórios
+        </Button>
+      </PageHeader>
 
       {/* Commission Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -191,6 +212,16 @@ export default function Orders() {
             className="pl-10"
           />
         </div>
+        <Select value={periodFilter} onValueChange={setPeriodFilter}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="week">Esta Semana</SelectItem>
+            <SelectItem value="month">Este Mês</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
