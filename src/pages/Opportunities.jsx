@@ -129,49 +129,43 @@ export default function Opportunities() {
     const newStage = destination.droppableId;
     const opportunity = opportunities.find(o => o.id === draggableId);
 
-    // Se mudou para GANHO, criar pedido/comissão e mostrar preview do email
-    if (newStage === 'ganho' && opportunity?.stage !== 'ganho') {
-        console.log('🎯 Movendo para GANHO - criar pedido e comissão automaticamente');
-        try {
-          const [quote, principal] = await Promise.all([
-            base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]),
-            base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0])
-          ]);
+    if (!opportunity) return;
 
-          if (!quote || !principal) {
-            toast.error('Não foi possível encontrar orçamento ou representado');
-            return;
-          }
+    // Se mudou para GANHO, mostrar modal de email
+    if (newStage === 'ganho' && opportunity.stage !== 'ganho') {
+      const quote = opportunities.find(o => o.id === draggableId);
+      const principal = opportunities.find(o => o.id === draggableId);
+      
+      try {
+        const quoteData = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r?.[0]);
+        const principalData = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r?.[0]);
 
-          // AUTOMAÇÃO: Criar Order + Commission
-          const automationResult = await automateOpportunityToOrderAndCommission(opportunity, quote, principal);
+        console.log('📧 Abrindo modal de email - Quote:', quoteData, 'Principal:', principalData);
 
-          if (automationResult?.order && automationResult?.commission) {
-            toast.success('✅ Pedido e comissão criados automaticamente!');
+        // Preparar dados do email
+        const emailSubject = `🎯 Oportunidade Ganha: ${opportunity.client_name}`;
+        const emailBody = `Prezados,\n\nTemos o prazer de comunicar que a oportunidade com ${opportunity.client_name} foi ganha!\n\nDetalhes:\n- Valor: ${formatCurrency(opportunity.total_value)}\n- Peso: ${opportunity.total_weight}kg\n\nEm breve, nosso pedido será enviado para processamento.\n\nAtenciosamente`;
 
-            // Mostrar modal de preview do email para o representado
-            setEmailPreview({
-              subject: `🎯 Oportunidade Ganha: ${opportunity.client_name}`,
-              body: `Prezados,\n\nTemos o prazer de comunicar que a oportunidade com ${opportunity.client_name} foi ganha!\n\nDetalhes:\n- Valor: ${formatCurrency(opportunity.total_value)}\n- Peso: ${opportunity.total_weight}kg\n\nEm breve, nosso pedido será enviado para processamento.\n\nAtenciosamente`,
-              principalEmail: principal?.email || '',
-              opportunityId: draggableId,
-              newStage: 'ganho'
-            });
-            setEditableEmailBody(`Prezados,\n\nTemos o prazer de comunicar que a oportunidade com ${opportunity.client_name} foi ganha!\n\nDetalhes:\n- Valor: ${formatCurrency(opportunity.total_value)}\n- Peso: ${opportunity.total_weight}kg\n\nEm breve, nosso pedido será enviado para processamento.\n\nAtenciosamente`);
-            setShowEmailPreview(true);
+        // Mostrar modal
+        setEmailPreview({
+          subject: emailSubject,
+          body: emailBody,
+          principalEmail: principalData?.email || '',
+          opportunityId: draggableId,
+          newStage: 'ganho'
+        });
+        setEditableEmailBody(emailBody);
+        setShowEmailPreview(true);
 
-            // Atualizar estágio em segundo plano
-            updateStageMutation.mutate({ id: draggableId, newStage: 'ganho' });
-            queryClient.invalidateQueries({ queryKey: ['orders'] });
-            queryClient.invalidateQueries({ queryKey: ['commissions'] });
-            return;
-          }
-        } catch (error) {
-          console.error('Erro ao criar pedido/comissão:', error);
-          toast.error('Erro ao criar pedido/comissão automaticamente');
-        }
+        console.log('✅ Modal aberto com sucesso');
+      } catch (error) {
+        console.error('❌ Erro ao abrir modal:', error);
+        toast.error('Erro ao preparar email');
       }
+      return;
+    }
 
+    // Transições normais
     updateStageMutation.mutate({ id: draggableId, newStage });
   };
 
