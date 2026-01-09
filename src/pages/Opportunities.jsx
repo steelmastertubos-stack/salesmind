@@ -692,8 +692,9 @@ export default function Opportunities() {
 
                             await base44.entities.PendingEmail.update(email.id, { status: 'sent' });
                             toast.success('Email enviado e pedido criado!');
-                            queryClient.invalidateQueries(['pendingEmails']);
-                            queryClient.invalidateQueries(['orders']);
+                            queryClient.invalidateQueries({ queryKey: ['pendingEmails'] });
+                            queryClient.invalidateQueries({ queryKey: ['orders'] });
+                            queryClient.invalidateQueries({ queryKey: ['commissions'] });
                           } catch (error) {
                             toast.error('Erro ao enviar email');
                           }
