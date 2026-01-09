@@ -97,11 +97,13 @@ export default function ClientImportForm({ onSuccess }) {
   const validateRow = (row, index) => {
     const rowErrors = [];
     
-    if (!row.company_name?.trim()) rowErrors.push(`Linha ${index + 2}: Razão social obrigatória`);
+    if (!row.company_name?.trim()) rowErrors.push(`Linha ${index + 2}: company_name obrigatório`);
     if (!row.cnpj?.trim()) rowErrors.push(`Linha ${index + 2}: CNPJ obrigatório`);
     if (row.cnpj && !/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(row.cnpj)) {
-      rowErrors.push(`Linha ${index + 2}: CNPJ em formato inválido (use XX.XXX.XXX/XXXX-XX)`);
+      rowErrors.push(`Linha ${index + 2}: CNPJ em formato inválido (XX.XXX.XXX/XXXX-XX)`);
     }
+    if (!row.email?.trim()) rowErrors.push(`Linha ${index + 2}: email obrigatório`);
+    if (!row.phone?.trim()) rowErrors.push(`Linha ${index + 2}: phone obrigatório`);
     
     return rowErrors;
   };
