@@ -81,9 +81,38 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const toggleApplication = (app) => {
+    setFormData(prev => {
+      const apps = prev.main_applications || [];
+      if (apps.includes(app)) {
+        return { ...prev, main_applications: apps.filter(a => a !== app) };
+      } else {
+        return { ...prev, main_applications: [...apps, app] };
+      }
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Validação: Segmento é obrigatório
+    const newErrors = {};
+    if (!formData.segment) {
+      newErrors.segment = 'Segmento de Atuação é obrigatório';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    // Adicionar código do segmento automaticamente
+    const dataToSave = {
+      ...formData,
+      segment_code: getSegmentCode(formData.segment)
+    };
+    
+    onSave(dataToSave);
   };
 
   return (
