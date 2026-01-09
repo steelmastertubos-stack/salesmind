@@ -157,6 +157,17 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       newItem.total_weight = newItem.quantity * newItem.weight_per_meter;
     }
 
+    // Try to find VTK cost
+    const vtkCost = vtkCosts.find(v => 
+      v.bitola === product.code && v.is_active
+    );
+    
+    if (vtkCost) {
+      newItem.vtk_cost = vtkCost.cost_per_unit;
+      newItem.vtk_aba = vtkCost.aba_name;
+      newItem.vtk_cost_id = vtkCost.id;
+    }
+
     if (newItem.total_weight > 0) {
       try {
         const calculated = calculateItemTotals(newItem);
