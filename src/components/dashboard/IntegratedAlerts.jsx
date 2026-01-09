@@ -164,11 +164,15 @@ export default function IntegratedAlerts() {
                   <p className="text-xs opacity-80">{alert.description}</p>
                 </div>
               </div>
-              <Link to={alert.link}>
-                <Button size="sm" variant="outline" className="text-xs">
-                  {alert.action}
-                </Button>
-              </Link>
+              {alert.hasMenu ? (
+                <PurchaseCycleActionMenu client={alert.client} />
+              ) : (
+                <Link to={alert.link}>
+                  <Button size="sm" variant="outline" className="text-xs">
+                    {alert.action}
+                  </Button>
+                </Link>
+              )}
             </div>
           );
         })}
