@@ -37,7 +37,7 @@ export default function SendQuoteDialog({ quote, client, representative, onClose
 
 Te enviei o orçamento ${quote.quote_number}, no valor total de R$ ${value}, conforme combinamos.
 
-Material será fornecido pela ${quote.principal_name || 'nossa representada'}, referência no mercado.
+Material será fornecido pela *${quote.principal_name || 'nossa representada'}*, referência no mercado.
 
 O PDF vai anexado pra você conferir os detalhes.
 
@@ -49,7 +49,7 @@ Qualquer dúvida ou se quiser ajustar algo, me chama por aqui 👍`;
 
 Conforme alinhado, segue em anexo o orçamento ${quote.quote_number}, no valor de R$ ${value}, com as condições comerciais para sua análise.
 
-Material será fornecido pela ${quote.principal_name || 'nossa representada'}, referência no mercado.
+Material será fornecido pela <strong>${quote.principal_name || 'nossa representada'}</strong>, referência no mercado.
 
 Caso queira ajustar algum ponto ou alinhar os próximos passos, você prefere que conversemos por e-mail ou posso te ligar rapidamente?
 
@@ -62,7 +62,7 @@ ${companyName}`;
 
 Segue em anexo o orçamento ${quote.quote_number}, preparado conforme sua solicitação e as condições alinhadas.
 
-Material será fornecido pela ${quote.principal_name || 'nossa representada'}, referência no mercado.
+Material será fornecido pela <strong>${quote.principal_name || 'nossa representada'}</strong>, referência no mercado.
 
 Quando puder analisar, consegue me confirmar se está tudo ok ou se prefere que a gente alinhe algum ponto antes de avançarmos?
 
