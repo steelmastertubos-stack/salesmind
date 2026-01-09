@@ -354,6 +354,8 @@ export default function Principals() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!editingPrincipal && <CNPJLookup onDataFetched={handleCNPJData} type="principal" />}
+
             <div className="space-y-2">
               <Label>Logo da Empresa</Label>
               <div className="flex items-center gap-4">
