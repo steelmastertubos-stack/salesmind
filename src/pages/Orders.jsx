@@ -30,6 +30,8 @@ import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function Orders() {
   const [search, setSearch] = useState('');
@@ -64,17 +66,41 @@ export default function Orders() {
     toast.success('Status da comissão atualizado!');
   };
 
-  const handleInvoiceSubmit = () => {
+  const handleInvoiceSubmit = async () => {
     if (invoiceDialog) {
-      updateMutation.mutate({
-        id: invoiceDialog.id,
-        data: {
-          invoice_number: invoiceData.invoice_number,
-          invoice_date: invoiceData.invoice_date,
-          invoiced_value: parseFloat(invoiceData.invoiced_value) || invoiceDialog.total_value,
-          status: 'faturado'
+      try {
+        // Atualizar Order
+        await updateMutation.mutateAsync({
+          id: invoiceDialog.id,
+          data: {
+            invoice_number: invoiceData.invoice_number,
+            invoice_date: invoiceData.invoice_date,
+            invoiced_value: parseFloat(invoiceData.invoiced_value) || invoiceDialog.total_value,
+            status: 'faturado'
+          }
+        });
+
+        // AUTO: Atualizar Commission para "a_receber"
+        const commission = await base44.entities.Commission.filter(
+          { order_id: invoiceDialog.id },
+          '',
+          1
+        ).then(r => r[0]);
+
+        if (commission) {
+          await base44.entities.Commission.update(commission.id, {
+            status: 'a_receber',
+            invoice_date: invoiceData.invoice_date,
+            invoice_value: parseFloat(invoiceData.invoiced_value) || invoiceDialog.total_value
+          });
+          toast.success('NF registrada! Comissão atualizada para A_RECEBER');
         }
-      });
+
+        queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      } catch (error) {
+        console.error('Erro:', error);
+        toast.error('Erro ao registrar NF');
+      }
     }
   };
 
