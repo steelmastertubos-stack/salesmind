@@ -50,7 +50,11 @@ IMPORTANTE: Busque dados reais e atualizados. Não invente informações.`,
             state: { type: "string", description: "Estado (UF)" },
             zip_code: { type: "string", description: "CEP" },
             segment: { type: "string", description: "Segmento de atuação" },
-            cnae: { type: "string", description: "CNAE principal" }
+            cnae: { type: "string", description: "CNAE principal" },
+            ...(type === 'principal' && {
+              phone: { type: "string", description: "Telefone" },
+              email: { type: "string", description: "E-mail" }
+            })
           }
         }
       });
