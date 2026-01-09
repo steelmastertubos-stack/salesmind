@@ -1,0 +1,203 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Upload, Download, AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { parseCSV, downloadTemplate } from '@/utils/csvParser';
+
+export default function ClientImportForm({ onSuccess }) {
+  const [file, setFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [errors, setErrors] = useState([]);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target.result;
+        const { headers, rows } = parseCSV(content);
+        
+        if (rows.length === 0) {
+          toast.error('Arquivo vazio');
+          return;
+        }
+        
+        setFile(selectedFile);
+        setPreview({ headers, rows: rows.slice(0, 5), total: rows.length });
+        setErrors([]);
+      };
+      reader.readAsText(selectedFile);
+    }
+  };
+
+  const validateRow = (row, index) => {
+    const rowErrors = [];
+    
+    if (!row.company_name?.trim()) rowErrors.push(`Linha ${index + 2}: Razão social obrigatória`);
+    if (!row.cnpj?.trim()) rowErrors.push(`Linha ${index + 2}: CNPJ obrigatório`);
+    if (row.cnpj && !/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(row.cnpj)) {
+      rowErrors.push(`Linha ${index + 2}: CNPJ em formato inválido (use XX.XXX.XXX/XXXX-XX)`);
+    }
+    
+    return rowErrors;
+  };
+
+  const handleImport = async () => {
+    if (!file) {
+      toast.error('Selecione um arquivo');
+      return;
+    }
+
+    setIsLoading(true);
+    const reader = new FileReader();
+    
+    reader.onload = async (event) => {
+      try {
+        const { rows } = parseCSV(event.target.result);
+        
+        // Validar linhas
+        const allErrors = [];
+        rows.forEach((row, i) => {
+          allErrors.push(...validateRow(row, i));
+        });
+
+        if (allErrors.length > 0) {
+          setErrors(allErrors);
+          toast.error(`${allErrors.length} erro(s) encontrado(s)`);
+          setIsLoading(false);
+          return;
+        }
+
+        // Preparar dados
+        const clients = rows.map(row => ({
+          company_name: row.company_name,
+          trade_name: row.trade_name || row.company_name,
+          cnpj: row.cnpj,
+          state_registration: row.state_registration || '',
+          address: row.address || '',
+          city: row.city || '',
+          state: row.state || '',
+          zip_code: row.zip_code || '',
+          phone: row.phone || '',
+          email: row.email || '',
+          contact_name: row.contact_name || '',
+          contact_role: row.contact_role || '',
+          segment: row.segment || '',
+          status: row.status || 'active',
+          is_active: row.is_active !== 'false'
+        }));
+
+        // Importar em lotes
+        const batchSize = 50;
+        let imported = 0;
+        
+        for (let i = 0; i < clients.length; i += batchSize) {
+          const batch = clients.slice(i, i + batchSize);
+          await base44.entities.Client.bulkCreate(batch);
+          imported += batch.length;
+        }
+
+        toast.success(`${imported} clientes importados com sucesso!`);
+        setFile(null);
+        setPreview(null);
+        onSuccess?.();
+      } catch (error) {
+        console.error('Erro na importação:', error);
+        toast.error('Erro ao importar clientes');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => downloadTemplate('clients')}
+          className="flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Baixar Template
+        </Button>
+      </div>
+
+      <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+        <Input
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          className="hidden"
+          id="client-file"
+        />
+        <label htmlFor="client-file" className="cursor-pointer">
+          <div className="flex flex-col items-center gap-2">
+            <Upload className="w-8 h-8 text-slate-400" />
+            <p className="text-sm font-medium">Clique ou arraste um arquivo CSV</p>
+            <p className="text-xs text-slate-500">{file?.name || 'Nenhum arquivo selecionado'}</p>
+          </div>
+        </label>
+      </div>
+
+      {preview && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-slate-700">
+            Prévia: {preview.total} cliente(s) para importar
+          </p>
+          
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50">
+                <tr>
+                  {preview.headers.map(h => (
+                    <th key={h} className="p-2 text-left font-medium">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {preview.rows.map((row, i) => (
+                  <tr key={i} className="border-t hover:bg-slate-50">
+                    {preview.headers.map(h => (
+                      <td key={h} className="p-2 text-slate-600">{row[h]}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {errors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="flex items-start gap-2 mb-2">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+            <p className="font-medium text-red-900">Erros encontrados:</p>
+          </div>
+          <ul className="text-sm text-red-800 space-y-1">
+            {errors.slice(0, 10).map((err, i) => (
+              <li key={i}>• {err}</li>
+            ))}
+            {errors.length > 10 && <li>• +{errors.length - 10} erro(s)</li>}
+          </ul>
+        </div>
+      )}
+
+      <Button
+        onClick={handleImport}
+        disabled={!file || isLoading}
+        className="w-full bg-emerald-600 hover:bg-emerald-700"
+      >
+        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        {isLoading ? 'Importando...' : 'Importar Clientes'}
+      </Button>
+    </div>
+  );
+}
