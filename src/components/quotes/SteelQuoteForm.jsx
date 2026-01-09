@@ -511,14 +511,16 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                            <span className="font-semibold">{item.total_weight?.toFixed(2)}</span>
                          )}
                        </td>
-                       <td className="p-2 text-right">
-                         {item.vtk_cost > 0 ? (
-                           <div className="text-sm font-semibold text-orange-600">
-                             {formatCurrency(item.vtk_cost)}
-                           </div>
-                         ) : (
-                           <span className="text-xs text-slate-400">Sem custo</span>
-                         )}
+                       <td className="p-2">
+                         <Input
+                           type="number"
+                           min="0"
+                           step="0.01"
+                           value={item.vtk_cost}
+                           onChange={(e) => updateItem(index, 'vtk_cost', parseFloat(e.target.value) || 0)}
+                           className="w-24 h-8 text-right text-orange-600 font-bold"
+                           placeholder="0,00"
+                         />
                        </td>
                        <td className="p-2">
                          <Input
