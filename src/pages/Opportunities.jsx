@@ -217,9 +217,9 @@ export default function Opportunities() {
 
       // 4. Atualizar estágio da oportunidade
       updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['quotes'] });
-      queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      queryClient.refetchQueries({ queryKey: ['orders'] });
+      queryClient.refetchQueries({ queryKey: ['quotes'] });
+      queryClient.refetchQueries({ queryKey: ['commissions'] });
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao processar');
