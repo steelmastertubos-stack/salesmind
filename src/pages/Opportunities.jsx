@@ -170,7 +170,9 @@ export default function Opportunities() {
 
   const confirmSendEmail = async () => {
     try {
+      console.log('📧 confirmSendEmail iniciado');
       const opportunity = opportunities.find(o => o.id === emailPreview.opportunityId);
+      console.log('Oportunidade encontrada:', opportunity);
       
       // 1. Enviar email ao representado
       await base44.integrations.Core.SendEmail({
