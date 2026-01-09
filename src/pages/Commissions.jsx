@@ -347,7 +347,7 @@ export default function Commissions() {
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-600 mb-1">Saldo Pendente</p>
                 <p className="text-lg font-bold text-amber-600">
-                  {formatCurrency((commission.commission_value || 0) - (editData.value_received || 0))}
+                  {formatCurrency((editingCommission.commission_value || 0) - (editData.value_received || 0))}
                 </p>
               </div>
               <div className="flex gap-3 pt-4">
