@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   DollarSign, 
   Calendar,
@@ -8,17 +8,26 @@ import {
   TrendingUp,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  Save,
+  X
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 export default function Commissions() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [principalFilter, setPrincipalFilter] = useState('all');
-  const [monthFilter, setMonthFilter] = useState('all');
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const queryClient = useQueryClient();
 
   const { data: commissions = [], isLoading } = useQuery({
     queryKey: ['commissions'],
@@ -28,6 +37,20 @@ export default function Commissions() {
   const { data: principals = [] } = useQuery({
     queryKey: ['principals'],
     queryFn: () => base44.entities.Principal.list('company_name', 100)
+  });
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => base44.entities.Order.list('-created_date', 500)
+  });
+
+  const updateCommissionMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Commission.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      setEditingId(null);
+      toast.success('Comissão atualizada!');
+    }
   });
 
   const formatCurrency = (value) => {
@@ -42,7 +65,7 @@ export default function Commissions() {
       case 'prevista':
         return { icon: Clock, color: 'bg-slate-100 text-slate-700', label: 'Prevista' };
       case 'faturada':
-        return { icon: AlertCircle, color: 'bg-blue-100 text-blue-700', label: 'Faturada' };
+        return { icon: AlertCircle, color: 'bg-blue-100 text-blue-700', label: 'A Faturar' };
       case 'a_receber':
         return { icon: TrendingUp, color: 'bg-amber-100 text-amber-700', label: 'A Receber' };
       case 'recebida':
@@ -54,17 +77,45 @@ export default function Commissions() {
     }
   };
 
+  const getOrderMargin = (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order || !order.items) return 0;
+    
+    let totalCost = 0;
+    let totalSale = 0;
+    order.items.forEach(item => {
+      const itemCost = (item.cost_per_kg || 0) * (item.total_weight || item.quantity || 0);
+      const itemSale = item.item_total || 0;
+      totalCost += itemCost;
+      totalSale += itemSale;
+    });
+
+    return totalCost > 0 ? ((totalSale - totalCost) / totalCost) * 100 : 0;
+  };
+
+  const getPrincipalPaymentDay = (principalId) => {
+    const principal = principals.find(p => p.id === principalId);
+    return principal?.payment_day || 10; // 10º dia por padrão
+  };
+
+  const calculateNextPaymentDate = (invoiceDate, principalId) => {
+    if (!invoiceDate) return null;
+    const invoice = new Date(invoiceDate);
+    const paymentTerms = principals.find(p => p.id === principalId)?.payment_terms || '30 dias';
+    
+    // Extrair dias do texto (ex: "30/60/90 dias" -> primeira parcela é 30)
+    const daysMatch = paymentTerms.match(/\d+/);
+    const days = daysMatch ? parseInt(daysMatch[0]) : 30;
+    
+    const paymentDate = new Date(invoice);
+    paymentDate.setDate(paymentDate.getDate() + days);
+    return paymentDate;
+  };
+
   const filteredCommissions = commissions.filter(c => {
     const statusMatch = statusFilter === 'all' || c.status === statusFilter;
     const principalMatch = principalFilter === 'all' || c.principal_id === principalFilter;
-    
-    let monthMatch = true;
-    if (monthFilter !== 'all' && c.invoice_date) {
-      const invoiceMonth = new Date(c.invoice_date).toISOString().slice(0, 7);
-      monthMatch = invoiceMonth === monthFilter;
-    }
-    
-    return statusMatch && principalMatch && monthMatch;
+    return statusMatch && principalMatch;
   });
 
   const totals = {
@@ -74,7 +125,43 @@ export default function Commissions() {
     recebida: filteredCommissions.filter(c => c.status === 'recebida').reduce((sum, c) => sum + (c.commission_value || 0), 0)
   };
 
-  const totalGeral = filteredCommissions.reduce((sum, c) => sum + (c.commission_value || 0), 0);
+  const totalGeral = Object.values(totals).reduce((sum, val) => sum + val, 0);
+
+  // Previsão de recebimento próximo mês
+  const nextMonthForecast = commissions.filter(c => {
+    const paymentDate = calculateNextPaymentDate(c.invoice_date, c.principal_id);
+    if (!paymentDate) return false;
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1);
+    return paymentDate.getMonth() === nextMonth.getMonth() && c.status !== 'recebida';
+  });
+
+  const handleEditCommission = (commission) => {
+    setEditingId(commission.id);
+    setEditData({
+      payment_date: commission.payment_date || '',
+      value_received: commission.value_received || 0,
+      notes: commission.notes || ''
+    });
+  };
+
+  const handleSaveEdit = () => {
+    const newStatus = editData.value_received >= editingCommission.commission_value ? 'recebida' : 'a_receber';
+    const difference = (editingCommission.commission_value || 0) - (editData.value_received || 0);
+
+    updateCommissionMutation.mutate({
+      id: editingId,
+      data: {
+        payment_date: editData.payment_date,
+        value_received: parseFloat(editData.value_received) || 0,
+        status: newStatus,
+        notes: editData.notes,
+        difference: difference
+      }
+    });
+  };
+
+  const editingCommission = commissions.find(c => c.id === editingId);
 
   return (
     <div className="pb-20 lg:pb-6">
@@ -147,62 +234,81 @@ export default function Commissions() {
         </Select>
       </div>
 
-      {/* Commissions List */}
+      {/* Detailed Table */}
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
         </div>
       ) : filteredCommissions.length > 0 ? (
-        <div className="space-y-3">
-          {filteredCommissions.map((commission) => {
-            const status = getStatusConfig(commission.status);
-            const StatusIcon = status.icon;
-            
-            return (
-              <div key={commission.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-slate-900">{commission.principal_name}</h3>
-                      <Badge className={status.color}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {status.label}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-slate-600">{commission.client_name}</p>
-                    <p className="text-xs text-slate-400">Pedido: {commission.order_number}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-emerald-600">
-                      {formatCurrency(commission.commission_value)}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {commission.commission_rate}% sobre {formatCurrency(commission.invoice_value)}
-                    </p>
-                  </div>
-                </div>
+        <div className="border rounded-xl overflow-hidden bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b">
+                <tr>
+                  <th className="text-left p-3 font-medium text-slate-700">Representada</th>
+                  <th className="text-left p-3 font-medium text-slate-700">Cliente</th>
+                  <th className="text-left p-3 font-medium text-slate-700">Pedido</th>
+                  <th className="text-right p-3 font-medium text-slate-700">Valor Vendido</th>
+                  <th className="text-right p-3 font-medium text-slate-700">Margem</th>
+                  <th className="text-right p-3 font-medium text-slate-700">% Comissão</th>
+                  <th className="text-right p-3 font-medium text-slate-700">Comissão</th>
+                  <th className="text-center p-3 font-medium text-slate-700">Status</th>
+                  <th className="text-left p-3 font-medium text-slate-700">Previsão</th>
+                  <th className="text-right p-3 font-medium text-slate-700">Recebido</th>
+                  <th className="text-right p-3 font-medium text-slate-700">Saldo</th>
+                  <th className="text-center p-3 font-medium text-slate-700">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCommissions.map((commission) => {
+                  const status = getStatusConfig(commission.status);
+                  const margin = getOrderMargin(commission.order_id);
+                  const paymentDate = calculateNextPaymentDate(commission.invoice_date, commission.principal_id);
+                  const received = commission.value_received || 0;
+                  const balance = (commission.commission_value || 0) - received;
+                  const StatusIcon = status.icon;
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    {commission.invoice_date && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        Faturado: {new Date(commission.invoice_date).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
-                    {commission.payment_due_date && (
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-3 h-3" />
-                        Receb.: {new Date(commission.payment_due_date).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                  return (
+                    <tr key={commission.id} className="border-b hover:bg-slate-50">
+                      <td className="p-3 font-medium text-slate-900">{commission.principal_name}</td>
+                      <td className="p-3 text-slate-600">{commission.client_name}</td>
+                      <td className="p-3 font-mono text-xs text-slate-500">{commission.order_number}</td>
+                      <td className="p-3 text-right text-emerald-600 font-semibold">{formatCurrency(commission.invoice_value)}</td>
+                      <td className="p-3 text-right text-slate-700">{margin.toFixed(1)}%</td>
+                      <td className="p-3 text-right font-semibold text-slate-900">{commission.commission_rate}%</td>
+                      <td className="p-3 text-right font-bold text-emerald-600">{formatCurrency(commission.commission_value)}</td>
+                      <td className="p-3 text-center">
+                        <Badge className={status.color} variant="outline">
+                          {status.label}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-xs text-slate-600">
+                        {paymentDate ? paymentDate.toLocaleDateString('pt-BR') : '-'}
+                      </td>
+                      <td className="p-3 text-right text-emerald-600 font-semibold">
+                        {commission.value_received ? formatCurrency(commission.value_received) : '-'}
+                      </td>
+                      <td className={`p-3 text-right font-semibold ${balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                        {formatCurrency(balance)}
+                      </td>
+                      <td className="p-3 text-center">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditCommission(commission)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
@@ -211,11 +317,84 @@ export default function Commissions() {
         </div>
       )}
 
+      {/* Edit Dialog */}
+      <Dialog open={!!editingId} onOpenChange={() => setEditingId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar Recebimento</DialogTitle>
+          </DialogHeader>
+          {editingCommission && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Representada</p>
+                <p className="font-semibold">{editingCommission.principal_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Cliente</p>
+                <p className="font-semibold">{editingCommission.client_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Comissão Prevista</p>
+                <p className="text-lg font-bold text-emerald-600">{formatCurrency(editingCommission.commission_value)}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-600 font-medium">Data de Pagamento</label>
+                <Input
+                  type="date"
+                  value={editData.payment_date}
+                  onChange={(e) => setEditData({ ...editData, payment_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-600 font-medium">Valor Recebido (R$)</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editData.value_received}
+                  onChange={(e) => setEditData({ ...editData, value_received: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-slate-600 font-medium">Observações</label>
+                <Input
+                  value={editData.notes}
+                  onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                  placeholder="Adicione notas..."
+                />
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs text-slate-600 mb-1">Saldo Pendente</p>
+                <p className="text-lg font-bold text-amber-600">
+                  {formatCurrency((editingCommission.commission_value || 0) - (editData.value_received || 0))}
+                </p>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button variant="outline" onClick={() => setEditingId(null)} className="flex-1">
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSaveEdit} 
+                  disabled={updateCommissionMutation.isPending}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Total Footer */}
       {filteredCommissions.length > 0 && (
-        <div className="mt-6 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
+        <div className="mt-6 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <span className="text-sm opacity-90">Total Filtrado</span>
+            <div>
+              <span className="text-sm opacity-90 block">Total de Comissões</span>
+              <p className="text-xs opacity-75 mt-1">Prevista + A Faturar + A Receber</p>
+            </div>
             <span className="text-3xl font-bold">{formatCurrency(totalGeral)}</span>
           </div>
         </div>
