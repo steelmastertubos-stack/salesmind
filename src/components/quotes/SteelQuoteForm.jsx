@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { getICMSRate, getIPIRate, calculateItemTotals, calculateQuoteTotals, validateQuote } from '@/components/utils/steelCalculations';
+import { getVTKCost } from '@/components/utils/vtkCostCalculator';
 import { toast } from 'sonner';
 
 const STATES = [
