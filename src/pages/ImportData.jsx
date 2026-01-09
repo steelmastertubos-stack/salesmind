@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Upload, Package, Users } from 'lucide-react';
+import { Upload, Package, Users, Box } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeader from '@/components/common/PageHeader';
 import ProductImportForm from '@/components/imports/ProductImportForm';
 import ClientImportForm from '@/components/imports/ClientImportForm';
+import StockImportForm from '@/components/imports/StockImportForm';
 
 export default function ImportData() {
   const queryClient = useQueryClient();
@@ -23,7 +24,7 @@ export default function ImportData() {
 
       <div className="max-w-2xl mx-auto">
         <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
               Produtos
@@ -31,6 +32,10 @@ export default function ImportData() {
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Clientes
+            </TabsTrigger>
+            <TabsTrigger value="stock" className="flex items-center gap-2">
+              <Box className="w-4 h-4" />
+              Estoque
             </TabsTrigger>
           </TabsList>
 
@@ -58,6 +63,19 @@ export default function ImportData() {
               </div>
             </div>
             <ClientImportForm onSuccess={handleImportSuccess} />
+          </TabsContent>
+
+          <TabsContent value="stock" className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex gap-2">
+                <Upload className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Formato esperado:</p>
+                  <p>Arquivo CSV com colunas: product_code, product_name, quantity, unit</p>
+                </div>
+              </div>
+            </div>
+            <StockImportForm onSuccess={handleImportSuccess} />
           </TabsContent>
         </Tabs>
       </div>
