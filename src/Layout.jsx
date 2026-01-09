@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { 
-  LayoutDashboard, 
-  Users, 
-  Building2, 
-  FileText, 
-  ShoppingCart, 
-  BarChart3,
-  Settings,
-  Menu,
-  X,
-  Zap,
-  MapPin
-} from 'lucide-react';
+    LayoutDashboard, 
+    Users, 
+    Building2, 
+    FileText, 
+    ShoppingCart, 
+    BarChart3,
+    Settings,
+    Menu,
+    X,
+    Zap,
+    MapPin,
+    Target
+  } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 export default function Layout({ children, currentPageName }) {
@@ -37,6 +38,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' },
     { name: 'Clientes', icon: Users, page: 'Clients' },
     { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
+    { name: 'Oportunidades', icon: Target, page: 'Opportunities' },
     { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' },
     { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
     { name: 'Representados', icon: Building2, page: 'Principals' },

@@ -1,0 +1,311 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  MessageCircle, 
+  Phone, 
+  Mail, 
+  Target,
+  TrendingUp,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  FileText,
+  Clock
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [contactNote, setContactNote] = useState('');
+  const [nextActionDate, setNextActionDate] = useState('');
+  const [nextActionType, setNextActionType] = useState('whatsapp');
+  const [newStage, setNewStage] = useState(opportunity.stage);
+  const [lossReason, setLossReason] = useState('');
+
+  const queryClient = useQueryClient();
+
+  const updateOpportunityMutation = useMutation({
+    mutationFn: (data) => base44.entities.Opportunity.update(opportunity.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['opportunities']);
+      toast.success('Oportunidade atualizada!');
+      onUpdate();
+    }
+  });
+
+  const handleAddContact = () => {
+    if (!contactNote.trim()) {
+      toast.error('Adicione uma nota sobre o contato');
+      return;
+    }
+
+    const timeline = opportunity.timeline || [];
+    timeline.push({
+      date: new Date().toISOString(),
+      type: 'contact',
+      description: contactNote,
+      user: 'user'
+    });
+
+    updateOpportunityMutation.mutate({
+      timeline,
+      last_contact_date: new Date().toISOString().split('T')[0],
+      days_without_contact: 0,
+      next_action_date: nextActionDate || null,
+      next_action_type: nextActionType
+    });
+
+    setContactNote('');
+    setNextActionDate('');
+  };
+
+  const handleStageChange = () => {
+    if (newStage === 'perdido' && !lossReason.trim()) {
+      toast.error('Informe o motivo da perda');
+      return;
+    }
+
+    const timeline = opportunity.timeline || [];
+    timeline.push({
+      date: new Date().toISOString(),
+      type: 'stage_change',
+      description: `Mudou para: ${stages[newStage].label}${newStage === 'perdido' ? ` - ${lossReason}` : ''}`,
+      user: 'user'
+    });
+
+    updateOpportunityMutation.mutate({
+      stage: newStage,
+      timeline,
+      loss_reason: newStage === 'perdido' ? lossReason : null
+    });
+  };
+
+  const handleWhatsApp = () => {
+    const message = `Olá! Referente ao orçamento ${opportunity.quote_number} no valor de ${formatCurrency(opportunity.total_value)}. Gostaria de alinhar os próximos passos.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const stages = {
+    proposta_enviada: { label: 'Proposta Enviada', icon: Target },
+    em_negociacao: { label: 'Em Negociação', icon: TrendingUp },
+    ganho: { label: 'Ganho', icon: CheckCircle2 },
+    perdido: { label: 'Perdido', icon: XCircle }
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value || 0);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">{opportunity.client_name}</h2>
+              <p className="text-sm text-slate-600">{opportunity.principal_name}</p>
+            </div>
+            <Badge className="text-base">
+              {formatCurrency(opportunity.total_value)}
+            </Badge>
+          </DialogTitle>
+        </DialogHeader>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="contact">Contatar</TabsTrigger>
+            <TabsTrigger value="stage">Alterar Estágio</TabsTrigger>
+            <TabsTrigger value="timeline">Histórico</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-600">Orçamento</Label>
+                <p className="font-mono font-bold">{opportunity.quote_number}</p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Estágio</Label>
+                <p className="font-semibold">{stages[opportunity.stage].label}</p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Valor</Label>
+                <p className="font-bold text-emerald-600">{formatCurrency(opportunity.total_value)}</p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Peso Total</Label>
+                <p className="font-semibold">{opportunity.total_weight?.toFixed(0)} kg</p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Último Contato</Label>
+                <p className="font-semibold">
+                  {opportunity.last_contact_date 
+                    ? new Date(opportunity.last_contact_date).toLocaleDateString('pt-BR')
+                    : 'Nunca'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Dias sem Contato</Label>
+                <p className="font-semibold text-orange-600">
+                  {opportunity.days_without_contact || 0} dias
+                </p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Próxima Ação</Label>
+                <p className="font-semibold">
+                  {opportunity.next_action_date 
+                    ? new Date(opportunity.next_action_date).toLocaleDateString('pt-BR')
+                    : 'Não definida'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-slate-600">Score de Prioridade</Label>
+                <p className="font-bold text-lg">{opportunity.priority_score || 0}/100</p>
+              </div>
+            </div>
+
+            {opportunity.notes && (
+              <div>
+                <Label className="text-slate-600">Observações</Label>
+                <p className="text-sm mt-1">{opportunity.notes}</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="contact" className="space-y-4">
+            <div className="flex gap-2 mb-4">
+              <Button onClick={handleWhatsApp} className="flex-1 bg-green-600 hover:bg-green-700">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                WhatsApp
+              </Button>
+              <Button variant="outline" className="flex-1">
+                <Phone className="w-4 h-4 mr-2" />
+                Ligar
+              </Button>
+              <Button variant="outline" className="flex-1">
+                <Mail className="w-4 h-4 mr-2" />
+                E-mail
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label>Registrar Contato</Label>
+                <Textarea
+                  value={contactNote}
+                  onChange={(e) => setContactNote(e.target.value)}
+                  placeholder="Descreva o que foi discutido..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Próxima Ação</Label>
+                  <Input
+                    type="date"
+                    value={nextActionDate}
+                    onChange={(e) => setNextActionDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Tipo</Label>
+                  <Select value={nextActionType} onValueChange={setNextActionType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="call">Ligação</SelectItem>
+                      <SelectItem value="email">E-mail</SelectItem>
+                      <SelectItem value="visit">Visita</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button onClick={handleAddContact} className="w-full">
+                Registrar Contato
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="stage" className="space-y-4">
+            <div>
+              <Label>Novo Estágio</Label>
+              <Select value={newStage} onValueChange={setNewStage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="proposta_enviada">Proposta Enviada</SelectItem>
+                  <SelectItem value="em_negociacao">Em Negociação</SelectItem>
+                  <SelectItem value="ganho">Ganho</SelectItem>
+                  <SelectItem value="perdido">Perdido</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newStage === 'perdido' && (
+              <div>
+                <Label>Motivo da Perda</Label>
+                <Textarea
+                  value={lossReason}
+                  onChange={(e) => setLossReason(e.target.value)}
+                  placeholder="Preço, prazo, concorrente, etc..."
+                  rows={3}
+                />
+              </div>
+            )}
+
+            <Button 
+              onClick={handleStageChange} 
+              className="w-full"
+              disabled={newStage === opportunity.stage}
+            >
+              Alterar Estágio
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="space-y-3">
+            {opportunity.timeline && opportunity.timeline.length > 0 ? (
+              opportunity.timeline.slice().reverse().map((event, index) => (
+                <div key={index} className="flex gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                      {event.type === 'contact' ? <Phone className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                    </div>
+                    {index < opportunity.timeline.length - 1 && (
+                      <div className="w-0.5 h-full bg-slate-200 mt-2"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">{event.description}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(event.date).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-slate-500 py-8">Nenhum evento registrado</p>
+            )}
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
