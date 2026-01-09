@@ -124,12 +124,12 @@ export default function Opportunities() {
 
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
-    
+
     const { draggableId, destination } = result;
     const newStage = destination.droppableId;
     const opportunity = opportunities.find(o => o.id === draggableId);
-    
-    // Se mudou para GANHO, mostrar preview do email
+
+    // Se mudou para GANHO, criar pedido/comissão e mostrar preview do email
     if (newStage === OPPORTUNITY_STAGE.WON && opportunity?.stage !== OPPORTUNITY_STAGE.WON) {
         console.log('🎯 Movendo para GANHO - criar pedido e comissão automaticamente');
         try {
@@ -139,11 +139,21 @@ export default function Opportunities() {
           ]);
 
           // AUTOMAÇÃO: Criar Order + Commission
-          const result = await automateOpportunityToOrderAndCommission(opportunity, quote, principal);
+          const automationResult = await automateOpportunityToOrderAndCommission(opportunity, quote, principal);
 
-          if (result?.order && result?.commission) {
-            setShowEmailPreview(false);
+          if (automationResult?.order && automationResult?.commission) {
             toast.success('✅ Pedido e comissão criados automaticamente!');
+
+            // Mostrar modal de preview do email para o representado
+            setEmailPreview({
+              subject: `🎯 Oportunidade Ganha: ${opportunity.client_name}`,
+              body: `Prezados,\n\nTemos o prazer de comunicar que a oportunidade com ${opportunity.client_name} foi ganha!\n\nDetalhes:\n- Valor: ${formatCurrency(opportunity.total_value)}\n- Peso: ${opportunity.total_weight}kg\n\nEm breve, nosso pedido será enviado para processamento.\n\nAtenciosamente`,
+              principalEmail: principal?.email || '',
+              opportunityId: draggableId,
+              newStage: OPPORTUNITY_STAGE.WON
+            });
+            setEditableEmailBody(`Prezados,\n\nTemos o prazer de comunicar que a oportunidade com ${opportunity.client_name} foi ganha!\n\nDetalhes:\n- Valor: ${formatCurrency(opportunity.total_value)}\n- Peso: ${opportunity.total_weight}kg\n\nEm breve, nosso pedido será enviado para processamento.\n\nAtenciosamente`);
+            setShowEmailPreview(true);
 
             // Atualizar estágio
             updateStageMutation.mutate({ id: draggableId, newStage: OPPORTUNITY_STAGE.WON });
@@ -156,7 +166,7 @@ export default function Opportunities() {
           toast.error('Erro ao criar pedido/comissão automaticamente');
         }
       }
-    
+
     updateStageMutation.mutate({ id: draggableId, newStage });
   };
 

@@ -1,4 +1,5 @@
 import AIInsights from './pages/AIInsights';
+import AuditFluxo from './pages/AuditFluxo';
 import ClientDetails from './pages/ClientDetails';
 import Clients from './pages/Clients';
 import Commissions from './pages/Commissions';
@@ -14,12 +15,12 @@ import Settings from './pages/Settings';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
-import AuditFluxo from './pages/AuditFluxo';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIInsights": AIInsights,
+    "AuditFluxo": AuditFluxo,
     "ClientDetails": ClientDetails,
     "Clients": Clients,
     "Commissions": Commissions,
@@ -35,7 +36,6 @@ export const PAGES = {
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
-    "AuditFluxo": AuditFluxo,
 }
 
 export const pagesConfig = {
