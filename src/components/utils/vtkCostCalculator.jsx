@@ -91,9 +91,39 @@ export function applyPaymentTermsAdjustment(marginPct, averagePaymentDays) {
 }
 
 /**
- * Busca comissão VTK conforme margem
+ * Busca comissão pela tabela customizada do representado
  */
-export function getVTKCommissionRate(marginPct) {
+export function getCommissionFromTable(marginPct, commissionTable) {
+  if (!commissionTable || commissionTable.length === 0) {
+    return {
+      commission_rate: 0,
+      bracket_info: null,
+      from_custom_table: false
+    };
+  }
+
+  const bracket = commissionTable.find(b => 
+    marginPct >= b.min_margin && marginPct <= b.max_margin
+  );
+  
+  return {
+    commission_rate: bracket?.commission_rate || 0,
+    bracket_info: bracket || null,
+    bracket_name: bracket?.bracket_name || '',
+    from_custom_table: true
+  };
+}
+
+/**
+ * Busca comissão VTK conforme margem - tabela padrão
+ */
+export function getVTKCommissionRate(marginPct, commissionTable = null) {
+  // Se tem tabela customizada, usar ela
+  if (commissionTable && commissionTable.length > 0) {
+    return getCommissionFromTable(marginPct, commissionTable);
+  }
+
+  // Tabela padrão VTK
   const vtkTable = [
     { minMargin: 15, maxMargin: 19.99, rate: 0.50 },
     { minMargin: 20, maxMargin: 20, rate: 0.60 },
@@ -135,7 +165,8 @@ export function getVTKCommissionRate(marginPct) {
   
   return {
     commission_rate: bracket?.rate || 0,
-    bracket_info: bracket || { minMargin: 0, maxMargin: 0, rate: 0 }
+    bracket_info: bracket || { minMargin: 0, maxMargin: 0, rate: 0 },
+    from_custom_table: false
   };
 }
 
