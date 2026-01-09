@@ -244,11 +244,12 @@ export default function Opportunities() {
 
       toast.success('Lembrete criado! Você será notificado em 1 hora');
       setShowEmailPreview(false);
-      
+
       // Atualizar estágio mesmo assim
       updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['quotes']);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao criar lembrete');
