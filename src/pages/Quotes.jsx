@@ -89,6 +89,11 @@ export default function Quotes() {
     queryFn: () => base44.entities.Client.list('company_name', 500)
   });
 
+  const { data: principals = [] } = useQuery({
+    queryKey: ['principals'],
+    queryFn: () => base44.entities.Principal.list('-created_date', 100)
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const quoteNumber = `ORC-${Date.now().toString().slice(-6)}`;
@@ -259,6 +264,44 @@ export default function Quotes() {
     }).format(value || 0);
   };
 
+  const calculateMarginAndCommission = (quote) => {
+    const principal = principals.find(p => p.id === quote.principal_id);
+    const isVTK = principal?.use_vtk_commission_table;
+    
+    if (!isVTK) {
+      // Para outros representados, apenas comissão simples
+      const commissionRate = principal?.commission_percentage || 0;
+      const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
+      return { commissionValue, commissionRate, isVTK: false };
+    }
+
+    // Para VTK, calcular margem baseada nos itens
+    let totalCost = 0;
+    let totalSale = 0;
+
+    quote.items?.forEach(item => {
+      const itemCost = (item.cost_per_kg || 0) * (item.total_weight || item.quantity || 0);
+      const itemSale = item.item_total || item.total_price || 0;
+      totalCost += itemCost;
+      totalSale += itemSale;
+    });
+
+    const margin = totalCost > 0 ? ((totalSale - totalCost) / totalCost) * 100 : 0;
+    
+    // Buscar comissão na tabela VTK
+    let commissionRate = 0;
+    if (principal.vtk_commission_table) {
+      const bracket = principal.vtk_commission_table.find(
+        b => margin >= b.min_margin && margin <= b.max_margin
+      );
+      commissionRate = bracket?.commission_rate || 0;
+    }
+
+    const commissionValue = (quote.total_value || 0) * (commissionRate / 100);
+    
+    return { margin, commissionValue, commissionRate, isVTK: true };
+  };
+
   const getStatusConfig = (status) => {
     switch (status) {
       case 'rascunho':
@@ -335,6 +378,8 @@ export default function Quotes() {
         <div className="space-y-3">
           {filteredQuotes.map((quote) => {
             const status = getStatusConfig(quote.status);
+            const { margin, commissionValue, commissionRate, isVTK } = calculateMarginAndCommission(quote);
+            
             return (
               <div key={quote.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="p-4">
@@ -354,6 +399,33 @@ export default function Quotes() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Comissão Info */}
+                  {commissionValue > 0 && (
+                    <div className="bg-amber-50 rounded-lg p-2 mb-3 border border-amber-200">
+                      <div className="flex items-center justify-between text-xs">
+                        {isVTK ? (
+                          <>
+                            <span className="text-amber-700 font-medium">
+                              Margem: {margin.toFixed(2)}% • Comissão: {commissionRate}%
+                            </span>
+                            <span className="text-amber-900 font-bold">
+                              {formatCurrency(commissionValue)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-amber-700 font-medium">
+                              Comissão: {commissionRate}%
+                            </span>
+                            <span className="text-amber-900 font-bold">
+                              {formatCurrency(commissionValue)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                     <div className="text-xs text-slate-500">
