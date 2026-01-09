@@ -153,6 +153,13 @@ export default function Principals() {
     setShowForm(true);
   };
 
+  const handleCNPJData = (data) => {
+    setFormData(prev => ({
+      ...prev,
+      ...data
+    }));
+  };
+
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
