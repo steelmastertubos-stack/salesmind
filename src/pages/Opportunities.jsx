@@ -139,6 +139,27 @@ export default function Opportunities() {
        const quote = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]);
 
        if (quote) {
+         const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
+
+         // Calcular margem e comissão corretamente
+         let totalCost = 0;
+         let totalSale = 0;
+
+         quote.items?.forEach(item => {
+           const weight = item.total_weight || item.quantity || 0;
+           if (item.vtk_cost > 0 && item.vtk_margin_pct > 0) {
+             totalCost += item.vtk_cost * weight;
+             totalSale += item.item_total || 0;
+           } else {
+             totalCost += (item.cost_per_kg || 0) * weight;
+             totalSale += item.item_total || 0;
+           }
+         });
+
+         const margin = totalSale > 0 && totalCost > 0 ? ((totalSale - totalCost) / totalSale) * 100 : 0;
+         const commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
+         const expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
+
          const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
          const order = await base44.entities.Order.create({
            order_number: orderNumber,
@@ -155,8 +176,8 @@ export default function Opportunities() {
            payment_terms: quote.payment_terms,
            notes: quote.notes,
            status: 'em_analise',
-           commission_rate: 5,
-           expected_commission: (quote.total_value || 0) * 0.05,
+           commission_rate: commissionRate,
+           expected_commission: expectedCommission,
            commission_status: 'pending',
            status_history: [{
              status: 'em_analise',
@@ -166,7 +187,6 @@ export default function Opportunities() {
          });
 
          // 3. Criar comissão automaticamente
-         const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
          if (principal && order) {
            await base44.entities.Commission.create({
              order_id: order.id,
@@ -176,8 +196,8 @@ export default function Opportunities() {
              client_id: opportunity.client_id,
              client_name: opportunity.client_name,
              invoice_value: quote.total_value || 0,
-             commission_rate: 5,
-             commission_value: (quote.total_value || 0) * 0.05,
+             commission_rate: commissionRate,
+             commission_value: expectedCommission,
              status: 'prevista',
              notes: 'Comissão gerada automaticamente ao criar pedido'
            });
