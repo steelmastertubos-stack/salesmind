@@ -275,10 +275,15 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
                 Cancelar
               </Button>
               <Button 
-                onClick={() => updateGoalMutation.mutate(parseFloat(newGoalValue))}
-                disabled={updateGoalMutation.isPending}
+                className="bg-[#0F2A44] hover:bg-[#1F4E79]"
+                onClick={() => {
+                  const value = parseFloat(newGoalValue);
+                  if (value > 0) {
+                    updateGoalMutation.mutate(value);
+                  }
+                }}
               >
-                {updateGoalMutation.isPending ? 'Salvando...' : 'Salvar Meta'}
+                Salvar Meta
               </Button>
             </div>
           </div>
