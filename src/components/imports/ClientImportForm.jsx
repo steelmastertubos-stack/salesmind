@@ -4,6 +4,7 @@ import { Upload, Download, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const parseCSV = (fileContent) => {
   const lines = fileContent.trim().split('\n');
@@ -17,6 +18,25 @@ const parseCSV = (fileContent) => {
       row[header] = values[i] || '';
     });
     return row;
+  });
+  
+  return { headers, rows };
+};
+
+const parseExcel = (fileContent) => {
+  const workbook = XLSX.read(fileContent, { type: 'binary' });
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(worksheet);
+  
+  if (data.length === 0) return { headers: [], rows: [] };
+  
+  const headers = Object.keys(data[0]);
+  const rows = data.map(row => {
+    const cleanRow = {};
+    headers.forEach(header => {
+      cleanRow[header] = (row[header] || '').toString().trim();
+    });
+    return cleanRow;
   });
   
   return { headers, rows };
@@ -45,21 +65,32 @@ export default function ClientImportForm({ onSuccess }) {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
+      const isExcel = selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls');
       const reader = new FileReader();
+      
       reader.onload = (event) => {
-        const content = event.target.result;
-        const { headers, rows } = parseCSV(content);
-        
-        if (rows.length === 0) {
-          toast.error('Arquivo vazio');
-          return;
+        try {
+          const content = event.target.result;
+          const { headers, rows } = isExcel ? parseExcel(content) : parseCSV(content);
+          
+          if (rows.length === 0) {
+            toast.error('Arquivo vazio');
+            return;
+          }
+          
+          setFile(selectedFile);
+          setPreview({ headers, rows: rows.slice(0, 5), total: rows.length });
+          setErrors([]);
+        } catch (error) {
+          toast.error('Erro ao ler o arquivo');
         }
-        
-        setFile(selectedFile);
-        setPreview({ headers, rows: rows.slice(0, 5), total: rows.length });
-        setErrors([]);
       };
-      reader.readAsText(selectedFile);
+      
+      if (isExcel) {
+        reader.readAsBinaryString(selectedFile);
+      } else {
+        reader.readAsText(selectedFile);
+      }
     }
   };
 
@@ -86,7 +117,8 @@ export default function ClientImportForm({ onSuccess }) {
     
     reader.onload = async (event) => {
       try {
-        const { rows } = parseCSV(event.target.result);
+        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+        const { rows } = isExcel ? parseExcel(event.target.result) : parseCSV(event.target.result);
         
         // Validar linhas
         const allErrors = [];
@@ -142,7 +174,12 @@ export default function ClientImportForm({ onSuccess }) {
       }
     };
     
-    reader.readAsText(file);
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    if (isExcel) {
+      reader.readAsBinaryString(file);
+    } else {
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -162,7 +199,7 @@ export default function ClientImportForm({ onSuccess }) {
       <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
         <Input
           type="file"
-          accept=".csv"
+          accept=".csv,.xlsx,.xls"
           onChange={handleFileChange}
           className="hidden"
           id="client-file"
