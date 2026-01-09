@@ -57,8 +57,8 @@ export default function ImportData() {
               <div className="flex gap-2">
                 <Upload className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Formato esperado:</p>
-                  <p>Arquivo CSV com colunas: company_name, trade_name, cnpj, state_registration, address, city, state, zip_code, phone, email, contact_name, contact_role, segment, status</p>
+                  <p className="font-medium mb-1">Formato esperado (CSV ou Excel):</p>
+                  <p>code, company_name, trade_name, cnpj, email, phone, whatsapp, address, city, state, zip, country, responsible_user, status, notes</p>
                 </div>
               </div>
             </div>
