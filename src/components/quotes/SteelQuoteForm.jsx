@@ -530,7 +530,6 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                            onChange={(e) => updateItem(index, 'vtk_margin_pct', parseFloat(e.target.value) || 0)}
                            className="w-20 h-8 text-right text-blue-600 font-bold"
                            placeholder="0"
-                           disabled={!item.vtk_cost}
                          />
                        </td>
                        <td className="p-2 text-right font-medium">
