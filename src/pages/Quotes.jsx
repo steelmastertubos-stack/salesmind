@@ -171,14 +171,7 @@ export default function Quotes() {
   const handleStatusChange = async (quote, newStatus) => {
     const updateData = { status: newStatus };
     
-    if (newStatus === 'emitido') {
-      // Gerar PDF automaticamente
-      toast.info('Gerando PDF...');
-      // Aguardar um pouco para garantir que o toast apareça
-      setTimeout(() => {
-        generateQuotePDF(quote);
-      }, 300);
-    } else if (newStatus === 'enviado') {
+    if (newStatus === 'enviado') {
       // Abrir modal de envio
       setSendingQuote(quote);
       updateData.sent_date = new Date().toISOString().split('T')[0];
@@ -355,7 +348,6 @@ export default function Quotes() {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="rascunho">Rascunho</SelectItem>
-            <SelectItem value="emitido">Emitido</SelectItem>
             <SelectItem value="enviado">Enviado</SelectItem>
             <SelectItem value="convertido">Convertido</SelectItem>
             <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -452,19 +444,6 @@ export default function Quotes() {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {(quote.status === 'rascunho' || quote.status === 'draft') && (
-                            <>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'emitido')} className="text-blue-600">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                ✅ Emitir Orçamento
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')} className="text-green-600">
-                                <Send className="w-4 h-4 mr-2" />
-                                📤 Enviar ao Cliente
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                            </>
-                          )}
-                          {quote.status === 'emitido' && (
                             <>
                               <DropdownMenuItem onClick={() => handleStatusChange(quote, 'enviado')} className="text-green-600">
                                 <Send className="w-4 h-4 mr-2" />
