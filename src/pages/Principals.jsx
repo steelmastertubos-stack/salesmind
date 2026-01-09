@@ -70,6 +70,7 @@ export default function Principals() {
     contact_name: '',
     logo_url: '',
     commission_percentage: '',
+    manual_margin_percentage: '',
     tax_type: '',
     default_tax_rate: '',
     freight_policy: '',
@@ -88,6 +89,7 @@ export default function Principals() {
       contact_name: '',
       logo_url: '',
       commission_percentage: '',
+      manual_margin_percentage: '',
       tax_type: '',
       default_tax_rate: '',
       freight_policy: '',
@@ -139,6 +141,7 @@ export default function Principals() {
       contact_name: principal.contact_name || '',
       logo_url: principal.logo_url || '',
       commission_percentage: principal.commission_percentage || '',
+      manual_margin_percentage: principal.manual_margin_percentage || '',
       tax_type: principal.tax_type || '',
       default_tax_rate: principal.default_tax_rate || '',
       freight_policy: principal.freight_policy || '',
@@ -445,21 +448,32 @@ export default function Principals() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Política de Frete</Label>
-                <Select 
-                  value={formData.freight_policy} 
-                  onValueChange={(v) => setFormData({ ...formData, freight_policy: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cif">CIF</SelectItem>
-                    <SelectItem value="fob">FOB</SelectItem>
-                    <SelectItem value="negotiable">Negociável</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>% Margem Manual (Alternativa VTK)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={formData.manual_margin_percentage}
+                  onChange={(e) => setFormData({ ...formData, manual_margin_percentage: e.target.value })}
+                  placeholder="Use quando não tiver tabela VTK"
+                />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Política de Frete</Label>
+              <Select 
+                value={formData.freight_policy} 
+                onValueChange={(v) => setFormData({ ...formData, freight_policy: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cif">CIF</SelectItem>
+                  <SelectItem value="fob">FOB</SelectItem>
+                  <SelectItem value="negotiable">Negociável</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
