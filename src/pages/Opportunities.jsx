@@ -128,6 +128,7 @@ export default function Opportunities() {
     
     // Se mudou para GANHO, mostrar preview do email
     if (newStage === 'ganho' && opportunity?.stage !== 'ganho') {
+      console.log('🎯 Movendo para GANHO - preparando preview de email');
       try {
         const [principal, client] = await Promise.all([
           base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]),
