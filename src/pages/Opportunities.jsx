@@ -113,7 +113,7 @@ export default function Opportunities() {
   return (
     <div className="space-y-6 pb-6">
       <PageHeader 
-        title="Oportunidades" 
+        title="CRM" 
         subtitle="Funil de vendas e acompanhamento comercial"
       />
 

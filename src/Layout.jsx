@@ -38,7 +38,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' },
     { name: 'Clientes', icon: Users, page: 'Clients' },
     { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
-    { name: 'Oportunidades', icon: Target, page: 'Opportunities' },
+    { name: 'CRM', icon: Target, page: 'Opportunities' },
     { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' },
     { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
     { name: 'Representados', icon: Building2, page: 'Principals' },
