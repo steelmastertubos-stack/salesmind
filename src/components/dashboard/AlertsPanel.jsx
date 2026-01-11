@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   AlertTriangle, 
   Clock, 
@@ -8,6 +9,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { createPageUrl } from '@/utils';
 
 export default function AlertsPanel({ clients, commissionAlerts }) {
   const inactiveClients = clients.filter(c => {
@@ -29,33 +31,33 @@ export default function AlertsPanel({ clients, commissionAlerts }) {
   const alerts = [
     {
       id: 1,
-      type: 'critical',
+      type: 'RISK',
       icon: AlertTriangle,
       title: 'Clientes em Risco',
       value: atRiskClients,
-      description: 'Clientes acima do ciclo médio',
+      description: 'Ação de Recuperação',
       color: 'bg-red-500',
       bgColor: 'bg-red-50',
       textColor: 'text-red-700'
     },
     {
       id: 2,
-      type: 'warning',
+      type: 'ATTENTION',
       icon: Clock,
       title: 'Requerem Atenção',
       value: attentionClients,
-      description: 'Próximos do ciclo de compra',
+      description: 'Antecipar Compra',
       color: 'bg-amber-500',
       bgColor: 'bg-amber-50',
       textColor: 'text-amber-700'
     },
     {
       id: 3,
-      type: 'info',
+      type: 'INACTIVE',
       icon: TrendingDown,
       title: 'Inativos',
       value: inactiveClients.length,
-      description: 'Sem compras recentes',
+      description: 'Reativar ou Classificar',
       color: 'bg-slate-500',
       bgColor: 'bg-slate-50',
       textColor: 'text-slate-700'
@@ -91,9 +93,10 @@ export default function AlertsPanel({ clients, commissionAlerts }) {
       <div className="space-y-3">
         {alerts.map((alert) => (
           (alert.value > 0 || typeof alert.value === 'string') && (
-            <div 
+            <Link 
               key={alert.id}
-              className={`${alert.bgColor} rounded-xl p-3 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity`}
+              to={createPageUrl(`AlertList?type=${alert.type}`)}
+              className={`${alert.bgColor} rounded-xl p-3 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity block`}
             >
               <div className="flex items-center gap-3">
                 <div className={`${alert.color} w-10 h-10 rounded-xl flex items-center justify-center`}>
@@ -110,7 +113,7 @@ export default function AlertsPanel({ clients, commissionAlerts }) {
                 </span>
                 <ChevronRight className={`w-4 h-4 ${alert.textColor}`} />
               </div>
-            </div>
+            </Link>
           )
         ))}
 
