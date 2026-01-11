@@ -246,6 +246,7 @@ export default function Dashboard() {
         <div>
           <AlertsPanel 
             clients={processedClients}
+            orders={orders}
             commissionAlerts={{
               blockedValue: blockedCommission,
               blockedCount: orders.filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status)).length

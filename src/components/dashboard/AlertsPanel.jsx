@@ -11,15 +11,29 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { createPageUrl } from '@/utils';
 
-export default function AlertsPanel({ clients, commissionAlerts }) {
-  const inactiveClients = clients.filter(c => {
-    if (!c.last_purchase_date) return false;
-    const days = Math.floor((new Date() - new Date(c.last_purchase_date)) / (1000 * 60 * 60 * 24));
-    return days > (c.average_purchase_cycle || 30);
-  });
+export default function AlertsPanel({ clients, commissionAlerts, orders = [] }) {
+  // Calcular alertas usando o motor
+  const processedClients = clients.map(client => {
+    if (!client.last_purchase_date) return null;
+    
+    const avgCycle = client.average_purchase_cycle || 30;
+    const daysSince = Math.floor((new Date() - new Date(client.last_purchase_date)) / (1000 * 60 * 60 * 24));
+    
+    let alertType = null;
+    if (daysSince >= 60) {
+      alertType = 'INACTIVE';
+    } else if (daysSince > avgCycle) {
+      alertType = 'RISK';
+    } else if (daysSince >= avgCycle * 0.85 && daysSince <= avgCycle) {
+      alertType = 'ATTENTION';
+    }
+    
+    return { ...client, alertType, daysSince, avgCycle };
+  }).filter(c => c && c.alertType);
 
-  const attentionClients = clients.filter(c => c.status === 'attention').length;
-  const atRiskClients = clients.filter(c => c.status === 'at_risk').length;
+  const atRiskClients = processedClients.filter(c => c.alertType === 'RISK').length;
+  const attentionClients = processedClients.filter(c => c.alertType === 'ATTENTION').length;
+  const inactiveClients = processedClients.filter(c => c.alertType === 'INACTIVE');
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {

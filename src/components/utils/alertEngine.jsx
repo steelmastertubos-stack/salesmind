@@ -69,6 +69,9 @@ export function getMostPurchasedProduct(orders, clientId) {
  * Determina tipo de alerta do cliente
  */
 export function getAlertType(client, orders) {
+  // Se não tem última compra, não gera alerta
+  if (!client.last_purchase_date) return null;
+  
   const avgCycle = calculateAverageCycle(orders, client.id) || client.average_purchase_cycle || 30;
   const daysSince = daysSinceLastPurchase(client.last_purchase_date);
 
