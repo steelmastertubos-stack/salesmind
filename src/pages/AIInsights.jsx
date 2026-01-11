@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
   Brain, 
@@ -17,7 +17,8 @@ import {
   Phone,
   MessageCircle,
   Mail,
-  FileText
+  FileText,
+  CheckCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,9 +28,16 @@ import PageHeader from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { generateActionableInsights } from '@/components/ai/InsightsEngine';
+import QuickActionModal from '@/components/ai/QuickActionModal';
 
 export default function AIInsights() {
   const [filter, setFilter] = useState('all');
+  const [selectedInsight, setSelectedInsight] = useState(null);
+  const [actionModal, setActionModal] = useState(null);
+  const [processingAction, setProcessingAction] = useState(null);
+  
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading: loadingClients } = useQuery({
     queryKey: ['clients'],
@@ -51,25 +59,101 @@ export default function AIInsights() {
     queryFn: () => base44.entities.Opportunity.list('-created_date', 500)
   });
 
+  const { data: activities = [] } = useQuery({
+    queryKey: ['activities'],
+    queryFn: () => base44.entities.Activity.list('-created_date', 100)
+  });
+
   // Generate insights using rules engine
   const dailyInsights = useMemo(() => {
     if (!clients.length || !orders.length) return [];
-    return generateActionableInsights(clients, orders, quotes, opportunities);
-  }, [clients, orders, quotes, opportunities]);
+    const insights = generateActionableInsights(clients, orders, quotes, opportunities);
+    
+    // Enrich with insight_id and check if action already exists
+    return insights.map((insight, idx) => {
+      const insightId = `INSIGHT-${insight.client_id}-${insight.insight_type || 'ACTION'}-${idx}`;
+      const existingActivity = activities.find(a => 
+        a.customer_id === insight.client_id && 
+        a.notes?.includes(insight.title)
+      );
+      
+      return {
+        ...insight,
+        insight_id: insightId,
+        insight_type: insight.insight_type || 'OPPORTUNITY',
+        scope_type: 'CUSTOMER',
+        scope_id: insight.client_id,
+        activity_id: existingActivity?.id,
+        status: existingActivity ? 'IN_PROGRESS' : 'NEW'
+      };
+    });
+  }, [clients, orders, quotes, opportunities, activities]);
 
-  const handleAction = (insight, actionType) => {
-    if (actionType === 'WHATSAPP') {
-      const text = encodeURIComponent(insight.message_template.whatsapp_text);
-      window.open(`https://wa.me/?text=${text}`, '_blank');
-      toast.success('WhatsApp aberto');
-    } else if (actionType === 'EMAIL') {
-      const subject = encodeURIComponent(insight.message_template.email_subject);
-      const body = encodeURIComponent(insight.message_template.email_body);
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
-      toast.success('Email aberto');
-    } else if (actionType === 'CALL') {
-      toast.info(insight.message_template.call_script);
+  const handleGenerateAction = async (insight) => {
+    // Validate insight has recommended_action
+    if (!insight.recommended_action || !insight.recommended_action.action_type) {
+      toast.error('Insight sem ação configurada');
+      return;
     }
+
+    setProcessingAction(insight.insight_id);
+
+    try {
+      const actionType = insight.recommended_action.action_type;
+      const channel = insight.recommended_action.channel;
+      
+      // A) Create Activity Log
+      const activityData = {
+        customer_id: insight.client_id,
+        customer_name: insight.client_name,
+        alert_type: 'ATTENTION',
+        action_type: channel || 'REMINDER',
+        notes: `[IA] ${insight.title}\n\n${insight.what_is_happening}\n\nAção: ${insight.recommended_action.channel}`,
+        status: 'in_progress',
+        next_follow_up: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+
+      const activity = await base44.entities.Activity.create(activityData);
+      
+      // B) Open execution flow based on action type
+      if (['WHATSAPP', 'CALL', 'EMAIL'].includes(channel)) {
+        setActionModal({ ...insight, activity_id: activity.id });
+      } else if (actionType === 'NAVIGATE' || insight.recommended_action.destination_route) {
+        const route = insight.recommended_action.destination_route || getDefaultRoute(insight);
+        navigate(route);
+      } else {
+        // Fallback: navigate to customer detail
+        navigate(createPageUrl(`ClientDetails?id=${insight.client_id}`));
+      }
+
+      // D) Update UI
+      toast.success('Ação criada com sucesso');
+      queryClient.invalidateQueries(['activities']);
+      
+    } catch (error) {
+      console.error('Error creating action:', error);
+      toast.error('Não foi possível gerar a ação');
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const getDefaultRoute = (insight) => {
+    if (insight.scope_type === 'CUSTOMER') {
+      return createPageUrl(`ClientDetails?id=${insight.scope_id}`);
+    }
+    if (insight.scope_type === 'SEGMENT') {
+      return createPageUrl(`Reports`);
+    }
+    if (insight.scope_type === 'REGION') {
+      return createPageUrl(`Reports`);
+    }
+    return createPageUrl('Dashboard');
+  };
+
+  const handleActionComplete = () => {
+    toast.success('Ação concluída com sucesso');
+    queryClient.invalidateQueries(['activities']);
   };
 
   const getActionIcon = (type) => {
@@ -113,7 +197,9 @@ export default function AIInsights() {
       ) : (
         <div className="space-y-4">
           {dailyInsights.map((insight, idx) => {
-            const ActionIcon = getActionIcon(insight.recommended_action.action_type);
+            const ActionIcon = getActionIcon(insight.recommended_action?.action_type || insight.recommended_action?.channel);
+            const isProcessing = processingAction === insight.insight_id;
+            const hasAction = insight.status === 'IN_PROGRESS';
             
             return (
               <Card key={idx} className="border-l-4 border-l-purple-600 hover:shadow-lg transition-shadow">
@@ -127,6 +213,12 @@ export default function AIInsights() {
                         <Badge variant="outline">
                           Score: {insight.priority_score}
                         </Badge>
+                        {hasAction && (
+                          <Badge className="bg-green-100 text-green-700">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Em andamento
+                          </Badge>
+                        )}
                       </div>
                       <CardTitle className="text-base">{insight.title}</CardTitle>
                       <Link 
@@ -136,13 +228,32 @@ export default function AIInsights() {
                         {insight.client_name} →
                       </Link>
                     </div>
-                    <Button
-                      className="bg-purple-600 hover:bg-purple-700"
-                      onClick={() => handleAction(insight, insight.recommended_action.action_type)}
-                    >
-                      <ActionIcon className="w-4 h-4 mr-2" />
-                      {insight.recommended_action.channel}
-                    </Button>
+                    {hasAction ? (
+                      <Link to={createPageUrl(`ClientAlertDetail?id=${insight.client_id}`)}>
+                        <Button variant="outline" className="border-green-600 text-green-700 hover:bg-green-50">
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Ver Ação
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button
+                        className="bg-purple-600 hover:bg-purple-700"
+                        onClick={() => handleGenerateAction(insight)}
+                        disabled={isProcessing || !insight.recommended_action}
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Criando...
+                          </>
+                        ) : (
+                          <>
+                            <ActionIcon className="w-4 h-4 mr-2" />
+                            Gerar Ação
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -157,14 +268,14 @@ export default function AIInsights() {
 
                   <div className="bg-slate-50 rounded-lg p-3">
                     <p className="text-xs font-semibold text-slate-600 mb-2">
-                      📞 {insight.recommended_action.channel === 'WHATSAPP' ? 'Mensagem sugerida:' : 
-                          insight.recommended_action.channel === 'CALL' ? 'Script da ligação:' : 
+                      📞 {insight.recommended_action?.channel === 'WHATSAPP' ? 'Mensagem sugerida:' : 
+                          insight.recommended_action?.channel === 'CALL' ? 'Script da ligação:' : 
                           'Email sugerido:'}
                     </p>
                     <p className="text-sm text-slate-700 italic">
-                      {insight.message_template.whatsapp_text || insight.message_template.call_script}
+                      {insight.message_template?.whatsapp_text || insight.message_template?.call_script}
                     </p>
-                    {insight.recommended_action.best_time_window && (
+                    {insight.recommended_action?.best_time_window && (
                       <p className="text-xs text-slate-500 mt-2">
                         ⏰ Melhor horário: {insight.recommended_action.best_time_window}
                       </p>
@@ -174,7 +285,7 @@ export default function AIInsights() {
                   <div className="bg-blue-50 rounded-lg p-3">
                     <p className="text-xs font-semibold text-blue-900 mb-1">💡 Por que essa ação?</p>
                     <ul className="text-xs text-blue-800 space-y-0.5">
-                      {insight.explainability.map((point, i) => (
+                      {insight.explainability?.map((point, i) => (
                         <li key={i}>{point}</li>
                       ))}
                     </ul>
@@ -184,6 +295,15 @@ export default function AIInsights() {
             );
           })}
         </div>
+      )}
+
+      {/* Quick Action Modal */}
+      {actionModal && (
+        <QuickActionModal
+          insight={actionModal}
+          onClose={() => setActionModal(null)}
+          onComplete={handleActionComplete}
+        />
       )}
     </div>
   );
