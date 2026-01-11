@@ -494,21 +494,26 @@ export default function Reports() {
   };
 
   // Handler for Focus Cards
-  const handleFocusCardClick = (type, payload) => {
-    console.log('FocusCardClick', { type, payload, period, clientFilter, principalFilter, statusFilter });
+  const handleFocusCardClick = (type) => {
+    console.log('🔍 FocusCardClick START', { type, filteredOrdersLength: filteredOrders.length });
 
     if (type === 'SEGMENT') {
-      const topSegment = Object.entries(
-        filteredOrders.reduce((acc, o) => {
-          const client = clients.find(c => c.id === o.client_id);
-          const seg = client?.segment || 'Outros';
-          acc[seg] = (acc[seg] || 0) + (o.total_value || 0);
-          return acc;
-        }, {})
-      ).sort(([,a], [,b]) => b - a)[0];
+      const segmentData = filteredOrders.reduce((acc, o) => {
+        const client = clients.find(c => c.id === o.client_id);
+        const seg = client?.segment || 'Outros';
+        acc[seg] = (acc[seg] || 0) + (o.total_value || 0);
+        return acc;
+      }, {});
+      
+      const topSegment = Object.entries(segmentData).sort(([,a], [,b]) => b - a)[0];
+      console.log('📊 Top Segment:', topSegment);
 
       if (topSegment && topSegment[0] !== 'Outros') {
         setActiveTab('segments');
+        setTimeout(() => {
+          const element = document.querySelector('[value="segments"]');
+          if (element) element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
         toast.success('Segmento Mais Lucrativo', { 
           description: `${topSegment[0]} - ${formatCurrency(topSegment[1])}` 
         });
@@ -517,16 +522,20 @@ export default function Reports() {
       }
     } 
     else if (type === 'REGION') {
-      const topRegion = Object.entries(
-        filteredOrders.reduce((acc, o) => {
-          const state = o.client_state || 'Outros';
-          acc[state] = (acc[state] || 0) + (o.total_value || 0);
-          return acc;
-        }, {})
-      ).sort(([,a], [,b]) => b - a)[0];
+      const regionData = filteredOrders.reduce((acc, o) => {
+        const state = o.client_state || 'Outros';
+        acc[state] = (acc[state] || 0) + (o.total_value || 0);
+        return acc;
+      }, {});
+      
+      const topRegion = Object.entries(regionData).sort(([,a], [,b]) => b - a)[0];
+      console.log('🗺️ Top Region:', topRegion);
+      console.log('🚀 Navigating to Clients with state:', topRegion?.[0]);
 
       if (topRegion && topRegion[0] !== 'Outros') {
-        navigate(createPageUrl(`Clients?state=${encodeURIComponent(topRegion[0])}`));
+        const url = createPageUrl(`Clients?state=${encodeURIComponent(topRegion[0])}`);
+        console.log('📍 URL:', url);
+        navigate(url);
         toast.success('Região Mais Forte', { 
           description: `${topRegion[0]} - ${formatCurrency(topRegion[1])}` 
         });
@@ -536,16 +545,18 @@ export default function Reports() {
     } 
     else if (type === 'OPPORTUNITY') {
       const openOpps = kpis.current.quotesCreated - kpis.current.quotesWon - kpis.current.quotesLost;
+      console.log('🎯 Open Opportunities:', openOpps);
+      console.log('🚀 Navigating to Opportunities page');
       
-      if (openOpps > 0) {
-        navigate(createPageUrl('Opportunities'));
-        toast.success('Oportunidades em Aberto', { 
-          description: `${openOpps} negócios ativos` 
-        });
-      } else {
-        toast.info('Nenhuma oportunidade em aberto');
-      }
+      const url = createPageUrl('Opportunities');
+      console.log('📍 URL:', url);
+      navigate(url);
+      toast.success('Oportunidades em Aberto', { 
+        description: openOpps > 0 ? `${openOpps} negócios ativos` : 'Ver funil de vendas'
+      });
     }
+
+    console.log('✅ FocusCardClick END');
   };
 
   return (
