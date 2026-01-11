@@ -16,7 +16,9 @@ import {
   ArrowDownRight,
   Minus,
   Filter,
-  X
+  X,
+  MapPin,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +28,11 @@ import { Badge } from '@/components/ui/badge';
 import PageHeader from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ComposedChart, Legend } from 'recharts';
+import AIInsightsBlock from '@/components/reports/AIInsightsBlock';
+import RegionsAnalysis from '@/components/reports/RegionsAnalysis';
+import SegmentsAnalysis from '@/components/reports/SegmentsAnalysis';
+import SeasonalityCrossAnalysis from '@/components/reports/SeasonalityCrossAnalysis';
+import { toast } from 'sonner';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -384,6 +391,79 @@ export default function Reports() {
     );
   };
 
+  // Generate AI Insights
+  const generateInsights = () => {
+    const insights = [];
+    
+    // Segment insights
+    const segmentData = {};
+    filteredOrders.forEach(order => {
+      const client = clients.find(c => c.id === order.client_id);
+      const segment = client?.segment || 'Outros';
+      if (!segmentData[segment]) segmentData[segment] = { revenue: 0, orders: 0 };
+      segmentData[segment].revenue += order.total_value || 0;
+      segmentData[segment].orders += 1;
+    });
+    
+    const totalRevenue = Object.values(segmentData).reduce((sum, s) => sum + s.revenue, 0);
+    const topSegment = Object.entries(segmentData).sort(([,a], [,b]) => b.revenue - a.revenue)[0];
+    if (topSegment && totalRevenue > 0) {
+      const [segment, data] = topSegment;
+      const share = (data.revenue / totalRevenue) * 100;
+      insights.push({
+        text: `${segment} gera ${share.toFixed(0)}% do faturamento (${formatCurrency(data.revenue)})`,
+        type: 'opportunity',
+        filters: { segment }
+      });
+    }
+
+    // Region insights
+    const regionData = {};
+    filteredOrders.forEach(order => {
+      const state = order.client_state || 'Outros';
+      if (!regionData[state]) regionData[state] = { revenue: 0, orders: 0, avgTicket: 0 };
+      regionData[state].revenue += order.total_value || 0;
+      regionData[state].orders += 1;
+    });
+    
+    Object.keys(regionData).forEach(state => {
+      regionData[state].avgTicket = regionData[state].orders > 0 ? regionData[state].revenue / regionData[state].orders : 0;
+    });
+
+    const topState = Object.entries(regionData).sort(([,a], [,b]) => b.revenue - a.revenue)[0];
+    const highestTicketState = Object.entries(regionData).sort(([,a], [,b]) => b.avgTicket - a.avgTicket)[0];
+    
+    if (topState && highestTicketState && topState[0] !== highestTicketState[0]) {
+      insights.push({
+        text: `${topState[0]} lidera em volume, mas ${highestTicketState[0]} tem maior ticket médio (${formatCurrency(highestTicketState[1].avgTicket)})`,
+        type: 'opportunity',
+        filters: { state: highestTicketState[0] }
+      });
+    }
+
+    // Conversion insights
+    if (kpis.current.conversionRate < 40 && kpis.current.quotesCreated > 10) {
+      insights.push({
+        text: `Taxa de conversão baixa (${kpis.current.conversionRate.toFixed(1)}%). Revisar qualificação de leads e follow-up`,
+        type: 'risk'
+      });
+    }
+
+    return insights;
+  };
+
+  const aiInsights = generateInsights();
+
+  const handleGenerateAction = (insight) => {
+    toast.success('Ação agendada! (em desenvolvimento)', {
+      description: insight.text
+    });
+  };
+
+  const handleClickState = (state) => {
+    toast.info(`Filtro aplicado: ${state}`);
+  };
+
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
       <PageHeader 
@@ -487,6 +567,9 @@ export default function Reports() {
         </CardContent>
       </Card>
 
+      {/* AI Insights Block */}
+      <AIInsightsBlock insights={aiInsights} onGenerateAction={handleGenerateAction} />
+
       {/* KPIs com Comparação */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -557,15 +640,122 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="sales" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+      <Tabs defaultValue="executive" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+          <TabsTrigger value="executive">Visão Executiva</TabsTrigger>
           <TabsTrigger value="sales">Vendas</TabsTrigger>
-          <TabsTrigger value="products">Produtos</TabsTrigger>
-          <TabsTrigger value="crm">CRM/Funil</TabsTrigger>
           <TabsTrigger value="clients">Clientes</TabsTrigger>
-          <TabsTrigger value="principals">Representadas</TabsTrigger>
+          <TabsTrigger value="regions">Regiões</TabsTrigger>
+          <TabsTrigger value="segments">Segmentos</TabsTrigger>
+          <TabsTrigger value="crm">CRM/Funil</TabsTrigger>
           <TabsTrigger value="seasonality">Sazonalidade</TabsTrigger>
         </TabsList>
+
+        {/* Visão Executiva */}
+        <TabsContent value="executive" className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Evolução Mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyEvolution}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="monthLabel" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(value, name) => {
+                        if (name === 'revenue') return [formatCurrency(value), 'Faturamento'];
+                        return [value, name];
+                      }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} name="Faturamento" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Resumida</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+                    <span className="text-sm font-medium">Faturamento</span>
+                    <span className="text-lg font-bold text-emerald-600">{formatCurrency(kpis.current.revenue)}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <span className="text-sm font-medium">Pedidos</span>
+                    <span className="text-lg font-bold text-blue-600">{kpis.current.orders}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <span className="text-sm font-medium">Ticket Médio</span>
+                    <span className="text-lg font-bold text-purple-600">{formatCurrency(kpis.current.avgTicket)}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                    <span className="text-sm font-medium">Conversão</span>
+                    <span className="text-lg font-bold text-amber-600">{kpis.current.conversionRate.toFixed(1)}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>💡 Onde Focar Agora?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-3 gap-4">
+                <Button 
+                  className="h-20 bg-emerald-600 hover:bg-emerald-700 flex-col"
+                  onClick={() => {
+                    const topSegment = Object.entries(
+                      filteredOrders.reduce((acc, o) => {
+                        const client = clients.find(c => c.id === o.client_id);
+                        const seg = client?.segment || 'Outros';
+                        acc[seg] = (acc[seg] || 0) + (o.total_value || 0);
+                        return acc;
+                      }, {})
+                    ).sort(([,a], [,b]) => b - a)[0];
+                    toast.info(`Top Segmento: ${topSegment?.[0]}`);
+                  }}
+                >
+                  <Zap className="w-6 h-6 mb-2" />
+                  Segmento Mais Lucrativo
+                </Button>
+                <Button 
+                  className="h-20 bg-blue-600 hover:bg-blue-700 flex-col"
+                  onClick={() => {
+                    const topRegion = Object.entries(
+                      filteredOrders.reduce((acc, o) => {
+                        const state = o.client_state || 'Outros';
+                        acc[state] = (acc[state] || 0) + (o.total_value || 0);
+                        return acc;
+                      }, {})
+                    ).sort(([,a], [,b]) => b - a)[0];
+                    toast.info(`Top Região: ${topRegion?.[0]}`);
+                  }}
+                >
+                  <MapPin className="w-6 h-6 mb-2" />
+                  Região Mais Forte
+                </Button>
+                <Button 
+                  className="h-20 bg-purple-600 hover:bg-purple-700 flex-col"
+                  onClick={() => {
+                    toast.info(`${kpis.current.quotesCreated - kpis.current.quotesWon - kpis.current.quotesLost} oportunidades em aberto`);
+                  }}
+                >
+                  <Target className="w-6 h-6 mb-2" />
+                  Oportunidades em Aberto
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Vendas Tab */}
         <TabsContent value="sales" className="space-y-6">
@@ -923,6 +1113,24 @@ export default function Reports() {
           </div>
         </TabsContent>
 
+        {/* Regiões Tab */}
+        <TabsContent value="regions" className="space-y-6">
+          <RegionsAnalysis 
+            orders={filteredOrders} 
+            onClickState={handleClickState}
+            formatCurrency={formatCurrency}
+          />
+        </TabsContent>
+
+        {/* Segmentos Tab */}
+        <TabsContent value="segments" className="space-y-6">
+          <SegmentsAnalysis 
+            clients={clients}
+            orders={filteredOrders}
+            formatCurrency={formatCurrency}
+          />
+        </TabsContent>
+
         {/* Representadas Tab */}
         <TabsContent value="principals" className="space-y-6">
           <Card>
@@ -968,9 +1176,15 @@ export default function Reports() {
 
         {/* Sazonalidade Tab */}
         <TabsContent value="seasonality" className="space-y-6">
+          <SeasonalityCrossAnalysis
+            clients={clients}
+            orders={orders}
+            formatCurrency={formatCurrency}
+          />
+
           <Card>
             <CardHeader>
-              <CardTitle>Análise de Sazonalidade</CardTitle>
+              <CardTitle>Análise Mensal Histórica</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -992,16 +1206,6 @@ export default function Reports() {
                     <Line yAxisId="right" type="monotone" dataKey="weight" stroke="#f59e0b" strokeWidth={2} name="Volume (kg)" />
                   </ComposedChart>
                 </ResponsiveContainer>
-              </div>
-              
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">💡 Insights de Sazonalidade</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Identifique meses de pico e prepare-se para alta demanda</li>
-                  <li>• Meses fracos são oportunidades para campanhas e promoções</li>
-                  <li>• Analise por produto específico para entender padrões de cada material</li>
-                  <li>• Compare ano a ano para validar tendências recorrentes</li>
-                </ul>
               </div>
             </CardContent>
           </Card>
