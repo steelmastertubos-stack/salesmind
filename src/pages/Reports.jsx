@@ -47,6 +47,7 @@ export default function Reports() {
   const [clientFilter, setClientFilter] = useState('all');
   const [principalFilter, setPrincipalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('executive');
 
   // Data fetching
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
@@ -492,6 +493,61 @@ export default function Reports() {
     toast.info(`Filtro aplicado: ${state}`);
   };
 
+  // Handler for Focus Cards
+  const handleFocusCardClick = (type, payload) => {
+    console.log('FocusCardClick', { type, payload, period, clientFilter, principalFilter, statusFilter });
+
+    if (type === 'SEGMENT') {
+      const topSegment = Object.entries(
+        filteredOrders.reduce((acc, o) => {
+          const client = clients.find(c => c.id === o.client_id);
+          const seg = client?.segment || 'Outros';
+          acc[seg] = (acc[seg] || 0) + (o.total_value || 0);
+          return acc;
+        }, {})
+      ).sort(([,a], [,b]) => b - a)[0];
+
+      if (topSegment && topSegment[0] !== 'Outros') {
+        setActiveTab('segments');
+        toast.success('Segmento Mais Lucrativo', { 
+          description: `${topSegment[0]} - ${formatCurrency(topSegment[1])}` 
+        });
+      } else {
+        toast.info('Sem dados de segmento disponíveis');
+      }
+    } 
+    else if (type === 'REGION') {
+      const topRegion = Object.entries(
+        filteredOrders.reduce((acc, o) => {
+          const state = o.client_state || 'Outros';
+          acc[state] = (acc[state] || 0) + (o.total_value || 0);
+          return acc;
+        }, {})
+      ).sort(([,a], [,b]) => b - a)[0];
+
+      if (topRegion && topRegion[0] !== 'Outros') {
+        setActiveTab('regions');
+        toast.success('Região Mais Forte', { 
+          description: `${topRegion[0]} - ${formatCurrency(topRegion[1])}` 
+        });
+      } else {
+        toast.info('Sem dados de região disponíveis');
+      }
+    } 
+    else if (type === 'OPPORTUNITY') {
+      const openOpps = kpis.current.quotesCreated - kpis.current.quotesWon - kpis.current.quotesLost;
+      
+      if (openOpps > 0) {
+        setActiveTab('crm');
+        toast.success('Oportunidades em Aberto', { 
+          description: `${openOpps} negócios ativos` 
+        });
+      } else {
+        toast.info('Nenhuma oportunidade em aberto');
+      }
+    }
+  };
+
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
       <PageHeader 
@@ -668,7 +724,7 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="executive" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
           <TabsTrigger value="executive">Visão Executiva</TabsTrigger>
           <TabsTrigger value="sales">Vendas</TabsTrigger>
@@ -739,43 +795,22 @@ export default function Reports() {
             <CardContent>
               <div className="grid lg:grid-cols-3 gap-4">
                 <Button 
-                  className="h-20 bg-emerald-600 hover:bg-emerald-700 flex-col"
-                  onClick={() => {
-                    const topSegment = Object.entries(
-                      filteredOrders.reduce((acc, o) => {
-                        const client = clients.find(c => c.id === o.client_id);
-                        const seg = client?.segment || 'Outros';
-                        acc[seg] = (acc[seg] || 0) + (o.total_value || 0);
-                        return acc;
-                      }, {})
-                    ).sort(([,a], [,b]) => b - a)[0];
-                    toast.info(`Top Segmento: ${topSegment?.[0]}`);
-                  }}
+                  className="h-20 bg-emerald-600 hover:bg-emerald-700 active:scale-95 flex-col transition-all cursor-pointer"
+                  onClick={() => handleFocusCardClick('SEGMENT')}
                 >
                   <Zap className="w-6 h-6 mb-2" />
                   Segmento Mais Lucrativo
                 </Button>
                 <Button 
-                  className="h-20 bg-blue-600 hover:bg-blue-700 flex-col"
-                  onClick={() => {
-                    const topRegion = Object.entries(
-                      filteredOrders.reduce((acc, o) => {
-                        const state = o.client_state || 'Outros';
-                        acc[state] = (acc[state] || 0) + (o.total_value || 0);
-                        return acc;
-                      }, {})
-                    ).sort(([,a], [,b]) => b - a)[0];
-                    toast.info(`Top Região: ${topRegion?.[0]}`);
-                  }}
+                  className="h-20 bg-blue-600 hover:bg-blue-700 active:scale-95 flex-col transition-all cursor-pointer"
+                  onClick={() => handleFocusCardClick('REGION')}
                 >
                   <MapPin className="w-6 h-6 mb-2" />
                   Região Mais Forte
                 </Button>
                 <Button 
-                  className="h-20 bg-purple-600 hover:bg-purple-700 flex-col"
-                  onClick={() => {
-                    toast.info(`${kpis.current.quotesCreated - kpis.current.quotesWon - kpis.current.quotesLost} oportunidades em aberto`);
-                  }}
+                  className="h-20 bg-purple-600 hover:bg-purple-700 active:scale-95 flex-col transition-all cursor-pointer"
+                  onClick={() => handleFocusCardClick('OPPORTUNITY')}
                 >
                   <Target className="w-6 h-6 mb-2" />
                   Oportunidades em Aberto
