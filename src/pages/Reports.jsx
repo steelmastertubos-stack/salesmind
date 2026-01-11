@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { 
   BarChart3, 
   TrendingUp,
@@ -37,6 +39,8 @@ import { toast } from 'sonner';
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function Reports() {
+  const navigate = useNavigate();
+  
   // Filtros globais
   const [period, setPeriod] = useState('thisMonth');
   const [comparisonPeriod, setComparisonPeriod] = useState('lastMonth');
@@ -454,10 +458,34 @@ export default function Reports() {
 
   const aiInsights = generateInsights();
 
-  const handleGenerateAction = (insight) => {
-    toast.success('Ação agendada! (em desenvolvimento)', {
-      description: insight.text
-    });
+  const handleGenerateAction = async (insight) => {
+    try {
+      // Create activity log
+      const activityData = {
+        customer_id: 'SEGMENT',
+        customer_name: insight.text,
+        alert_type: 'ATTENTION',
+        action_type: 'REMINDER',
+        notes: `[IA - Relatórios] ${insight.text}\n\nAção: Analisar ${insight.filters?.segment || insight.filters?.state || 'segmento'}`,
+        status: 'pending'
+      };
+
+      await base44.entities.Activity.create(activityData);
+      
+      // Navigate based on filters
+      if (insight.filters?.segment) {
+        navigate(createPageUrl('Clients'));
+        toast.success('Navegando para clientes', { description: `Segmento: ${insight.filters.segment}` });
+      } else if (insight.filters?.state) {
+        navigate(createPageUrl('Clients'));
+        toast.success('Navegando para clientes', { description: `Estado: ${insight.filters.state}` });
+      } else {
+        toast.success('Ação criada com sucesso');
+      }
+    } catch (error) {
+      console.error('Error creating action:', error);
+      toast.error('Erro ao criar ação');
+    }
   };
 
   const handleClickState = (state) => {
