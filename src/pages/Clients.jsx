@@ -23,14 +23,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export default function Clients() {
+  const queryClient = useQueryClient();
+  
+  // Check for segment filter from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlSegment = urlParams.get('segment');
+  
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [segmentFilter, setSegmentFilter] = useState('all');
+  const [segmentFilter, setSegmentFilter] = useState(urlSegment || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-
-  const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],

@@ -474,11 +474,11 @@ export default function Reports() {
       
       // Navigate based on filters
       if (insight.filters?.segment) {
-        navigate(createPageUrl('Clients'));
-        toast.success('Navegando para clientes', { description: `Segmento: ${insight.filters.segment}` });
+        navigate(createPageUrl(`Clients?segment=${encodeURIComponent(insight.filters.segment)}`));
+        toast.success('Mostrando clientes do segmento', { description: insight.filters.segment });
       } else if (insight.filters?.state) {
-        navigate(createPageUrl('Clients'));
-        toast.success('Navegando para clientes', { description: `Estado: ${insight.filters.state}` });
+        navigate(createPageUrl(`Clients?state=${encodeURIComponent(insight.filters.state)}`));
+        toast.success('Mostrando clientes do estado', { description: insight.filters.state });
       } else {
         toast.success('Ação criada com sucesso');
       }
