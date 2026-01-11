@@ -91,12 +91,38 @@ export default function AlertsPanel({ clients, commissionAlerts }) {
       </div>
 
       <div className="space-y-3">
-        {alerts.map((alert) => (
-          (alert.value > 0 || typeof alert.value === 'string') && (
+        {alerts.map((alert) => {
+          const hasAlerts = alert.value > 0 || typeof alert.value === 'string';
+          const isDisabled = !hasAlerts;
+          
+          if (isDisabled) {
+            return (
+              <div
+                key={alert.id}
+                className={`${alert.bgColor} rounded-xl p-3 flex items-center justify-between opacity-40 cursor-not-allowed`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`${alert.color} w-10 h-10 rounded-xl flex items-center justify-center`}>
+                    <alert.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-semibold ${alert.textColor}`}>{alert.title}</p>
+                    <p className="text-xs text-slate-500">{alert.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`font-bold text-lg ${alert.textColor}`}>0</span>
+                  <ChevronRight className={`w-4 h-4 ${alert.textColor}`} />
+                </div>
+              </div>
+            );
+          }
+          
+          return (
             <Link 
               key={alert.id}
               to={createPageUrl(`AlertList?type=${alert.type}`)}
-              className={`${alert.bgColor} rounded-xl p-3 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity block`}
+              className={`${alert.bgColor} rounded-xl p-3 flex items-center justify-between cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all block`}
             >
               <div className="flex items-center gap-3">
                 <div className={`${alert.color} w-10 h-10 rounded-xl flex items-center justify-center`}>
@@ -114,8 +140,8 @@ export default function AlertsPanel({ clients, commissionAlerts }) {
                 <ChevronRight className={`w-4 h-4 ${alert.textColor}`} />
               </div>
             </Link>
-          )
-        ))}
+          );
+        })}
 
         {alerts.every(a => a.value === 0) && (
           <div className="text-center py-6 text-slate-500">
