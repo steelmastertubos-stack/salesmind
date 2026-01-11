@@ -146,7 +146,7 @@ export default function Opportunities() {
         const isPrimeiraVenda = !clientData?.purchase_count || clientData.purchase_count === 0;
         
         // Preparar dados do email
-        const emailSubject = `${quoteData?.quote_number} - ${opportunity.client_name}`;
+        const emailSubject = `${quoteData?.quote_number} - ${opportunity.client_name} PEDIDO APROVADO`;
         let emailBody = `Ganhamos mais um! 🎯\n\nCliente: ${opportunity.client_name}\nValor: ${formatCurrency(opportunity.total_value)}\nPeso: ${opportunity.total_weight}kg\nOrçamento: ${quoteData?.quote_number}\n\n`;
         
         if (isPrimeiraVenda) {
