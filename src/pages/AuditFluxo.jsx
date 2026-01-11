@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import { IntegrationValidator } from '@/components/utils/integrationValidator';
+import { AuditFixer } from '@/components/utils/auditFixer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, CheckCircle2, AlertCircle, Zap, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, AlertCircle, Zap, RefreshCw, Wrench, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
 export default function AuditFluxo() {
   const [auditResult, setAuditResult] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: quotes = [] } = useQuery({
     queryKey: ['quotes'],
@@ -36,6 +40,11 @@ export default function AuditFluxo() {
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('company_name', 500)
+  });
+
+  const { data: principals = [] } = useQuery({
+    queryKey: ['principals'],
+    queryFn: () => base44.entities.Principal.list('company_name', 200)
   });
 
   const runAudit = async () => {
@@ -79,6 +88,44 @@ export default function AuditFluxo() {
     }
   };
 
+  const runAutoFix = async () => {
+    if (!auditResult || auditResult.critical === 0) {
+      toast.info('Nenhum problema crítico para corrigir');
+      return;
+    }
+
+    setIsFixing(true);
+    try {
+      const fixer = new AuditFixer();
+      const result = await fixer.fixAllIssues(
+        auditResult.issues,
+        quotes,
+        opportunities,
+        orders,
+        commissions,
+        principals
+      );
+
+      toast.success(`✅ ${result.fixed} problemas corrigidos!`, {
+        description: result.failed > 0 ? `${result.failed} falharam` : 'Todos os problemas foram resolvidos'
+      });
+
+      // Atualizar dados
+      queryClient.invalidateQueries(['quotes']);
+      queryClient.invalidateQueries(['opportunities']);
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['commissions']);
+
+      // Executar nova auditoria
+      setTimeout(() => runAudit(), 1000);
+    } catch (error) {
+      console.error('Erro ao executar auto-fix:', error);
+      toast.error('Erro ao corrigir problemas');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
   const isHealthy = !auditResult || auditResult.critical === 0;
 
   return (
@@ -87,14 +134,35 @@ export default function AuditFluxo() {
         title="🔍 Auditoria do Fluxo Integrado"
         subtitle="Validação automática da cadeia Quote → Opp → Order → Commission"
       >
-        <Button
-          onClick={runAudit}
-          disabled={isRunning}
-          className="bg-[#0F2A44] hover:bg-[#1F4E79]"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
-          {isRunning ? 'Auditando...' : 'Executar Auditoria'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={runAudit}
+            disabled={isRunning || isFixing}
+            variant="outline"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
+            {isRunning ? 'Auditando...' : 'Executar Auditoria'}
+          </Button>
+          {auditResult && auditResult.critical > 0 && (
+            <Button
+              onClick={runAutoFix}
+              disabled={isFixing || isRunning}
+              className="bg-[#1DB954] hover:bg-[#15803d]"
+            >
+              {isFixing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Corrigindo...
+                </>
+              ) : (
+                <>
+                  <Wrench className="w-4 h-4 mr-2" />
+                  Corrigir Problemas ({auditResult.critical})
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </PageHeader>
 
       {/* Health Status */}
