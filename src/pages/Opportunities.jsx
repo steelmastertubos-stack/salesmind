@@ -655,17 +655,13 @@ export default function Opportunities() {
                 </Button>
                 <Button
                    onClick={() => {
-                     const emailContent = `Para: ${emailPreview.principalEmail}\nAssunto: ${emailPreview.subject}\n\n${editableEmailBody}`;
-                     navigator.clipboard.writeText(emailContent).then(() => {
-                       toast.success('✅ Email copiado! Cole no Outlook');
-                     }).catch(() => {
-                       alert('Copie manualmente:\n\n' + emailContent);
-                     });
+                     const mailtoLink = `mailto:${emailPreview.principalEmail}?subject=${encodeURIComponent(emailPreview.subject)}&body=${encodeURIComponent(editableEmailBody)}`;
+                     window.location.href = mailtoLink;
                    }}
                    className="flex-1 bg-blue-600 hover:bg-blue-700"
                  >
                    <Mail className="w-4 h-4 mr-2" />
-                   Copiar para Outlook
+                   Abrir no Outlook
                  </Button>
                 <Button
                   onClick={confirmSendEmail}
