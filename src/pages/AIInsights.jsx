@@ -90,25 +90,18 @@ export default function AIInsights() {
   }, [clients, orders, quotes, opportunities, activities]);
 
   const handleGenerateAction = async (insight) => {
-    // Validate insight has recommended_action
-    if (!insight.recommended_action || !insight.recommended_action.action_type) {
-      toast.error('Insight sem ação configurada');
-      return;
-    }
-
     setProcessingAction(insight.insight_id);
 
     try {
-      const actionType = insight.recommended_action.action_type;
-      const channel = insight.recommended_action.channel;
+      const channel = insight.recommended_action?.channel || 'WHATSAPP';
       
       // A) Create Activity Log
       const activityData = {
         customer_id: insight.client_id,
         customer_name: insight.client_name,
         alert_type: 'ATTENTION',
-        action_type: channel || 'REMINDER',
-        notes: `[IA] ${insight.title}\n\n${insight.what_is_happening}\n\nAção: ${insight.recommended_action.channel}`,
+        action_type: channel,
+        notes: `[IA] ${insight.title}\n\n${insight.what_is_happening}\n\nAção: ${channel}`,
         status: 'in_progress',
         next_follow_up: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       };
@@ -118,16 +111,14 @@ export default function AIInsights() {
       // B) Open execution flow based on action type
       if (['WHATSAPP', 'CALL', 'EMAIL'].includes(channel)) {
         setActionModal({ ...insight, activity_id: activity.id });
-      } else if (actionType === 'NAVIGATE' || insight.recommended_action.destination_route) {
-        const route = insight.recommended_action.destination_route || getDefaultRoute(insight);
-        navigate(route);
+        toast.success('Ação criada! Prepare sua mensagem');
       } else {
         // Fallback: navigate to customer detail
         navigate(createPageUrl(`ClientDetails?id=${insight.client_id}`));
+        toast.success('Ação criada! Abrindo detalhes do cliente');
       }
 
       // D) Update UI
-      toast.success('Ação criada com sucesso');
       queryClient.invalidateQueries(['activities']);
       
     } catch (error) {
@@ -239,7 +230,7 @@ export default function AIInsights() {
                       <Button
                         className="bg-purple-600 hover:bg-purple-700"
                         onClick={() => handleGenerateAction(insight)}
-                        disabled={isProcessing || !insight.recommended_action}
+                        disabled={isProcessing}
                       >
                         {isProcessing ? (
                           <>
