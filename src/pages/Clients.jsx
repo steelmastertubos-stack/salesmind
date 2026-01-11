@@ -25,13 +25,15 @@ import { toast } from 'sonner';
 export default function Clients() {
   const queryClient = useQueryClient();
   
-  // Check for segment filter from URL
+  // Check for segment and state filters from URL
   const urlParams = new URLSearchParams(window.location.search);
   const urlSegment = urlParams.get('segment');
+  const urlState = urlParams.get('state');
   
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [segmentFilter, setSegmentFilter] = useState(urlSegment || 'all');
+  const [stateFilter, setStateFilter] = useState(urlState || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -79,6 +81,7 @@ export default function Clients() {
   };
 
   const segments = [...new Set(clients.map(c => c.segment).filter(Boolean))];
+  const states = [...new Set(clients.map(c => c.state).filter(Boolean))];
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = 
@@ -88,13 +91,15 @@ export default function Clients() {
     
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
     const matchesSegment = segmentFilter === 'all' || client.segment === segmentFilter;
+    const matchesState = stateFilter === 'all' || client.state === stateFilter;
     
-    return matchesSearch && matchesStatus && matchesSegment;
+    return matchesSearch && matchesStatus && matchesSegment && matchesState;
   });
 
   const activeFilters = [
     statusFilter !== 'all' && statusFilter,
-    segmentFilter !== 'all' && segmentFilter
+    segmentFilter !== 'all' && segmentFilter,
+    stateFilter !== 'all' && stateFilter
   ].filter(Boolean).length;
 
   return (
@@ -169,12 +174,28 @@ export default function Clients() {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Estado</label>
+                <Select value={stateFilter} onValueChange={setStateFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os estados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {states.map(state => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Button 
                 variant="outline" 
                 className="w-full"
                 onClick={() => {
                   setStatusFilter('all');
                   setSegmentFilter('all');
+                  setStateFilter('all');
                 }}
               >
                 Limpar Filtros
@@ -199,6 +220,14 @@ export default function Clients() {
             <Badge variant="secondary" className="pl-2">
               Segmento: {segmentFilter}
               <button onClick={() => setSegmentFilter('all')} className="ml-1 hover:bg-slate-200 rounded-full p-0.5">
+                <X className="w-3 h-3" />
+              </button>
+            </Badge>
+          )}
+          {stateFilter !== 'all' && (
+            <Badge variant="secondary" className="pl-2">
+              Estado: {stateFilter}
+              <button onClick={() => setStateFilter('all')} className="ml-1 hover:bg-slate-200 rounded-full p-0.5">
                 <X className="w-3 h-3" />
               </button>
             </Badge>

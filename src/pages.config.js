@@ -1,5 +1,7 @@
 import AIInsights from './pages/AIInsights';
+import AlertList from './pages/AlertList';
 import AuditFluxo from './pages/AuditFluxo';
+import ClientAlertDetail from './pages/ClientAlertDetail';
 import ClientDetails from './pages/ClientDetails';
 import Clients from './pages/Clients';
 import Commissions from './pages/Commissions';
@@ -15,14 +17,14 @@ import Settings from './pages/Settings';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
-import AlertList from './pages/AlertList';
-import ClientAlertDetail from './pages/ClientAlertDetail';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIInsights": AIInsights,
+    "AlertList": AlertList,
     "AuditFluxo": AuditFluxo,
+    "ClientAlertDetail": ClientAlertDetail,
     "ClientDetails": ClientDetails,
     "Clients": Clients,
     "Commissions": Commissions,
@@ -38,8 +40,6 @@ export const PAGES = {
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
-    "AlertList": AlertList,
-    "ClientAlertDetail": ClientAlertDetail,
 }
 
 export const pagesConfig = {

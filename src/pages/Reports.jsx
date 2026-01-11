@@ -526,7 +526,7 @@ export default function Reports() {
       ).sort(([,a], [,b]) => b - a)[0];
 
       if (topRegion && topRegion[0] !== 'Outros') {
-        setActiveTab('regions');
+        navigate(createPageUrl(`Clients?state=${encodeURIComponent(topRegion[0])}`));
         toast.success('Região Mais Forte', { 
           description: `${topRegion[0]} - ${formatCurrency(topRegion[1])}` 
         });
@@ -538,7 +538,7 @@ export default function Reports() {
       const openOpps = kpis.current.quotesCreated - kpis.current.quotesWon - kpis.current.quotesLost;
       
       if (openOpps > 0) {
-        setActiveTab('crm');
+        navigate(createPageUrl('Opportunities'));
         toast.success('Oportunidades em Aberto', { 
           description: `${openOpps} negócios ativos` 
         });
