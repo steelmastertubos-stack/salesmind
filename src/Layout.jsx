@@ -14,9 +14,11 @@ import {
     Zap,
     MapPin,
     Target,
-    Upload
+    Upload,
+    CheckSquare
   } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import TaskNotifications from '@/components/tasks/TaskNotifications';
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,6 +42,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Clientes', icon: Users, page: 'Clients' },
     { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
     { name: 'CRM', icon: Target, page: 'Opportunities' },
+    { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' },
     { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' },
     { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
     { name: 'Representados', icon: Building2, page: 'Principals' },
@@ -165,6 +168,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="p-4 lg:p-6">
           {children}
         </div>
+        <TaskNotifications />
       </main>
 
       {/* Mobile Bottom Navigation */}
