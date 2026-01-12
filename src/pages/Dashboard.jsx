@@ -25,6 +25,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
   const [greeting, setGreeting] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -112,6 +114,24 @@ export default function Dashboard() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value || 0);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries(['clients']),
+        queryClient.invalidateQueries(['quotes']),
+        queryClient.invalidateQueries(['orders']),
+        queryClient.invalidateQueries(['commissions']),
+        queryClient.invalidateQueries(['user'])
+      ]);
+      toast.success('Dados atualizados!');
+    } catch (error) {
+      toast.error('Erro ao atualizar dados');
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const isLoading = loadingClients || loadingQuotes || loadingOrders;
