@@ -302,7 +302,7 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
           <Alert className="bg-blue-50 border-blue-200">
             <AlertCircle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-900">
-              Nome do Contato, Telefone e Email são obrigatórios
+              <strong>Campos obrigatórios:</strong> Segmento, Nome do Contato, Telefone e Email
             </AlertDescription>
           </Alert>
 
