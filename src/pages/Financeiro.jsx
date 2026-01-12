@@ -56,19 +56,68 @@ export default function FinanceiroPage() {
     queryFn: () => base44.entities.Commission.list('-created_date', 500)
   });
 
+  const { data: orders = [] } = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => base44.entities.Order.list('-created_date', 500)
+  });
+
   // Calcular resumo financeiro
   const summary = useMemo(() => {
     const now = new Date();
     
+    // Filtrar parcelas
     const filtered = installments.filter(i => {
       const monthMatch = !selectedMonth || i.reference_month === selectedMonth;
       const principalMatch = !selectedPrincipal || i.representada_id === selectedPrincipal;
       return monthMatch && principalMatch;
     });
 
-    const previsto = filtered.filter(i => i.status === 'prevista').reduce((sum, i) => sum + (i.installment_value || 0), 0);
-    const aReceber = filtered.filter(i => i.status === 'a_receber').reduce((sum, i) => sum + (i.installment_value || 0), 0);
+    // PREVISTO: Apenas parcelas de pedidos com comissão parcelada (não faturados ainda)
+    // Buscar pedidos relacionados às comissões para verificar se são parcelados
+    const ordersMap = {};
+    orders.forEach(o => ordersMap[o.id] = o);
+    
+    const commissionsMap = {};
+    commissions.forEach(c => commissionsMap[c.id] = c);
+
+    const previsto = filtered.filter(i => {
+      // Deve estar com status "prevista"
+      if (i.status !== 'prevista') return false;
+      
+      // Buscar comissão e pedido relacionados
+      const commission = commissionsMap[i.commission_id];
+      if (!commission) return false;
+      
+      const order = ordersMap[commission.order_id];
+      if (!order) return false;
+      
+      // Aceitar apenas se o pedido ainda não foi faturado e tem parcelas configuradas
+      // (pedidos parcelados têm payment_installments ou terms definidos tipo "30/45/60")
+      const isNotInvoiced = !order.billing_date && order.status !== 'faturado';
+      const hasInstallments = order.payment_installments?.length > 0 || 
+                              (order.terms && order.terms.includes('/'));
+      
+      return isNotInvoiced && hasInstallments;
+    }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
+
+    // A RECEBER: Parcelas de pedidos faturados (ganhos)
+    const aReceber = filtered.filter(i => {
+      if (i.status === 'recebida') return false;
+      
+      const commission = commissionsMap[i.commission_id];
+      if (!commission) return false;
+      
+      const order = ordersMap[commission.order_id];
+      if (!order) return false;
+      
+      // Pedido deve estar faturado
+      const isInvoiced = order.status === 'faturado' || order.billing_date;
+      
+      return isInvoiced;
+    }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
+
     const recebido = filtered.filter(i => i.status === 'recebida').reduce((sum, i) => sum + (i.received_value || 0), 0);
+    
     const atrasado = filtered.filter(i => {
       if (i.status === 'recebida') return false;
       const dueDate = new Date(i.due_date);
@@ -76,7 +125,7 @@ export default function FinanceiroPage() {
     }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
 
     return { previsto, aReceber, recebido, atrasado, total: previsto + aReceber + recebido };
-  }, [installments, selectedMonth, selectedPrincipal]);
+  }, [installments, commissions, orders, selectedMonth, selectedPrincipal]);
 
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
