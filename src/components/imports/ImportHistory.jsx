@@ -64,10 +64,6 @@ export default function ImportHistory() {
 
   const activeBatches = batches.filter(b => b.status === 'active');
 
-  if (activeBatches.length === 0) {
-    return null;
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -77,7 +73,12 @@ export default function ImportHistory() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {activeBatches.map(batch => (
+        {activeBatches.length === 0 ? (
+          <p className="text-sm text-slate-500 text-center py-4">
+            Nenhuma importação realizada ainda. Após importar, você poderá desfazer aqui.
+          </p>
+        ) : (
+          activeBatches.map(batch => (
           <div key={batch.id} className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-white border flex items-center justify-center">
@@ -103,7 +104,8 @@ export default function ImportHistory() {
               Desfazer
             </Button>
           </div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   );
