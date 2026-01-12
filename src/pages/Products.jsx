@@ -371,6 +371,7 @@ function ProductForm({ product, principals, onSave, onCancel }) {
     category: product?.category || 'outros',
     ncm: product?.ncm || '',
     unit: product?.unit || 'kg',
+    factor_6m: product?.factor_6m || '',
     weight_per_meter: product?.weight_per_meter || '',
     ipi_rate: product?.ipi_rate || '',
     base_price_per_kg: product?.base_price_per_kg || '',
@@ -379,12 +380,18 @@ function ProductForm({ product, principals, onSave, onCancel }) {
   });
 
   const selectedPrincipal = principals.find(p => p.id === formData.principal_id);
+  const isNewAco = selectedPrincipal?.trade_name?.toUpperCase().includes('NEW') || 
+                   selectedPrincipal?.company_name?.toUpperCase().includes('NEW');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
     const data = {
       ...formData,
-      weight_per_meter: parseFloat(formData.weight_per_meter) || 0,
+      factor_6m: parseFloat(formData.factor_6m) || 0,
+      weight_per_meter: isNewAco && formData.factor_6m 
+        ? parseFloat(formData.factor_6m) / 6 
+        : parseFloat(formData.weight_per_meter) || 0,
       ipi_rate: parseFloat(formData.ipi_rate) || 0,
       base_price_per_kg: parseFloat(formData.base_price_per_kg),
       cost_per_kg: parseFloat(formData.cost_per_kg) || 0
@@ -485,10 +492,49 @@ function ProductForm({ product, principals, onSave, onCancel }) {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label>Peso/metro (kg/mt)</Label>
-          <Input type="number" step="0.01" value={formData.weight_per_meter} onChange={(e) => setFormData(prev => ({ ...prev, weight_per_meter: e.target.value }))} />
-        </div>
+        {isNewAco ? (
+          <>
+            <div className="space-y-2">
+              <Label className="text-blue-900">Fator (peso barra 6m) *</Label>
+              <Input 
+                type="number" 
+                step="0.01" 
+                value={formData.factor_6m} 
+                onChange={(e) => {
+                  const factor = e.target.value;
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    factor_6m: factor,
+                    weight_per_meter: factor ? (parseFloat(factor) / 6).toFixed(3) : ''
+                  }));
+                }}
+                className="border-blue-300 bg-blue-50"
+              />
+              <p className="text-xs text-blue-700">Ex: 57 kg gera 9.500 kg/mt</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-500">Peso/metro (calculado)</Label>
+              <Input 
+                type="text" 
+                value={formData.weight_per_meter ? parseFloat(formData.weight_per_meter).toFixed(3) : '-'}
+                disabled
+                className="bg-slate-100 text-slate-700 font-semibold cursor-not-allowed"
+              />
+              <p className="text-xs text-slate-500">Automático: fator ÷ 6</p>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-2">
+            <Label>Peso/metro (kg/mt)</Label>
+            <Input 
+              type="number" 
+              step="0.01" 
+              value={formData.weight_per_meter} 
+              onChange={(e) => setFormData(prev => ({ ...prev, weight_per_meter: e.target.value }))} 
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label>IPI (%)</Label>

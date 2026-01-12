@@ -25,8 +25,12 @@ const parseCSV = (fileContent) => {
   return { headers, rows };
 };
 
-const downloadTemplate = (principalName = 'REPRESENTADA') => {
-  const content = `code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
+const downloadTemplate = (principalName = 'REPRESENTADA', isNewAco = false) => {
+  const content = isNewAco 
+    ? `code,name,description,category,unit,factor_6m,base_price_per_kg,cost_per_kg,ipi_rate,is_active
+${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,57.00,7.99,5.40,5.0,true
+${principalName}-TQ-150x150x4.75,TUBO QUADRADO 150x150x4.75,Tubo de aço carbono,tubos_quadrados_retangulares,kg,106.50,8.20,5.60,5.0,true`
+    : `code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
 ${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,9.42,7.99,5.40,5.0,true
 ${principalName}-TR-1/2,TUBO REDONDO 1/2",Tubo sem costura API 5L,tubos_redondos,mt,0.85,12.50,9.80,12.5,true`;
   
@@ -57,6 +61,8 @@ export default function ProductImportForm({ onSuccess }) {
   });
 
   const selectedPrincipal = principals.find(p => p.id === selectedPrincipalId);
+  const isNewAco = selectedPrincipal?.trade_name?.toUpperCase().includes('NEW') || 
+                   selectedPrincipal?.company_name?.toUpperCase().includes('NEW');
 
   const handleDeleteAll = async () => {
     if (!confirm('⚠️ ATENÇÃO: Deseja EXCLUIR TODOS OS PRODUTOS do sistema? Esta ação não pode ser desfeita!')) {
@@ -153,21 +159,29 @@ export default function ProductImportForm({ onSuccess }) {
         // Gerar ID do lote
         const batchId = `PROD-${Date.now()}`;
 
-        // Preparar dados - usar representada selecionada e PRESERVAR valores do CSV
-        const products = rows.map(row => ({
-          principal_id: selectedPrincipalId,
-          code: row.code,
-          name: row.name,
-          description: row.description || '',
-          category: row.category || 'outros',
-          unit: row.unit || 'kg',
-          weight_per_meter: parseFloat(row.weight_per_meter) || 0,
-          base_price_per_kg: parseFloat(row.base_price_per_kg),
-          cost_per_kg: parseFloat(row.cost_per_kg) || 0,
-          ipi_rate: parseFloat(row.ipi_rate) || 0,
-          is_active: row.is_active !== 'false',
-          import_batch_id: batchId
-        }));
+        // Preparar dados - calcular peso/metro automaticamente para NEW AÇO
+        const products = rows.map(row => {
+          const factor = parseFloat(row.factor_6m) || 0;
+          const weightPerMeter = isNewAco && factor > 0 
+            ? factor / 6 
+            : parseFloat(row.weight_per_meter) || 0;
+
+          return {
+            principal_id: selectedPrincipalId,
+            code: row.code,
+            name: row.name,
+            description: row.description || '',
+            category: row.category || 'outros',
+            unit: row.unit || 'kg',
+            factor_6m: factor,
+            weight_per_meter: weightPerMeter,
+            base_price_per_kg: parseFloat(row.base_price_per_kg),
+            cost_per_kg: parseFloat(row.cost_per_kg) || 0,
+            ipi_rate: parseFloat(row.ipi_rate) || 0,
+            is_active: row.is_active !== 'false',
+            import_batch_id: batchId
+          };
+        });
 
         // Importar em lotes
         const batchSize = 50;
@@ -209,9 +223,19 @@ export default function ProductImportForm({ onSuccess }) {
         <p className="text-sm font-medium text-amber-900 mb-2">
           🔧 Modo de Importação por Representada
         </p>
-        <p className="text-xs text-amber-800">
+        <p className="text-xs text-amber-800 mb-2">
           Selecione a representada primeiro, depois importe o CSV com os produtos dela. O sistema vinculará automaticamente todos os produtos à representada escolhida.
         </p>
+        {isNewAco && (
+          <div className="bg-blue-100 border border-blue-300 rounded p-2 mt-2">
+            <p className="text-xs font-semibold text-blue-900">
+              ⚙️ NEW AÇO: Use coluna "factor_6m" em vez de "weight_per_meter"
+            </p>
+            <p className="text-xs text-blue-800 mt-1">
+              O peso/metro será calculado automaticamente como: factor_6m ÷ 6
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -237,12 +261,15 @@ export default function ProductImportForm({ onSuccess }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => downloadTemplate(selectedPrincipal?.trade_name?.toUpperCase() || 'REPRESENTADA')}
+          onClick={() => downloadTemplate(
+            selectedPrincipal?.trade_name?.toUpperCase() || 'REPRESENTADA',
+            isNewAco
+          )}
           className="flex items-center gap-2"
           disabled={!selectedPrincipalId}
         >
           <Download className="w-4 h-4" />
-          Baixar Template
+          Baixar Template {isNewAco && '(NEW AÇO)'}
         </Button>
         <Button
           variant="outline"
