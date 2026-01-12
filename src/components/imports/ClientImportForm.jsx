@@ -135,6 +135,9 @@ export default function ClientImportForm({ onSuccess }) {
           return;
         }
 
+        // Gerar ID do lote
+        const batchId = `CLIENT-${Date.now()}`;
+
         // Preparar dados
          const clients = rows.map(row => ({
            code: row.code || `CLI-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -152,7 +155,8 @@ export default function ClientImportForm({ onSuccess }) {
            contact_name: row.responsible_user || '',
            status: (row.status || 'active').toLowerCase() === 'active' ? 'active' : 'inactive',
            notes: row.notes || '',
-           is_active: (row.status || 'active').toLowerCase() === 'active'
+           is_active: (row.status || 'active').toLowerCase() === 'active',
+           import_batch_id: batchId
          }));
 
         // Importar em lotes
