@@ -4,29 +4,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Trash2, RotateCcw, Package, Users, Box } from 'lucide-react';
+import { AlertCircle, Trash2, RotateCcw, Package, Users, Box, Download, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ImportHistory() {
   const queryClient = useQueryClient();
-  const [showLegacy, setShowLegacy] = useState(false);
+  const [showLegacy, setShowLegacy] = useState(true);
 
-  const { data: batches = [], isLoading } = useQuery({
+  const { data: batches = [], isLoading, refetch } = useQuery({
     queryKey: ['import-batches'],
-    queryFn: () => base44.entities.ImportBatch.list('-created_date', 50)
+    queryFn: () => base44.entities.ImportBatch.list('-created_date', 50),
+    refetchInterval: 10000
   });
 
   // Buscar produtos e clientes agrupados por data para importações antigas
   const { data: products = [] } = useQuery({
     queryKey: ['products-for-history'],
-    queryFn: () => base44.entities.Product.list('-created_date', 100),
-    enabled: showLegacy
+    queryFn: () => base44.entities.Product.list('-created_date', 200)
   });
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients-for-history'],
-    queryFn: () => base44.entities.Client.list('-created_date', 100),
-    enabled: showLegacy
+    queryFn: () => base44.entities.Client.list('-created_date', 200)
   });
 
   const revertBatchMutation = useMutation({
@@ -132,6 +131,44 @@ export default function ImportHistory() {
   const clientGroups = showLegacy ? groupByDate(clients, 'Client') : [];
   const legacyGroups = [...productGroups, ...clientGroups];
 
+  const exportHistory = () => {
+    const exportData = [];
+    
+    activeBatches.forEach(batch => {
+      exportData.push({
+        'Tipo': batch.entity_type === 'Product' ? 'Produtos' : 'Clientes',
+        'Arquivo': batch.file_name || 'Não informado',
+        'Quantidade': batch.records_count,
+        'Data': new Date(batch.created_date).toLocaleString('pt-BR'),
+        'Status': 'Ativa',
+        'ID Lote': batch.batch_id
+      });
+    });
+
+    legacyGroups.forEach(group => {
+      exportData.push({
+        'Tipo': group.type === 'Product' ? 'Produtos' : 'Clientes',
+        'Arquivo': `Importação ${group.date}`,
+        'Quantidade': group.count,
+        'Data': group.date,
+        'Status': 'Sem rastreamento',
+        'ID Lote': '-'
+      });
+    });
+
+    const csv = [
+      Object.keys(exportData[0] || {}).join(','),
+      ...exportData.map(row => Object.values(row).map(v => `"${v}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `historico-importacoes-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success('Histórico exportado com sucesso!');
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -140,15 +177,35 @@ export default function ImportHistory() {
             <RotateCcw className="w-5 h-5" />
             Histórico de Importações
           </CardTitle>
-          {(products.length > 0 || clients.length > 0) && (
+          <div className="flex items-center gap-2">
+            {(activeBatches.length > 0 || legacyGroups.length > 0) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportHistory}
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Exportar
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowLegacy(!showLegacy)}
+              onClick={() => refetch()}
+              disabled={isLoading}
             >
-              {showLegacy ? 'Ocultar antigas' : 'Ver todas'}
+              <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
-          )}
+            {(products.length > 0 || clients.length > 0) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowLegacy(!showLegacy)}
+              >
+                {showLegacy ? 'Ocultar antigas' : 'Ver todas'}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
