@@ -40,6 +40,7 @@ export default function Layout({ children, currentPageName }) {
   const navigation = [
     { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' },
     { name: 'Clientes', icon: Users, page: 'Clients' },
+    { name: 'Produtos', icon: Package, page: 'Products' },
     { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
     { name: 'CRM', icon: Target, page: 'Opportunities' },
     { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' },
