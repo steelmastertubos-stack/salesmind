@@ -15,7 +15,8 @@ import {
     MapPin,
     Target,
     Upload,
-    CheckSquare
+    CheckSquare,
+    Package
   } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
