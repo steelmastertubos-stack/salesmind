@@ -47,8 +47,9 @@ export default function ImportData() {
               <div className="flex gap-2">
                 <Upload className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Formato esperado:</p>
-                  <p>Arquivo CSV com colunas: code, name, description, category, unit, weight_per_meter, base_price_per_kg, cost_per_kg, ipi_rate, is_active</p>
+                  <p className="font-medium mb-1">Formato esperado (CSV sem coluna principal_id):</p>
+                  <p>code, name, description, category, unit, weight_per_meter, base_price_per_kg, cost_per_kg, ipi_rate, is_active</p>
+                  <p className="mt-2 text-xs">📋 A representada é selecionada antes de importar, não precisa estar no CSV</p>
                 </div>
               </div>
             </div>

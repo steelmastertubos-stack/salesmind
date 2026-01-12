@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, Download, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Upload, Download, Check, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 const parseCSV = (fileContent) => {
@@ -22,14 +25,14 @@ const parseCSV = (fileContent) => {
   return { headers, rows };
 };
 
-const downloadTemplate = () => {
-  const content = `principal_id,code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
-PRINCIPAL_ID,NEWACO-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,9.42,7.99,5.40,5.0,true
-PRINCIPAL_ID,VTK-TR-1/2,TUBO REDONDO 1/2",Tubo sem costura API 5L,tubos_redondos,mt,0.85,12.50,9.80,12.5,true`;
+const downloadTemplate = (principalName = 'REPRESENTADA') => {
+  const content = `code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
+${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,9.42,7.99,5.40,5.0,true
+${principalName}-TR-1/2,TUBO REDONDO 1/2",Tubo sem costura API 5L,tubos_redondos,mt,0.85,12.50,9.80,12.5,true`;
   
   const element = document.createElement('a');
   element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
-  element.setAttribute('download', 'template-produtos.csv');
+  element.setAttribute('download', `template-produtos-${principalName}.csv`);
   element.style.display = 'none';
   document.body.appendChild(element);
   element.click();
@@ -37,10 +40,52 @@ PRINCIPAL_ID,VTK-TR-1/2,TUBO REDONDO 1/2",Tubo sem costura API 5L,tubos_redondos
 };
 
 export default function ProductImportForm({ onSuccess }) {
+  const [selectedPrincipalId, setSelectedPrincipalId] = useState('');
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [errors, setErrors] = useState([]);
+
+  const { data: principals = [] } = useQuery({
+    queryKey: ['principals'],
+    queryFn: () => base44.entities.Principal.list('company_name', 100)
+  });
+
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => base44.entities.Product.list('name', 500)
+  });
+
+  const selectedPrincipal = principals.find(p => p.id === selectedPrincipalId);
+
+  const handleDeleteAll = async () => {
+    if (!confirm('⚠️ ATENÇÃO: Deseja EXCLUIR TODOS OS PRODUTOS do sistema? Esta ação não pode ser desfeita!')) {
+      return;
+    }
+    
+    if (!confirm('Tem certeza absoluta? Todos os produtos serão removidos permanentemente!')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const productsToDelete = allProducts;
+      let deleted = 0;
+      
+      for (const product of productsToDelete) {
+        await base44.entities.Product.delete(product.id);
+        deleted++;
+      }
+
+      toast.success(`${deleted} produtos excluídos com sucesso!`);
+      onSuccess?.();
+    } catch (error) {
+      console.error('Erro ao excluir produtos:', error);
+      toast.error('Erro ao excluir produtos');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -66,7 +111,6 @@ export default function ProductImportForm({ onSuccess }) {
   const validateRow = (row, index) => {
     const rowErrors = [];
     
-    if (!row.principal_id?.trim()) rowErrors.push(`Linha ${index + 2}: ID da representada obrigatório`);
     if (!row.code?.trim()) rowErrors.push(`Linha ${index + 2}: Código técnico obrigatório`);
     if (!row.name?.trim()) rowErrors.push(`Linha ${index + 2}: Nome do produto obrigatório`);
     if (!row.base_price_per_kg) rowErrors.push(`Linha ${index + 2}: Preço base obrigatório`);
@@ -76,6 +120,11 @@ export default function ProductImportForm({ onSuccess }) {
   };
 
   const handleImport = async () => {
+    if (!selectedPrincipalId) {
+      toast.error('Selecione a representada');
+      return;
+    }
+    
     if (!file) {
       toast.error('Selecione um arquivo');
       return;
@@ -104,9 +153,9 @@ export default function ProductImportForm({ onSuccess }) {
         // Gerar ID do lote
         const batchId = `PROD-${Date.now()}`;
 
-        // Preparar dados - PRESERVAR valores do CSV sem alteração
+        // Preparar dados - usar representada selecionada e PRESERVAR valores do CSV
         const products = rows.map(row => ({
-          principal_id: row.principal_id,
+          principal_id: selectedPrincipalId,
           code: row.code,
           name: row.name,
           description: row.description || '',
@@ -156,15 +205,54 @@ export default function ProductImportForm({ onSuccess }) {
 
   return (
     <div className="space-y-4">
+      <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
+        <p className="text-sm font-medium text-amber-900 mb-2">
+          🔧 Modo de Importação por Representada
+        </p>
+        <p className="text-xs text-amber-800">
+          Selecione a representada primeiro, depois importe o CSV com os produtos dela. O sistema vinculará automaticamente todos os produtos à representada escolhida.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">1. Selecione a Representada *</Label>
+        <Select value={selectedPrincipalId} onValueChange={setSelectedPrincipalId}>
+          <SelectTrigger className={!selectedPrincipalId ? 'border-red-300' : ''}>
+            <SelectValue placeholder="Escolha a representada para importar produtos" />
+          </SelectTrigger>
+          <SelectContent>
+            {principals.map(p => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.trade_name || p.company_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {!selectedPrincipalId && (
+          <p className="text-xs text-red-600">Obrigatório selecionar a representada</p>
+        )}
+      </div>
+
       <div className="flex gap-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={downloadTemplate}
+          onClick={() => downloadTemplate(selectedPrincipal?.trade_name?.toUpperCase() || 'REPRESENTADA')}
           className="flex items-center gap-2"
+          disabled={!selectedPrincipalId}
         >
           <Download className="w-4 h-4" />
           Baixar Template
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDeleteAll}
+          className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto"
+          disabled={isLoading || allProducts.length === 0}
+        >
+          <Trash2 className="w-4 h-4" />
+          Excluir Todos ({allProducts.length})
         </Button>
       </div>
 
@@ -231,11 +319,11 @@ export default function ProductImportForm({ onSuccess }) {
 
       <Button
         onClick={handleImport}
-        disabled={!file || isLoading}
+        disabled={!selectedPrincipalId || !file || isLoading}
         className="w-full bg-emerald-600 hover:bg-emerald-700"
       >
         {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        {isLoading ? 'Importando...' : 'Importar Produtos'}
+        {isLoading ? 'Importando...' : `Importar Produtos para ${selectedPrincipal?.trade_name || 'Representada'}`}
       </Button>
     </div>
   );
