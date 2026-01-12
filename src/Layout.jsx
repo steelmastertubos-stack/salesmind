@@ -39,22 +39,53 @@ export default function Layout({ children, currentPageName }) {
     loadUser();
   }, []);
 
-  const navigation = [
-    { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' },
-    { name: 'Clientes', icon: Users, page: 'Clients' },
-    { name: 'Produtos', icon: Package, page: 'Products' },
-    { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
-    { name: 'CRM', icon: Target, page: 'Opportunities' },
-    { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' },
-    { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' },
-    { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
-    { name: 'Financeiro', icon: DollarSign, page: 'Financeiro' },
-    { name: 'Representados', icon: Building2, page: 'Principals' },
-    { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
-    { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
-    { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
-    { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
-    { name: 'Configurações', icon: Settings, page: 'Settings' },
+  const navigationSections = [
+    {
+      title: 'VISÃO GERAL',
+      items: [
+        { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' }
+      ]
+    },
+    {
+      title: 'VENDAS',
+      items: [
+        { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
+        { name: 'CRM', icon: Target, page: 'Opportunities' },
+        { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' },
+        { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' }
+      ]
+    },
+    {
+      title: 'BASE COMERCIAL',
+      items: [
+        { name: 'Clientes', icon: Users, page: 'Clients' },
+        { name: 'Produtos', icon: Package, page: 'Products' }
+      ]
+    },
+    {
+      title: 'FINANCEIRO',
+      items: [
+        { name: 'Financeiro', icon: DollarSign, page: 'Financeiro' },
+        { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
+        { name: 'Representados', icon: Building2, page: 'Principals' }
+      ]
+    },
+    {
+      title: 'INTELIGÊNCIA',
+      items: [
+        { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
+        { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
+        { name: 'Auditoria', icon: Zap, page: 'AuditFluxo' }
+      ]
+    },
+    {
+      title: 'OPERAÇÃO',
+      items: [
+        { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
+        { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
+        { name: 'Configurações', icon: Settings, page: 'Settings' }
+      ]
+    }
   ];
 
   const isActive = (page) => currentPageName === page;
@@ -109,39 +140,32 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
 
-        <nav className="mt-20 lg:mt-4 px-3 space-y-1">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.page}
-                      to={createPageUrl(item.page)}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`
-                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                        ${isActive(item.page) 
-                          ? 'bg-[#1DB954] text-white shadow-lg' 
-                          : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
-                      `}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
-                    </Link>
+        <nav className="mt-20 lg:mt-4 px-3 space-y-1 overflow-y-auto pb-24" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+                  {navigationSections.map((section, sectionIdx) => (
+                    <div key={section.title} className={sectionIdx > 0 ? 'mt-6 pt-4 border-t border-slate-600' : ''}>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 mb-2">
+                        {section.title}
+                      </p>
+                      <div className="space-y-1">
+                        {section.items.map((item) => (
+                          <Link
+                            key={item.page}
+                            to={createPageUrl(item.page)}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`
+                              flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200
+                              ${isActive(item.page) 
+                                ? 'bg-[#1DB954] text-white shadow-lg' 
+                                : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
+                            `}
+                          >
+                            <item.icon className="w-4 h-4" />
+                            <span className="text-sm font-medium">{item.name}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                  {/* Auditoria - Nova Opção */}
-                  <div className="mt-6 pt-6 border-t border-slate-600">
-                    <Link
-                      to={createPageUrl('AuditFluxo')}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`
-                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                        ${isActive('AuditFluxo') 
-                          ? 'bg-[#1DB954] text-white shadow-lg' 
-                          : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
-                      `}
-                    >
-                      <Zap className="w-5 h-5" />
-                      <span className="font-medium text-sm">🔍 Auditoria</span>
-                    </Link>
-                  </div>
                 </nav>
 
         {user && (
@@ -178,7 +202,13 @@ export default function Layout({ children, currentPageName }) {
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 z-50">
         <div className="flex justify-around">
-          {navigation.slice(0, 5).map((item) => (
+          {[
+            { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' },
+            { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
+            { name: 'CRM', icon: Target, page: 'Opportunities' },
+            { name: 'Clientes', icon: Users, page: 'Clients' },
+            { name: 'Financeiro', icon: DollarSign, page: 'Financeiro' }
+          ].map((item) => (
             <Link
               key={item.page}
               to={createPageUrl(item.page)}
