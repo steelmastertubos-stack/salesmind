@@ -16,7 +16,8 @@ import {
     Target,
     Upload,
     CheckSquare,
-    Package
+    Package,
+    DollarSign
   } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
@@ -47,6 +48,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' },
     { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' },
     { name: 'Comissões', icon: BarChart3, page: 'Commissions' },
+    { name: 'Financeiro', icon: DollarSign, page: 'Financeiro' },
     { name: 'Representados', icon: Building2, page: 'Principals' },
     { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
     { name: 'Insights IA', icon: Zap, page: 'AIInsights' },

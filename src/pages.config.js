@@ -19,6 +19,7 @@ import Tasks from './pages/Tasks';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
+import Financeiro from './pages/Financeiro';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +45,7 @@ export const PAGES = {
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
+    "Financeiro": Financeiro,
 }
 
 export const pagesConfig = {
