@@ -165,6 +165,14 @@ export default function ClientImportForm({ onSuccess }) {
           imported += batch.length;
         }
 
+        await base44.entities.ImportBatch.create({
+          batch_id: batchId,
+          entity_type: 'Client',
+          records_count: imported,
+          file_name: file.name,
+          status: 'active'
+        });
+
         toast.success(`${imported} clientes importados com sucesso!`);
         setFile(null);
         setPreview(null);

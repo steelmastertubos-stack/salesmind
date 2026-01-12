@@ -99,6 +99,9 @@ export default function ProductImportForm({ onSuccess }) {
           return;
         }
 
+        // Gerar ID do lote
+        const batchId = `PROD-${Date.now()}`;
+
         // Preparar dados
         const products = rows.map(row => ({
           code: row.code || '',
@@ -110,7 +113,8 @@ export default function ProductImportForm({ onSuccess }) {
           base_price_per_kg: parseFloat(row.base_price_per_kg),
           cost_per_kg: parseFloat(row.cost_per_kg) || 0,
           ipi_rate: parseFloat(row.ipi_rate) || 0,
-          is_active: row.is_active !== 'false'
+          is_active: row.is_active !== 'false',
+          import_batch_id: batchId
         }));
 
         // Importar em lotes
@@ -122,6 +126,15 @@ export default function ProductImportForm({ onSuccess }) {
           await base44.entities.Product.bulkCreate(batch);
           imported += batch.length;
         }
+
+        // Registrar lote de importação
+        await base44.entities.ImportBatch.create({
+          batch_id: batchId,
+          entity_type: 'Product',
+          records_count: imported,
+          file_name: file.name,
+          status: 'active'
+        });
 
         toast.success(`${imported} produtos importados com sucesso!`);
         setFile(null);

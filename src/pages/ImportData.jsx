@@ -6,6 +6,7 @@ import PageHeader from '@/components/common/PageHeader';
 import ProductImportForm from '@/components/imports/ProductImportForm';
 import ClientImportForm from '@/components/imports/ClientImportForm';
 import StockImportForm from '@/components/imports/StockImportForm';
+import ImportHistory from '@/components/imports/ImportHistory';
 
 export default function ImportData() {
   const queryClient = useQueryClient();
@@ -16,11 +17,13 @@ export default function ImportData() {
   };
 
   return (
-    <div className="pb-20 lg:pb-6">
+    <div className="pb-20 lg:pb-6 space-y-6">
       <PageHeader 
         title="Importação em Massa" 
         subtitle="Importe produtos, clientes e estoque via CSV"
       />
+
+      <ImportHistory />
 
       <div className="w-full">
         <Tabs defaultValue="products" className="space-y-6 w-full">
