@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import IntegratedAlerts from '@/components/dashboard/IntegratedAlerts';
+import { toast } from 'sonner';
 import { 
   Users, 
   FileText, 
@@ -150,11 +151,12 @@ export default function Dashboard() {
         </div>
         <Button 
           variant="outline" 
-          onClick={() => refetchClients()}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
           className="w-fit"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Atualizando...' : 'Atualizar'}
         </Button>
       </div>
 
