@@ -7,6 +7,7 @@ import Clients from './pages/Clients';
 import Commissions from './pages/Commissions';
 import Dashboard from './pages/Dashboard';
 import FieldMode from './pages/FieldMode';
+import Financeiro from './pages/Financeiro';
 import ImportData from './pages/ImportData';
 import Opportunities from './pages/Opportunities';
 import Orders from './pages/Orders';
@@ -19,7 +20,6 @@ import Tasks from './pages/Tasks';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
-import Financeiro from './pages/Financeiro';
 import __Layout from './Layout.jsx';
 
 
@@ -33,6 +33,7 @@ export const PAGES = {
     "Commissions": Commissions,
     "Dashboard": Dashboard,
     "FieldMode": FieldMode,
+    "Financeiro": Financeiro,
     "ImportData": ImportData,
     "Opportunities": Opportunities,
     "Orders": Orders,
@@ -45,7 +46,6 @@ export const PAGES = {
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
-    "Financeiro": Financeiro,
 }
 
 export const pagesConfig = {

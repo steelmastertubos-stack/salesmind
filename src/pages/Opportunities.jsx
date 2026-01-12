@@ -26,6 +26,8 @@ import OpportunityDetail from '@/components/opportunities/OpportunityDetail';
 import { calculateCommission, isFixedCommissionRepresentative } from '@/components/utils/commissionCalculator';
 import { automateOpportunityToOrderAndCommission } from '@/components/utils/fluxoAutomation';
 import { OPPORTUNITY_STAGE, ORDER_STATUS, COMMISSION_STATUS } from '@/components/utils/fluxoConstants';
+import CRMAutomation from '@/components/utils/crmAutomation';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const getVTKCommissionRate = (margin) => {
   const vtkTable = [
@@ -76,6 +78,10 @@ export default function Opportunities() {
   const [editableEmailBody, setEditableEmailBody] = useState('');
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [showPendingEmails, setShowPendingEmails] = useState(false);
+  const [showLossReasonDialog, setShowLossReasonDialog] = useState(false);
+  const [opportunityToLose, setOpportunityToLose] = useState(null);
+  const [lossReason, setLossReason] = useState('');
+  const [reactivationDays, setReactivationDays] = useState(60);
   const queryClient = useQueryClient();
 
   const { data: pendingEmails = [] } = useQuery({
@@ -131,6 +137,37 @@ export default function Opportunities() {
 
     if (!opportunity) return;
 
+    // AUTOMAÇÃO: Proposta Enviada
+    if (newStage === 'proposta_enviada' && opportunity.stage !== 'proposta_enviada') {
+      try {
+        await CRMAutomation.automatePropostaEnviada(opportunity);
+        toast.success('✅ Tarefa de follow-up criada automaticamente!');
+        updateStageMutation.mutate({ id: draggableId, newStage });
+      } catch (error) {
+        toast.error('Erro ao criar automações');
+      }
+      return;
+    }
+
+    // AUTOMAÇÃO: Em Negociação
+    if (newStage === 'em_negociacao' && opportunity.stage !== 'em_negociacao') {
+      try {
+        await CRMAutomation.automateEmNegociacao(opportunity);
+        toast.success('🔥 Negociação ativa! Acompanhamento diário configurado');
+        updateStageMutation.mutate({ id: draggableId, newStage });
+      } catch (error) {
+        toast.error('Erro ao criar automações');
+      }
+      return;
+    }
+
+    // AUTOMAÇÃO: Perdido - EXIGIR MOTIVO
+    if (newStage === 'perdido' && opportunity.stage !== 'perdido') {
+      setOpportunityToLose(opportunity);
+      setShowLossReasonDialog(true);
+      return;
+    }
+
     // Se mudou para GANHO, mostrar modal de email
     if (newStage === 'ganho' && opportunity.stage !== 'ganho') {
       try {
@@ -185,13 +222,16 @@ export default function Opportunities() {
       const opportunity = opportunities.find(o => o.id === emailPreview.opportunityId);
       console.log('Oportunidade encontrada:', opportunity);
 
-      // 1. Criar pedido automaticamente
-       const quote = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]);
+      // USAR AUTOMAÇÃO COMPLETA DO CRM
+      const quote = await base44.entities.Quote.filter({ id: opportunity.quote_id }, '', 1).then(r => r[0]);
 
        if (quote) {
          const principal = await base44.entities.Principal.filter({ id: opportunity.principal_id }, '', 1).then(r => r[0]);
 
-         // Calcular comissão baseado no tipo de representado
+         // EXECUTAR AUTOMAÇÃO COMPLETA DE GANHO
+         await CRMAutomation.automateGanho(opportunity, quote, principal);
+
+         /* REMOVIDO - Agora usando automação completa
          let commissionRate = 0;
          let expectedCommission = 0;
 
@@ -220,7 +260,9 @@ export default function Opportunities() {
            commissionRate = margin >= 15 ? getVTKCommissionRate(margin) : (principal?.commission_percentage || 0);
            expectedCommission = (quote.total_value || 0) * (commissionRate / 100);
          }
+         */ 
 
+         /* REMOVIDO - Criação manual de pedido/comissão
          const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
          const order = await base44.entities.Order.create({
            order_number: orderNumber,
@@ -245,10 +287,11 @@ export default function Opportunities() {
              date: new Date().toISOString(),
              notes: 'Pedido criado automaticamente ao ganhar oportunidade'
            }]
-         });
+           });
+           */
 
-         // 3. Criar comissão automaticamente
-         if (principal && order) {
+           /* REMOVIDO - Criação manual de comissão
+           if (principal && order) {
            try {
              console.log('🎯 Criando comissão:', {
                order_id: order.id,
@@ -279,24 +322,19 @@ export default function Opportunities() {
            } catch (commError) {
              console.error('❌ Erro ao criar comissão:', commError);
            }
-         }
+           }
+           */
+           }
 
-        // 3. Atualizar orçamento para convertido
-        await base44.entities.Quote.update(quote.id, {
-          status: 'convertido',
-          approved_date: new Date().toISOString().split('T')[0]
-        });
-      }
-
-      toast.success('Pedido criado com sucesso! 🎉');
       setShowEmailPreview(false);
       setAttachedFiles([]);
 
-      // 4. Atualizar estágio da oportunidade
+      // Atualizar estágio da oportunidade
       updateStageMutation.mutate({ id: emailPreview.opportunityId, newStage: emailPreview.newStage });
       queryClient.refetchQueries({ queryKey: ['orders'] });
       queryClient.refetchQueries({ queryKey: ['quotes'] });
       queryClient.refetchQueries({ queryKey: ['commissions'] });
+      queryClient.refetchQueries({ queryKey: ['commission-installments'] });
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao processar');
