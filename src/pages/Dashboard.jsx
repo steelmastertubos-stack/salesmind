@@ -56,6 +56,11 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Commission.list('-created_date', 500)
   });
 
+  const { data: installments = [] } = useQuery({
+    queryKey: ['commission-installments'],
+    queryFn: () => base44.entities.CommissionInstallment.list('-due_date', 500)
+  });
+
   const { data: opportunities = [] } = useQuery({
     queryKey: ['opportunities'],
     queryFn: () => base44.entities.Opportunity.list('-created_date', 100)
@@ -102,12 +107,31 @@ export default function Dashboard() {
 
   const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
   
-  const pendingQuotes = quotes.filter(q => ['draft', 'sent', 'negotiating'].includes(q.status));
+  const pendingQuotes = quotes.filter(q => ['rascunho', 'emitido', 'enviado'].includes(q.status));
   const pendingQuotesValue = pendingQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
 
-  const pendingCommission = commissions
-    .filter(c => ['prevista', 'faturada'].includes(c.status))
-    .reduce((sum, c) => sum + (c.commission_value || 0), 0);
+  // COMISSÃO PREVISTA: Apenas parcelas de pedidos parcelados NÃO faturados
+  const ordersMap = {};
+  orders.forEach(o => ordersMap[o.id] = o);
+  
+  const commissionsMap = {};
+  commissions.forEach(c => commissionsMap[c.id] = c);
+
+  const pendingCommission = installments.filter(i => {
+    if (i.status !== 'prevista') return false;
+    
+    const commission = commissionsMap[i.commission_id];
+    if (!commission) return false;
+    
+    const order = ordersMap[commission.order_id];
+    if (!order) return false;
+    
+    const isNotInvoiced = !order.billing_date && order.status !== 'faturado';
+    const hasInstallments = order.payment_installments?.length > 0 || 
+                            (order.terms && order.terms.includes('/'));
+    
+    return isNotInvoiced && hasInstallments;
+  }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
 
   const blockedCommission = orders
     .filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status))
