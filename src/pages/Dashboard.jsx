@@ -56,6 +56,11 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Commission.list('-created_date', 500)
   });
 
+  const { data: opportunities = [] } = useQuery({
+    queryKey: ['opportunities'],
+    queryFn: () => base44.entities.Opportunity.list('-created_date', 100)
+  });
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me()
@@ -209,7 +214,7 @@ export default function Dashboard() {
       <IntegratedAlerts />
 
       {/* Goals Panel - Destaque */}
-      <GoalsPanel orders={orders} quotes={quotes} />
+      <GoalsPanel orders={orders} quotes={quotes} opportunities={opportunities} />
 
       {/* Priority Clients - NEW */}
       {!isLoading && clients.length > 0 && (
