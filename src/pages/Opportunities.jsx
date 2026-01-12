@@ -887,6 +887,107 @@ export default function Opportunities() {
           </div>
         </div>
       )}
+
+      {/* Loss Reason Dialog */}
+      <Dialog open={showLossReasonDialog} onOpenChange={setShowLossReasonDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>❌ Oportunidade Perdida</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <p className="text-sm text-slate-600 mb-2">
+                Cliente: <strong>{opportunityToLose?.client_name}</strong>
+              </p>
+              <p className="text-sm text-slate-600">
+                Valor: <strong>{formatCurrency(opportunityToLose?.value_estimated || 0)}</strong>
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Motivo da Perda *</label>
+              <select
+                className="w-full p-2 border border-slate-300 rounded-lg"
+                value={lossReason}
+                onChange={(e) => setLossReason(e.target.value)}
+                required
+              >
+                <option value="">Selecione o motivo</option>
+                <option value="Preço alto">Preço alto</option>
+                <option value="Prazo de entrega">Prazo de entrega</option>
+                <option value="Concorrente">Perdeu para concorrente</option>
+                <option value="Projeto cancelado">Projeto cancelado pelo cliente</option>
+                <option value="Produto inadequado">Produto não atende</option>
+                <option value="Sem resposta">Cliente não respondeu</option>
+                <option value="Outro">Outro motivo</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Agendar Reativação</label>
+              <select
+                className="w-full p-2 border border-slate-300 rounded-lg"
+                value={reactivationDays}
+                onChange={(e) => setReactivationDays(parseInt(e.target.value))}
+              >
+                <option value={30}>Em 30 dias</option>
+                <option value={60}>Em 60 dias</option>
+                <option value={90}>Em 90 dias</option>
+                <option value={180}>Em 6 meses</option>
+              </select>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-xs text-orange-800">
+                ⚠️ Uma tarefa de reativação será criada automaticamente para {reactivationDays} dias
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowLossReasonDialog(false);
+                setLossReason('');
+                setOpportunityToLose(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              onClick={async () => {
+                if (!lossReason) {
+                  toast.error('Motivo da perda é obrigatório!');
+                  return;
+                }
+
+                try {
+                  await CRMAutomation.automatePerdido(
+                    opportunityToLose,
+                    lossReason,
+                    reactivationDays
+                  );
+                  
+                  updateStageMutation.mutate({ 
+                    id: opportunityToLose.id, 
+                    newStage: 'perdido' 
+                  });
+                  
+                  setShowLossReasonDialog(false);
+                  setLossReason('');
+                  setOpportunityToLose(null);
+                } catch (error) {
+                  toast.error('Erro ao processar perda');
+                }
+              }}
+              disabled={!lossReason}
+            >
+              Confirmar Perda
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
