@@ -23,9 +23,9 @@ const parseCSV = (fileContent) => {
 };
 
 const downloadTemplate = () => {
-  const content = `code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
-TUBO-001,Tubo 1/2",Tubo sem costura,tubos_redondos,mt,0.5,150.00,120.00,12.5,true
-TUBO-002,Tubo 3/4",Tubo sem costura,tubos_redondos,mt,0.75,180.00,145.00,12.5,true`;
+  const content = `principal_id,code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
+PRINCIPAL_ID,NEWACO-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,9.42,7.99,5.40,5.0,true
+PRINCIPAL_ID,VTK-TR-1/2,TUBO REDONDO 1/2",Tubo sem costura API 5L,tubos_redondos,mt,0.85,12.50,9.80,12.5,true`;
   
   const element = document.createElement('a');
   element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
@@ -66,6 +66,8 @@ export default function ProductImportForm({ onSuccess }) {
   const validateRow = (row, index) => {
     const rowErrors = [];
     
+    if (!row.principal_id?.trim()) rowErrors.push(`Linha ${index + 2}: ID da representada obrigatório`);
+    if (!row.code?.trim()) rowErrors.push(`Linha ${index + 2}: Código técnico obrigatório`);
     if (!row.name?.trim()) rowErrors.push(`Linha ${index + 2}: Nome do produto obrigatório`);
     if (!row.base_price_per_kg) rowErrors.push(`Linha ${index + 2}: Preço base obrigatório`);
     if (isNaN(parseFloat(row.base_price_per_kg))) rowErrors.push(`Linha ${index + 2}: Preço base deve ser um número`);
@@ -102,9 +104,10 @@ export default function ProductImportForm({ onSuccess }) {
         // Gerar ID do lote
         const batchId = `PROD-${Date.now()}`;
 
-        // Preparar dados
+        // Preparar dados - PRESERVAR valores do CSV sem alteração
         const products = rows.map(row => ({
-          code: row.code || '',
+          principal_id: row.principal_id,
+          code: row.code,
           name: row.name,
           description: row.description || '',
           category: row.category || 'outros',

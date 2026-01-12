@@ -11,14 +11,14 @@ import ImportData from './pages/ImportData';
 import Opportunities from './pages/Opportunities';
 import Orders from './pages/Orders';
 import Principals from './pages/Principals';
+import Products from './pages/Products';
 import Quotes from './pages/Quotes';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Tasks from './pages/Tasks';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
-import Tasks from './pages/Tasks';
-import Products from './pages/Products';
 import __Layout from './Layout.jsx';
 
 
@@ -36,14 +36,14 @@ export const PAGES = {
     "Opportunities": Opportunities,
     "Orders": Orders,
     "Principals": Principals,
+    "Products": Products,
     "Quotes": Quotes,
     "Reports": Reports,
     "Settings": Settings,
+    "Tasks": Tasks,
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
-    "Tasks": Tasks,
-    "Products": Products,
 }
 
 export const pagesConfig = {
