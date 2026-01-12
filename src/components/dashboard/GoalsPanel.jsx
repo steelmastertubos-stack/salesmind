@@ -9,7 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function GoalsPanel({ orders = [], quotes = [] }) {
+export default function GoalsPanel({ orders = [], quotes = [], opportunities = [] }) {
   const [showEditGoal, setShowEditGoal] = useState(false);
   const [newGoalValue, setNewGoalValue] = useState('');
   const queryClient = useQueryClient();
@@ -95,20 +95,20 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
            o.status !== 'cancelled';
   });
 
-  const thisMonthQuotes = quotes.filter(q => {
-    const quoteDate = new Date(q.created_date);
-    return quoteDate.getMonth() + 1 === currentMonth && 
-           quoteDate.getFullYear() === currentYear;
+  const thisMonthOpportunities = opportunities.filter(opp => {
+    const oppDate = new Date(opp.created_date);
+    return oppDate.getMonth() + 1 === currentMonth && 
+           oppDate.getFullYear() === currentYear;
   });
 
-  // Valores
+  // Valores - usar oportunidades do CRM
   const sold = thisMonthOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
-  const negotiating = thisMonthQuotes
-    .filter(q => ['sent', 'negotiating'].includes(q.status))
-    .reduce((sum, q) => sum + (q.total_value || 0), 0);
-  const lost = thisMonthQuotes
-    .filter(q => q.status === 'lost')
-    .reduce((sum, q) => sum + (q.total_value || 0), 0);
+  const negotiating = thisMonthOpportunities
+    .filter(opp => opp.stage === 'em_negociacao')
+    .reduce((sum, opp) => sum + (opp.total_value || 0), 0);
+  const lost = thisMonthOpportunities
+    .filter(opp => opp.stage === 'perdido')
+    .reduce((sum, opp) => sum + (opp.total_value || 0), 0);
 
   // Meta do mês atual
   const goal = currentGoalData?.goal_value || 100000;
@@ -209,7 +209,7 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
             <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all" />
           </Progress>
           <p className="text-xs text-slate-500 mt-1">
-            {thisMonthQuotes.filter(q => ['sent', 'negotiating'].includes(q.status)).length} orçamentos ativos
+            {thisMonthOpportunities.filter(opp => opp.stage === 'em_negociacao').length} oportunidades ativas
           </p>
         </div>
 
@@ -229,7 +229,7 @@ export default function GoalsPanel({ orders = [], quotes = [] }) {
             <div className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all" />
           </Progress>
           <p className="text-xs text-slate-500 mt-1">
-            {thisMonthQuotes.filter(q => q.status === 'lost').length} orçamentos perdidos
+            {thisMonthOpportunities.filter(opp => opp.stage === 'perdido').length} oportunidades perdidas
           </p>
         </div>
 
