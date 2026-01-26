@@ -110,28 +110,10 @@ export default function Dashboard() {
   const pendingQuotes = quotes.filter(q => ['rascunho', 'emitido', 'enviado'].includes(q.status));
   const pendingQuotesValue = pendingQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
 
-  // COMISSÃO PREVISTA: Apenas parcelas de pedidos parcelados NÃO faturados
-  const ordersMap = {};
-  orders.forEach(o => ordersMap[o.id] = o);
-  
-  const commissionsMap = {};
-  commissions.forEach(c => commissionsMap[c.id] = c);
-
-  const pendingCommission = installments.filter(i => {
-    if (i.status !== 'prevista') return false;
-    
-    const commission = commissionsMap[i.commission_id];
-    if (!commission) return false;
-    
-    const order = ordersMap[commission.order_id];
-    if (!order) return false;
-    
-    const isNotInvoiced = !order.billing_date && order.status !== 'faturado';
-    const hasInstallments = order.payment_installments?.length > 0 || 
-                            (order.terms && order.terms.includes('/'));
-    
-    return isNotInvoiced && hasInstallments;
-  }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
+  // COMISSÃO PREVISTA: Soma TODAS as comissões previstas
+  const pendingCommission = commissions
+    .filter(c => c.status === 'prevista')
+    .reduce((sum, c) => sum + (c.commission_total_value || c.commission_value || 0), 0);
 
   const blockedCommission = orders
     .filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status))
