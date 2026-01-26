@@ -22,6 +22,7 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const queryClient = useQueryClient();
 
   const { data: products = [], isLoading } = useQuery({
@@ -86,6 +87,17 @@ export default function ProductsPage() {
     }
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      await Promise.all(ids.map(id => base44.entities.Product.delete(id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['products']);
+      setSelectedProducts([]);
+      toast.success('Produtos excluídos em massa!');
+    }
+  });
+
   // Criar mapa de representados
   const principalsMap = useMemo(() => {
     const map = {};
@@ -141,6 +153,26 @@ export default function ProductsPage() {
     }
   };
 
+  const handleBulkDelete = () => {
+    if (confirm(`Deseja excluir ${selectedProducts.length} produtos selecionados?`)) {
+      bulkDeleteMutation.mutate(selectedProducts);
+    }
+  };
+
+  const toggleSelectProduct = (id) => {
+    setSelectedProducts(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.id));
+    }
+  };
+
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
       <PageHeader
@@ -152,6 +184,16 @@ export default function ProductsPage() {
           setShowForm(true);
         }}
       >
+        {selectedProducts.length > 0 && (
+          <Button 
+            variant="destructive" 
+            onClick={handleBulkDelete}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Excluir {selectedProducts.length}
+          </Button>
+        )}
         <Button variant="outline" onClick={() => setShowImportDialog(true)}>
           <Upload className="w-4 h-4 mr-2" />
           Importar CSV
@@ -235,6 +277,14 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-slate-50">
+                <th className="text-center p-3 font-medium text-slate-700 w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 <th className="text-left p-3 font-medium text-slate-700">Representada</th>
                 <th className="text-left p-3 font-medium text-slate-700">Código</th>
                 <th className="text-left p-3 font-medium text-slate-700">Produto</th>
@@ -251,6 +301,14 @@ export default function ProductsPage() {
             <tbody>
               {filteredProducts.map(product => (
                 <tr key={product.id} className="border-b hover:bg-slate-50 transition-colors">
+                  <td className="text-center p-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.includes(product.id)}
+                      onChange={() => toggleSelectProduct(product.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
                   <td className="p-3">
                     <span className="text-xs font-medium text-slate-900">
                       {principalsMap[product.principal_id] || '-'}
