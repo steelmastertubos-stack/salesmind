@@ -53,7 +53,7 @@ export default function StockImportForm({ onSuccess }) {
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('name', 500)
+    queryFn: () => base44.entities.Product.list('name', 2500)
   });
 
   const handleFileChange = (e) => {
