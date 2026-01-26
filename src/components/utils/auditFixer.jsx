@@ -114,43 +114,55 @@ export class AuditFixer {
       throw new Error('Opportunity não encontrada');
     }
 
-    const quote = quotes.find(q => q.id === opp.quote_id);
+    // Se não tem quote, criar primeiro
+    let quote = quotes.find(q => q.opportunity_id === opp.id);
     if (!quote) {
-      throw new Error('Quote vinculado não encontrado');
+      quote = await this.createQuoteForOpportunity(opp);
     }
 
     const principal = principals.find(p => p.id === opp.principal_id);
 
     // Calcular comissão
-    const commissionRate = quote.commission_rate || principal?.commission_percentage || 5;
-    const expectedCommission = (opp.total_value || 0) * (commissionRate / 100);
+    const commissionRate = quote.commission_rate || principal?.commission_percentage || 3;
+    const expectedCommission = (opp.value_estimated || 0) * (commissionRate / 100);
+
+    // Data de fechamento (usar won_at ou created_date)
+    const wonDate = opp.won_at ? new Date(opp.won_at) : new Date(opp.created_date);
+    const billingDate = new Date(wonDate);
+    billingDate.setDate(billingDate.getDate() + 7);
 
     const orderData = {
-      order_number: `PED-${Date.now()}`,
-      quote_id: opp.quote_id,
+      opportunity_id: opp.id,
+      quote_id: quote.id,
       client_id: opp.client_id,
       client_name: opp.client_name,
       principal_id: opp.principal_id,
       principal_name: opp.principal_name,
       items: quote.items || [],
-      total_value: opp.total_value,
-      total_weight: opp.total_weight,
-      payment_terms: quote.payment_terms,
+      total_value: opp.value_estimated || quote.total_value,
+      total_weight: opp.total_weight || quote.total_weight,
+      total_cost: (opp.value_estimated || 0) * 0.7,
+      status: 'faturado',
+      billing_date: billingDate.toISOString().split('T')[0],
+      invoice_date: billingDate.toISOString().split('T')[0],
+      closed_at: billingDate.toISOString(),
       commission_rate: commissionRate,
       expected_commission: expectedCommission,
-      status: 'em_analise',
-      notes: `[AUTO-FIX] Pedido criado automaticamente pela auditoria`
+      notes: `[AUTO-FIX] Pedido criado automaticamente`
     };
 
     const newOrder = await base44.entities.Order.create(orderData);
 
-    // Criar comissão também
-    await this.createCommissionForOrder(newOrder, principal);
+    // Criar comissão
+    const newCommission = await this.createCommissionForOrder(newOrder, opp, principal);
+
+    // Criar parcela
+    await this.createInstallmentForCommission(newCommission, billingDate);
 
     this.fixLog.push({
       issue_id: issue.id,
       status: 'fixed',
-      action: 'Order + Commission criados',
+      action: 'Fluxo completo criado: Order → Commission → Installment',
       created_id: newOrder.id
     });
 
@@ -217,27 +229,69 @@ export class AuditFixer {
   }
 
   /**
+   * Helper: Criar Quote para Opportunity
+   */
+  async createQuoteForOpportunity(opp) {
+    const quoteData = {
+      opportunity_id: opp.id,
+      client_id: opp.client_id,
+      client_name: opp.client_name,
+      principal_id: opp.principal_id,
+      principal_name: opp.principal_name,
+      total_value: opp.value_estimated || 10000,
+      items: [],
+      status: 'convertido'
+    };
+
+    return await base44.entities.Quote.create(quoteData);
+  }
+
+  /**
    * Helper: Criar Commission para Order
    */
-  async createCommissionForOrder(order, principal) {
-    const rate = order.commission_rate || principal?.commission_percentage || 5;
+  async createCommissionForOrder(order, opp, principal) {
+    const rate = order.commission_rate || principal?.commission_percentage || 3;
     const commissionValue = (order.total_value || 0) * (rate / 100);
 
     const commissionData = {
       order_id: order.id,
-      order_number: order.order_number,
+      opportunity_id: order.opportunity_id || opp?.id,
+      quote_id: order.quote_id,
       principal_id: order.principal_id,
       principal_name: order.principal_name,
       client_id: order.client_id,
       client_name: order.client_name,
-      invoice_date: order.invoice_date || new Date().toISOString().split('T')[0],
-      invoice_value: order.total_value,
+      sales_value: order.total_value,
       commission_rate: rate,
+      commission_total_value: commissionValue,
       commission_value: commissionValue,
-      status: 'prevista'
+      status: 'prevista',
+      invoice_date: order.billing_date || order.invoice_date || new Date().toISOString().split('T')[0]
     };
 
     return await base44.entities.Commission.create(commissionData);
+  }
+
+  /**
+   * Helper: Criar Installment para Commission
+   */
+  async createInstallmentForCommission(commission, billingDate) {
+    const dueDate = new Date(billingDate);
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    const installmentData = {
+      commission_id: commission.id,
+      representada_id: commission.principal_id,
+      order_id: commission.order_id,
+      installment_no: 1,
+      installment_pct: 100,
+      installment_value: commission.commission_total_value,
+      due_date: dueDate.toISOString().split('T')[0],
+      status: 'prevista',
+      reference_month: new Date(commission.invoice_date).toISOString().slice(0, 7)
+    };
+
+    return await base44.entities.CommissionInstallment.create(installmentData);
   }
 
   /**
