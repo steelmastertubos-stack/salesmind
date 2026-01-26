@@ -27,12 +27,12 @@ const parseCSV = (fileContent) => {
 
 const downloadTemplate = (principalName = 'REPRESENTADA', isNewAco = false) => {
   const content = isNewAco 
-    ? `code,name,description,category,unit,factor_6m,base_price_per_kg,cost_per_kg,ipi_rate,is_active
-${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,57.00,7.99,5.40,5.0,true
-${principalName}-TQ-150x150x4.75,TUBO QUADRADO 150x150x4.75,Tubo de aço carbono,tubos_quadrados_retangulares,kg,106.50,8.20,5.60,5.0,true`
-    : `code,name,description,category,unit,weight_per_meter,base_price_per_kg,cost_per_kg,ipi_rate,is_active
-${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,Tubo de aço carbono,tubos_quadrados_retangulares,kg,9.42,7.99,5.40,5.0,true
-${principalName}-TR-1/2,TUBO REDONDO 1/2",Tubo sem costura API 5L,tubos_redondos,mt,0.85,12.50,9.80,12.5,true`;
+    ? `Representada,Código,Nome,Categoria,Unidade,Peso/metro,Preço Base (R$/kg),Custo (R$/kg),IPI (%),Status
+${principalName},${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,tubos_quadrados_retangulares,kg,9.500,7.99,5.40,5.0,Ativo
+${principalName},${principalName}-TQ-150x150x4.75,TUBO QUADRADO 150x150x4.75,tubos_quadrados_retangulares,kg,17.750,8.20,5.60,5.0,Ativo`
+    : `Representada,Código,Nome,Categoria,Unidade,Peso/metro,Preço Base (R$/kg),Custo (R$/kg),IPI (%),Status
+${principalName},${principalName}-TQ-100x100x3.00,TUBO QUADRADO 100x100x3.00,tubos_quadrados_retangulares,kg,9.420,7.99,5.40,5.0,Ativo
+${principalName},${principalName}-TR-1/2,TUBO REDONDO 1/2",tubos_redondos,mt,0.850,12.50,9.80,12.5,Ativo`;
   
   const element = document.createElement('a');
   element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
@@ -57,7 +57,7 @@ export default function ProductImportForm({ onSuccess }) {
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('name', 500)
+    queryFn: () => base44.entities.Product.list('name', 2500)
   });
 
   const selectedPrincipal = principals.find(p => p.id === selectedPrincipalId);
@@ -117,10 +117,15 @@ export default function ProductImportForm({ onSuccess }) {
   const validateRow = (row, index) => {
     const rowErrors = [];
     
-    if (!row.code?.trim()) rowErrors.push(`Linha ${index + 2}: Código técnico obrigatório`);
-    if (!row.name?.trim()) rowErrors.push(`Linha ${index + 2}: Nome do produto obrigatório`);
-    if (!row.base_price_per_kg) rowErrors.push(`Linha ${index + 2}: Preço base obrigatório`);
-    if (isNaN(parseFloat(row.base_price_per_kg))) rowErrors.push(`Linha ${index + 2}: Preço base deve ser um número`);
+    // Aceitar tanto formato novo quanto exportado
+    const code = row.code || row['Código'] || row.Codigo;
+    const name = row.name || row['Nome'];
+    const price = row.base_price_per_kg || row['Preço Base (R$/kg)'] || row['Preco Base (R$/kg)'];
+    
+    if (!code?.trim()) rowErrors.push(`Linha ${index + 2}: Código técnico obrigatório`);
+    if (!name?.trim()) rowErrors.push(`Linha ${index + 2}: Nome do produto obrigatório`);
+    if (!price) rowErrors.push(`Linha ${index + 2}: Preço base obrigatório`);
+    if (isNaN(parseFloat(price))) rowErrors.push(`Linha ${index + 2}: Preço base deve ser um número`);
     
     return rowErrors;
   };
@@ -156,29 +161,54 @@ export default function ProductImportForm({ onSuccess }) {
           return;
         }
 
+        // Identificar produtos existentes com os mesmos códigos
+        const existingProducts = allProducts.filter(p => 
+          rows.some(row => {
+            const code = row.code || row['Código'] || row.Codigo;
+            return p.code === code?.replace(/"/g, '');
+          })
+        );
+
+        // Excluir produtos duplicados
+        if (existingProducts.length > 0) {
+          toast.info(`Removendo ${existingProducts.length} produtos duplicados...`);
+          for (const product of existingProducts) {
+            await base44.entities.Product.delete(product.id);
+          }
+        }
+
         // Gerar ID do lote
         const batchId = `PROD-${Date.now()}`;
 
-        // Preparar dados - calcular peso/metro automaticamente para NEW AÇO
+        // Preparar dados - aceitar formato exportado do CSV
         const products = rows.map(row => {
-          const factor = parseFloat(row.factor_6m) || 0;
-          const weightPerMeter = isNewAco && factor > 0 
-            ? factor / 6 
-            : parseFloat(row.weight_per_meter) || 0;
+          // Remover aspas dos valores
+          const cleanValue = (v) => v?.toString().replace(/"/g, '').trim();
+          
+          const code = cleanValue(row.code || row['Código'] || row.Codigo);
+          const name = cleanValue(row.name || row['Nome']);
+          const description = cleanValue(row.description || row['Descrição'] || row.Descricao || '');
+          const category = cleanValue(row.category || row['Categoria']) || 'outros';
+          const unit = cleanValue(row.unit || row['Unidade']) || 'kg';
+          const weightPerMeter = parseFloat(cleanValue(row.weight_per_meter || row['Peso/metro'] || row['Peso/m'] || row.factor_6m || 0));
+          const basePrice = parseFloat(cleanValue(row.base_price_per_kg || row['Preço Base (R$/kg)'] || row['Preco Base (R$/kg)']));
+          const cost = parseFloat(cleanValue(row.cost_per_kg || row['Custo (R$/kg)'] || 0));
+          const ipi = parseFloat(cleanValue(row.ipi_rate || row['IPI (%)'] || row['IPI'] || 0));
+          const status = cleanValue(row.is_active || row.Status || 'Ativo');
+          const isActive = status !== 'false' && status !== 'Inativo';
 
           return {
             principal_id: selectedPrincipalId,
-            code: row.code,
-            name: row.name,
-            description: row.description || '',
-            category: row.category || 'outros',
-            unit: row.unit || 'kg',
-            factor_6m: factor,
+            code,
+            name,
+            description,
+            category,
+            unit,
             weight_per_meter: weightPerMeter,
-            base_price_per_kg: parseFloat(row.base_price_per_kg),
-            cost_per_kg: parseFloat(row.cost_per_kg) || 0,
-            ipi_rate: parseFloat(row.ipi_rate) || 0,
-            is_active: row.is_active !== 'false',
+            base_price_per_kg: basePrice,
+            cost_per_kg: cost,
+            ipi_rate: ipi,
+            is_active: isActive,
             import_batch_id: batchId
           };
         });
@@ -219,23 +249,21 @@ export default function ProductImportForm({ onSuccess }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
-        <p className="text-sm font-medium text-amber-900 mb-2">
-          🔧 Modo de Importação por Representada
+      <div className="bg-blue-50 border border-blue-300 rounded-lg p-4">
+        <p className="text-sm font-medium text-blue-900 mb-2">
+          ✅ Importação no Formato Exportado
         </p>
-        <p className="text-xs text-amber-800 mb-2">
-          Selecione a representada primeiro, depois importe o CSV com os produtos dela. O sistema vinculará automaticamente todos os produtos à representada escolhida.
+        <p className="text-xs text-blue-800 mb-2">
+          Use o CSV exportado pela página de Produtos (mesmo formato). O sistema identifica e exclui automaticamente produtos duplicados (mesmo código) antes de importar.
         </p>
-        {isNewAco && (
-          <div className="bg-blue-100 border border-blue-300 rounded p-2 mt-2">
-            <p className="text-xs font-semibold text-blue-900">
-              ⚙️ NEW AÇO: Use coluna "factor_6m" em vez de "weight_per_meter"
-            </p>
-            <p className="text-xs text-blue-800 mt-1">
-              O peso/metro será calculado automaticamente como: factor_6m ÷ 6
-            </p>
-          </div>
-        )}
+        <div className="bg-emerald-100 border border-emerald-300 rounded p-2 mt-2">
+          <p className="text-xs font-semibold text-emerald-900">
+            🔄 Produtos duplicados são removidos automaticamente
+          </p>
+          <p className="text-xs text-emerald-800 mt-1">
+            Se o código já existe, o produto antigo será excluído e substituído pela nova versão
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2">
