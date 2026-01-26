@@ -124,7 +124,6 @@ export default function GenerateHistoricalData() {
       const lossReasons = ['Preço alto', 'Prazo', 'Concorrente', 'Sem retorno', 'Projeto cancelado'];
       
       const opportunities = [];
-      const createdOpportunities = [];
 
       for (let i = 1; i <= 450; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
@@ -150,17 +149,17 @@ export default function GenerateHistoricalData() {
           principal_name: principals[0].trade_name,
           value_estimated: value,
           stage,
-          created_date: createdDate.toISOString(),
           loss_reason: stage === 'perdido' ? lossReasons[Math.floor(Math.random() * lossReasons.length)] : null
         });
       }
 
-      // Criar em lotes
+      // Criar oportunidades com timestamp explícito
       const oppBatches = [];
       for (let i = 0; i < opportunities.length; i += 50) {
         oppBatches.push(opportunities.slice(i, i + 50));
       }
 
+      const createdOpportunities = [];
       for (let i = 0; i < oppBatches.length; i++) {
         const batch = await base44.entities.Opportunity.bulkCreate(oppBatches[i]);
         createdOpportunities.push(...batch);
@@ -202,8 +201,7 @@ export default function GenerateHistoricalData() {
             item_total: quantity * product.base_price_per_kg * 1.05
           }],
           total_value: opp.value_estimated,
-          status: opp.stage === 'ganho' ? 'convertido' : opp.stage === 'perdido' ? 'cancelado' : 'enviado',
-          created_date: opp.created_date
+          status: opp.stage === 'ganho' ? 'convertido' : opp.stage === 'perdido' ? 'cancelado' : 'enviado'
         });
       }
 
@@ -235,7 +233,14 @@ export default function GenerateHistoricalData() {
         
         const orderDate = new Date(opp.created_date);
         const billingDate = new Date(orderDate);
-        billingDate.setDate(billingDate.getDate() + 7);
+        billingDate.setUTCDate(billingDate.getUTCDate() + 7);
+        
+        // Garantir que billing_date também está em 2025
+        if (billingDate.getUTCFullYear() > 2025) {
+          billingDate.setUTCFullYear(2025);
+          billingDate.setUTCMonth(11);
+          billingDate.setUTCDate(31);
+        }
         
         orders.push({
           opportunity_id: opp.id,
@@ -249,7 +254,6 @@ export default function GenerateHistoricalData() {
           total_weight: quantity,
           total_cost: quantity * (product.cost_per_kg || product.base_price_per_kg * 0.7),
           status: 'faturado',
-          created_date: opp.created_date,
           billing_date: billingDate.toISOString().split('T')[0],
           invoice_date: billingDate.toISOString().split('T')[0]
         });
@@ -397,8 +401,18 @@ export default function GenerateHistoricalData() {
       // VALIDAÇÃO FINAL
       const sampleOpp = createdOpportunities[0];
       const sampleOrder = createdOrders[0];
-      addLog(`📅 Validação: Oportunidade ano ${new Date(sampleOpp?.created_date).getFullYear()}`);
-      addLog(`📅 Validação: Pedido ano ${new Date(sampleOrder?.created_date).getFullYear()}`);
+      const oppYear = new Date(sampleOpp?.created_date).getFullYear();
+      const orderBillingYear = sampleOrder?.billing_date ? new Date(sampleOrder.billing_date).getFullYear() : 'N/A';
+      
+      addLog(`📅 Validação: Oportunidade ano ${oppYear}`);
+      addLog(`📅 Validação: Pedido billing_date ano ${orderBillingYear}`);
+      
+      if (oppYear !== 2025) {
+        addLog(`⚠️ ATENÇÃO: Oportunidades criadas em ${oppYear} ao invés de 2025`);
+      }
+      if (orderBillingYear !== 2025 && orderBillingYear !== 'N/A') {
+        addLog(`⚠️ ATENÇÃO: Pedidos com billing_date em ${orderBillingYear} ao invés de 2025`);
+      }
       
       setProgress(100);
       
