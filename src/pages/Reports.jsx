@@ -1340,7 +1340,7 @@ export default function Reports() {
         <TabsContent value="segments" className="space-y-6">
           <SegmentsAnalysis 
             clients={clients}
-            orders={filteredOrders}
+            orders={orders}
             formatCurrency={formatCurrency}
           />
         </TabsContent>
