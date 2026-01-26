@@ -27,7 +27,7 @@ export default function ProductsPage() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('name', 500)
+    queryFn: () => base44.entities.Product.list('name', 5000)
   });
 
   const { data: principals = [] } = useQuery({

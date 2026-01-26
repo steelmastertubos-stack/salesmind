@@ -57,7 +57,7 @@ export default function ProductImportForm({ onSuccess }) {
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('name', 2500)
+    queryFn: () => base44.entities.Product.list('name', 5000)
   });
 
   const selectedPrincipal = principals.find(p => p.id === selectedPrincipalId);
@@ -236,15 +236,33 @@ export default function ProductImportForm({ onSuccess }) {
           };
         });
 
-        // Importar em lotes
-        const batchSize = 50;
+        // Importar em lotes com feedback de progresso
+        const batchSize = 100;
         let imported = 0;
+        let failed = 0;
         
         for (let i = 0; i < products.length; i += batchSize) {
           const batch = products.slice(i, i + batchSize);
-          await base44.entities.Product.bulkCreate(batch);
-          imported += batch.length;
+          try {
+            await base44.entities.Product.bulkCreate(batch);
+            imported += batch.length;
+            toast.info(`Progresso: ${imported}/${products.length} produtos importados`, { duration: 1000 });
+          } catch (error) {
+            console.error('Erro no lote:', i, error);
+            // Tentar importar um por um se o lote falhar
+            for (const product of batch) {
+              try {
+                await base44.entities.Product.create(product);
+                imported++;
+              } catch (singleError) {
+                console.error('Erro ao importar produto:', product.code, singleError);
+                failed++;
+              }
+            }
+          }
         }
+        
+        console.log(`✅ Importação finalizada: ${imported} importados, ${failed} falharam de ${products.length} total`);
 
         // Registrar lote de importação
         await base44.entities.ImportBatch.create({
@@ -255,7 +273,9 @@ export default function ProductImportForm({ onSuccess }) {
           status: 'active'
         });
 
-        toast.success(`${imported} produtos importados com sucesso!`);
+        toast.success(`${imported} produtos importados com sucesso!${failed > 0 ? ` (${failed} falharam)` : ''}`, {
+          description: `Total no arquivo: ${products.length} produtos`
+        });
         setFile(null);
         setPreview(null);
         onSuccess?.();
