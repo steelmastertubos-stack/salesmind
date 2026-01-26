@@ -137,18 +137,19 @@ export default function GenerateHistoricalData() {
       const opportunities = [];
       const quotes = [];
       const orders = [];
+      const createdOpportunities = [];
 
+      // Criar oportunidades primeiro
       for (let i = 1; i <= 450; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
-        const month = Math.floor(i / 38); // Distribuir ao longo de 12 meses (450/38 ≈ 12)
+        const month = Math.floor(i / 38);
         const day = Math.floor(Math.random() * 28) + 1;
         const createdDate = new Date(2025, month, day);
         
         const value = 5000 + Math.floor(Math.random() * 95000);
         const stage = stages[Math.floor(Math.random() * stages.length)];
         
-        // Opportunity
-        const opp = {
+        opportunities.push({
           client_id: client.id,
           client_name: client.trade_name || client.company_name,
           principal_id: principalId,
@@ -156,17 +157,39 @@ export default function GenerateHistoricalData() {
           value_estimated: value,
           stage,
           created_date: createdDate.toISOString(),
-          loss_reason: stage === 'perdido' ? lossReasons[Math.floor(Math.random() * lossReasons.length)] : null
-        };
-        opportunities.push(opp);
+          loss_reason: stage === 'perdido' ? lossReasons[Math.floor(Math.random() * lossReasons.length)] : null,
+          _tempIndex: i
+        });
+      }
 
-        // Quote
+      // Criar oportunidades em lotes e guardar os IDs
+      const oppBatches = [];
+      for (let i = 0; i < opportunities.length; i += 50) {
+        oppBatches.push(opportunities.slice(i, i + 50));
+      }
+
+      for (let i = 0; i < oppBatches.length; i++) {
+        const batch = await base44.entities.Opportunity.bulkCreate(oppBatches[i]);
+        createdOpportunities.push(...batch);
+        addLog(`📈 Criadas ${Math.min((i + 1) * 50, opportunities.length)} / ${opportunities.length} oportunidades`);
+        setProgress(40 + (i / oppBatches.length) * 20);
+      }
+
+      setProgress(60);
+      addLog(`💡 ${createdOpportunities.length} oportunidades criadas, gerando orçamentos vinculados...`);
+
+      // Criar quotes vinculados às oportunidades
+      for (let i = 0; i < createdOpportunities.length; i++) {
+        const opp = createdOpportunities[i];
+        const client = createdClients.find(c => c.id === opp.client_id);
         const product = createdProducts[Math.floor(Math.random() * createdProducts.length)];
         const quantity = 100 + Math.floor(Math.random() * 900);
+        
         const quote = {
-          client_id: client.id,
-          client_name: client.trade_name || client.company_name,
-          client_state: client.state,
+          opportunity_id: opp.id,
+          client_id: opp.client_id,
+          client_name: opp.client_name,
+          client_state: client?.state || 'SP',
           principal_id: principalId,
           principal_name: principals[0].trade_name,
           items: [{
@@ -185,58 +208,69 @@ export default function GenerateHistoricalData() {
             item_subtotal: quantity * product.base_price_per_kg,
             item_total: quantity * product.base_price_per_kg * 1.05
           }],
-          total_value: value,
-          status: stage === 'ganho' ? 'convertido' : stage === 'perdido' ? 'cancelado' : 'enviado',
-          created_date: createdDate.toISOString()
+          total_value: opp.value_estimated,
+          status: opp.stage === 'ganho' ? 'convertido' : opp.stage === 'perdido' ? 'cancelado' : 'enviado',
+          created_date: opp.created_date
         };
         quotes.push(quote);
 
         // Order (se ganho)
-        if (stage === 'ganho') {
-          const order = {
-            client_id: client.id,
-            client_name: client.trade_name || client.company_name,
+        if (opp.stage === 'ganho') {
+          const orderDate = new Date(opp.created_date);
+          orders.push({
+            opportunity_id: opp.id,
+            quote_id: null, // será atualizado depois
+            client_id: opp.client_id,
+            client_name: opp.client_name,
             principal_id: principalId,
             principal_name: principals[0].trade_name,
             items: quote.items,
-            total_value: value,
+            total_value: opp.value_estimated,
             total_weight: quantity,
             status: 'faturado',
-            created_date: createdDate.toISOString(),
-            billing_date: new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          };
-          orders.push(order);
+            created_date: opp.created_date,
+            billing_date: new Date(orderDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          });
         }
       }
 
-      // Criar em lotes
-      const oppBatches = [];
-      for (let i = 0; i < opportunities.length; i += 50) {
-        oppBatches.push(opportunities.slice(i, i + 50));
-      }
-
-      for (let i = 0; i < oppBatches.length; i++) {
-        await base44.entities.Opportunity.bulkCreate(oppBatches[i]);
-        addLog(`📈 Criadas ${(i + 1) * 50} / ${opportunities.length} oportunidades`);
-        setProgress(40 + (i / oppBatches.length) * 20);
-      }
-
-      setProgress(60);
-
+      // Criar quotes em lotes
       const quoteBatches = [];
       for (let i = 0; i < quotes.length; i += 50) {
         quoteBatches.push(quotes.slice(i, i + 50));
       }
 
+      const createdQuotes = [];
       for (let i = 0; i < quoteBatches.length; i++) {
-        await base44.entities.Quote.bulkCreate(quoteBatches[i]);
-        addLog(`📋 Criados ${(i + 1) * 50} / ${quotes.length} orçamentos`);
+        const batch = await base44.entities.Quote.bulkCreate(quoteBatches[i]);
+        createdQuotes.push(...batch);
+        addLog(`📋 Criados ${Math.min((i + 1) * 50, quotes.length)} / ${quotes.length} orçamentos`);
         setProgress(60 + (i / quoteBatches.length) * 15);
       }
 
       setProgress(75);
 
+      // Atualizar opportunity_id nos quotes criados
+      for (let i = 0; i < createdQuotes.length; i++) {
+        const quote = createdQuotes[i];
+        if (quote.opportunity_id) {
+          await base44.entities.Opportunity.update(quote.opportunity_id, { 
+            quote_id: quote.id 
+          });
+        }
+      }
+      addLog(`🔗 Vinculados ${createdQuotes.length} orçamentos às oportunidades`);
+
       if (orders.length > 0) {
+        // Vincular quote_id aos pedidos
+        for (let i = 0; i < orders.length; i++) {
+          const order = orders[i];
+          const quote = createdQuotes.find(q => q.opportunity_id === order.opportunity_id);
+          if (quote) {
+            order.quote_id = quote.id;
+          }
+        }
+
         const orderBatches = [];
         for (let i = 0; i < orders.length; i += 50) {
           orderBatches.push(orders.slice(i, i + 50));
@@ -244,7 +278,7 @@ export default function GenerateHistoricalData() {
 
         for (let i = 0; i < orderBatches.length; i++) {
           await base44.entities.Order.bulkCreate(orderBatches[i]);
-          addLog(`✅ Criados ${(i + 1) * 50} / ${orders.length} pedidos`);
+          addLog(`✅ Criados ${Math.min((i + 1) * 50, orders.length)} / ${orders.length} pedidos`);
           setProgress(75 + (i / orderBatches.length) * 15);
         }
       }
