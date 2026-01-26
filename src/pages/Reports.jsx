@@ -31,6 +31,7 @@ import PageHeader from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ComposedChart, Legend } from 'recharts';
 import AIInsightsBlock from '@/components/reports/AIInsightsBlock';
+import AIReportAnalyzer from '@/components/reports/AIReportAnalyzer';
 import RegionsAnalysis from '@/components/reports/RegionsAnalysis';
 import SegmentsAnalysis from '@/components/reports/SegmentsAnalysis';
 import SeasonalityCrossAnalysis from '@/components/reports/SeasonalityCrossAnalysis';
@@ -770,6 +771,18 @@ export default function Reports() {
       {/* AI Insights Block */}
       {filteredOrders.length > 0 && <AIInsightsBlock insights={aiInsights} onGenerateAction={handleGenerateAction} />}
 
+      {/* AI Report Analyzer */}
+      {filteredOrders.length > 0 && (
+        <AIReportAnalyzer
+          orders={filteredOrders}
+          opportunities={filteredOpportunities}
+          clients={clients}
+          period={period}
+          yearFilter={yearFilter}
+          formatCurrency={formatCurrency}
+        />
+      )}
+
       {/* KPIs com Comparação */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card 
@@ -850,8 +863,9 @@ export default function Reports() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
-          <TabsTrigger value="executive">Visão Executiva</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8">
+          <TabsTrigger value="ia">🤖 IA</TabsTrigger>
+          <TabsTrigger value="executive">Executiva</TabsTrigger>
           <TabsTrigger value="sales">Vendas</TabsTrigger>
           <TabsTrigger value="clients">Clientes</TabsTrigger>
           <TabsTrigger value="regions">Regiões</TabsTrigger>
@@ -859,6 +873,18 @@ export default function Reports() {
           <TabsTrigger value="crm">CRM/Funil</TabsTrigger>
           <TabsTrigger value="seasonality">Sazonalidade</TabsTrigger>
         </TabsList>
+
+        {/* IA Tab */}
+        <TabsContent value="ia" className="space-y-6">
+          <AIReportAnalyzer
+            orders={filteredOrders}
+            opportunities={filteredOpportunities}
+            clients={clients}
+            period={period}
+            yearFilter={yearFilter}
+            formatCurrency={formatCurrency}
+          />
+        </TabsContent>
 
         {/* Visão Executiva */}
         <TabsContent value="executive" className="space-y-6">
