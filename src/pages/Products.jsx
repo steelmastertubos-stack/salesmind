@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, Search, Edit, Trash2, Filter, X, Download } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Filter, X, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import ProductImportForm from '@/components/imports/ProductImportForm';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,6 +20,7 @@ export default function ProductsPage() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
   const [showForm, setShowForm] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
@@ -150,6 +152,10 @@ export default function ProductsPage() {
           setShowForm(true);
         }}
       >
+        <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+          <Upload className="w-4 h-4 mr-2" />
+          Importar CSV
+        </Button>
         <Button variant="outline" onClick={exportToCSV} disabled={filteredProducts.length === 0}>
           <Download className="w-4 h-4 mr-2" />
           Exportar CSV
@@ -354,6 +360,21 @@ export default function ProductsPage() {
             onCancel={() => {
               setShowForm(false);
               setEditingProduct(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Importar Produtos via CSV</DialogTitle>
+          </DialogHeader>
+          <ProductImportForm 
+            onSuccess={() => {
+              queryClient.invalidateQueries(['products']);
+              setShowImportDialog(false);
+              toast.success('Produtos importados com sucesso!');
             }}
           />
         </DialogContent>
