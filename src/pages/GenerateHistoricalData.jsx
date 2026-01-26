@@ -249,17 +249,7 @@ export default function GenerateHistoricalData() {
       }
 
       setProgress(75);
-
-      // Atualizar opportunity_id nos quotes criados
-      for (let i = 0; i < createdQuotes.length; i++) {
-        const quote = createdQuotes[i];
-        if (quote.opportunity_id) {
-          await base44.entities.Opportunity.update(quote.opportunity_id, { 
-            quote_id: quote.id 
-          });
-        }
-      }
-      addLog(`🔗 Vinculados ${createdQuotes.length} orçamentos às oportunidades`);
+      addLog(`🔗 Vinculando registros e criando comissões...`);
 
       if (orders.length > 0) {
         // Vincular quote_id aos pedidos
@@ -276,11 +266,88 @@ export default function GenerateHistoricalData() {
           orderBatches.push(orders.slice(i, i + 50));
         }
 
+        const createdOrders = [];
         for (let i = 0; i < orderBatches.length; i++) {
-          await base44.entities.Order.bulkCreate(orderBatches[i]);
+          const batch = await base44.entities.Order.bulkCreate(orderBatches[i]);
+          createdOrders.push(...batch);
           addLog(`✅ Criados ${Math.min((i + 1) * 50, orders.length)} / ${orders.length} pedidos`);
-          setProgress(75 + (i / orderBatches.length) * 15);
+          setProgress(75 + (i / orderBatches.length) * 10);
         }
+
+        // Criar comissões para todos os pedidos
+        addLog(`💰 Criando comissões para ${createdOrders.length} pedidos...`);
+        
+        const commissions = [];
+        for (const order of createdOrders) {
+          const principal = principals[0];
+          const commissionRate = principal?.commission_percentage || 3;
+          const salesValue = order.total_value || 0;
+          const commissionValue = (salesValue * commissionRate) / 100;
+
+          commissions.push({
+            order_id: order.id,
+            opportunity_id: order.opportunity_id,
+            quote_id: order.quote_id,
+            principal_id: order.principal_id,
+            principal_name: order.principal_name,
+            client_id: order.client_id,
+            client_name: order.client_name,
+            sales_value: salesValue,
+            commission_rate: commissionRate,
+            commission_total_value: commissionValue,
+            commission_value: commissionValue,
+            status: 'prevista',
+            invoice_date: order.billing_date || order.created_date
+          });
+        }
+
+        // Criar comissões em lotes
+        const commissionBatches = [];
+        for (let i = 0; i < commissions.length; i += 50) {
+          commissionBatches.push(commissions.slice(i, i + 50));
+        }
+
+        const createdCommissions = [];
+        for (let i = 0; i < commissionBatches.length; i++) {
+          const batch = await base44.entities.Commission.bulkCreate(commissionBatches[i]);
+          createdCommissions.push(...batch);
+          setProgress(85 + (i / commissionBatches.length) * 5);
+        }
+
+        addLog(`✅ ${createdCommissions.length} comissões criadas`);
+
+        // Criar parcelas para as comissões
+        addLog(`💳 Criando parcelas de comissão...`);
+        
+        const installments = [];
+        for (const commission of createdCommissions) {
+          const dueDate = new Date(commission.invoice_date);
+          dueDate.setDate(dueDate.getDate() + 30);
+
+          installments.push({
+            commission_id: commission.id,
+            representada_id: commission.principal_id,
+            order_id: commission.order_id,
+            installment_no: 1,
+            installment_pct: 100,
+            installment_value: commission.commission_total_value,
+            due_date: dueDate.toISOString().split('T')[0],
+            status: 'prevista',
+            reference_month: new Date(commission.invoice_date).toISOString().slice(0, 7)
+          });
+        }
+
+        // Criar parcelas em lotes
+        const installmentBatches = [];
+        for (let i = 0; i < installments.length; i += 50) {
+          installmentBatches.push(installments.slice(i, i + 50));
+        }
+
+        for (let i = 0; i < installmentBatches.length; i++) {
+          await base44.entities.CommissionInstallment.bulkCreate(installmentBatches[i]);
+        }
+
+        addLog(`✅ ${installments.length} parcelas criadas`);
       }
 
       setProgress(90);
@@ -321,6 +388,7 @@ export default function GenerateHistoricalData() {
         opportunities: opportunities.length,
         quotes: quotes.length,
         orders: orders.length,
+        commissions: orders.length,
         tasks: tasks.length
       };
 

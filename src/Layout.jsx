@@ -75,7 +75,8 @@ export default function Layout({ children, currentPageName }) {
       items: [
         { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
         { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
-        { name: 'Auditoria', icon: Zap, page: 'AuditFluxo' }
+        { name: 'Auditoria', icon: Zap, page: 'AuditFluxo' },
+        { name: 'Corrigir Fluxo', icon: Zap, page: 'FixIntegratedFlow' }
       ]
     },
     {
