@@ -141,6 +141,7 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
       unit: product.unit || 'kg',
       quantity: product.min_quantity || 1,
       weight_per_meter: product.weight_per_meter || 0,
+      bar_quantity: 0,
       total_weight: 0,
       base_price_per_kg: product.base_price_per_kg || 0,
       cost_per_kg: product.cost_per_kg || 0,
@@ -446,7 +447,7 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
             {isFixedCommissionPrincipal() && (
               <div className="bg-blue-50 border-b border-blue-200 p-3">
                 <p className="text-xs text-blue-900 font-medium">
-                  ℹ️ Representado com <strong>preço tabelado</strong> - comissão fixa ({isFixedCommissionPrincipal() ? (principals.find(p => p.id === formData.principal_id)?.trade_name || '').includes('new') ? '3%' : '4%' : ''}%)
+                  ℹ️ Representado com <strong>preço tabelado</strong> - comissão fixa (3%)
                 </p>
               </div>
             )}
@@ -459,6 +460,9 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                     <th className="text-left p-2 font-medium">Unid</th>
                     <th className="text-right p-2 font-medium">Qtd</th>
                     <th className="text-right p-2 font-medium">Peso/mt</th>
+                    {isFixedCommissionPrincipal() && (
+                      <th className="text-right p-2 font-medium">Qtd Barras</th>
+                    )}
                     <th className="text-right p-2 font-medium">Peso Total</th>
                     {!isFixedCommissionPrincipal() && (
                       <>
@@ -529,6 +533,19 @@ export default function SteelQuoteForm({ quote, clientId, onSave, onCancel, isLo
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
+                      {isFixedCommissionPrincipal() && (
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={item.bar_quantity || 0}
+                            onChange={(e) => updateItem(index, 'bar_quantity', parseInt(e.target.value) || 0)}
+                            className="w-20 h-8 text-right"
+                            placeholder="0"
+                          />
+                        </td>
+                      )}
                       <td className="p-2">
                          {item.unit === 'pc' || item.unit === 'na' ? (
                            <Input
