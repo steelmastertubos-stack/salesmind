@@ -43,11 +43,24 @@ export default function Reports() {
   
   // Filtros globais
   const [period, setPeriod] = useState('thisMonth');
+  const [yearFilter, setYearFilter] = useState('2025');
   const [comparisonPeriod, setComparisonPeriod] = useState('lastMonth');
   const [clientFilter, setClientFilter] = useState('all');
   const [principalFilter, setPrincipalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('executive');
+  
+  // Get available years from data
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    [...orders, ...quotes, ...opportunities].forEach(item => {
+      const date = new Date(item.created_date);
+      if (!isNaN(date.getTime())) {
+        years.add(date.getFullYear());
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [orders, quotes, opportunities]);
 
   // Data fetching
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
@@ -140,11 +153,12 @@ export default function Reports() {
     return data.filter(item => {
       const date = new Date(item[dateField]);
       const matchesPeriod = date >= start && date <= end;
+      const matchesYear = yearFilter === 'all' || date.getFullYear() === parseInt(yearFilter);
       const matchesClient = clientFilter === 'all' || item.client_id === clientFilter;
       const matchesPrincipal = principalFilter === 'all' || item.principal_id === principalFilter;
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
       
-      return matchesPeriod && matchesClient && matchesPrincipal && matchesStatus;
+      return matchesPeriod && matchesYear && matchesClient && matchesPrincipal && matchesStatus;
     });
   };
 
@@ -591,7 +605,19 @@ export default function Reports() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Anos</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger>
                 <SelectValue placeholder="Período" />

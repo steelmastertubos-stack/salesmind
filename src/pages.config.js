@@ -22,6 +22,7 @@ import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import TestDataGenerator from './pages/TestDataGenerator';
 import Generate2025Data from './pages/Generate2025Data';
+import GenerateHistoricalData from './pages/GenerateHistoricalData';
 import __Layout from './Layout.jsx';
 
 
@@ -50,6 +51,7 @@ export const PAGES = {
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "TestDataGenerator": TestDataGenerator,
     "Generate2025Data": Generate2025Data,
+    "GenerateHistoricalData": GenerateHistoricalData,
 }
 
 export const pagesConfig = {
