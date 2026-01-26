@@ -49,18 +49,6 @@ export default function Reports() {
   const [principalFilter, setPrincipalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('executive');
-  
-  // Get available years from data
-  const availableYears = useMemo(() => {
-    const years = new Set();
-    [...orders, ...quotes, ...opportunities].forEach(item => {
-      const date = new Date(item.created_date);
-      if (!isNaN(date.getTime())) {
-        years.add(date.getFullYear());
-      }
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [orders, quotes, opportunities]);
 
   // Data fetching
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
@@ -89,6 +77,18 @@ export default function Reports() {
   });
 
   const isLoading = loadingOrders || loadingClients || loadingQuotes || loadingOpportunities;
+
+  // Get available years from data
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    [...orders, ...quotes, ...opportunities].forEach(item => {
+      const date = new Date(item.created_date);
+      if (!isNaN(date.getTime())) {
+        years.add(date.getFullYear());
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [orders, quotes, opportunities]);
 
   // Utility functions
   const formatCurrency = (value) => {

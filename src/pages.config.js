@@ -8,6 +8,8 @@ import Commissions from './pages/Commissions';
 import Dashboard from './pages/Dashboard';
 import FieldMode from './pages/FieldMode';
 import Financeiro from './pages/Financeiro';
+import Generate2025Data from './pages/Generate2025Data';
+import GenerateHistoricalData from './pages/GenerateHistoricalData';
 import ImportData from './pages/ImportData';
 import Opportunities from './pages/Opportunities';
 import Orders from './pages/Orders';
@@ -17,12 +19,10 @@ import Quotes from './pages/Quotes';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Tasks from './pages/Tasks';
+import TestDataGenerator from './pages/TestDataGenerator';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
-import TestDataGenerator from './pages/TestDataGenerator';
-import Generate2025Data from './pages/Generate2025Data';
-import GenerateHistoricalData from './pages/GenerateHistoricalData';
 import __Layout from './Layout.jsx';
 
 
@@ -37,6 +37,8 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "FieldMode": FieldMode,
     "Financeiro": Financeiro,
+    "Generate2025Data": Generate2025Data,
+    "GenerateHistoricalData": GenerateHistoricalData,
     "ImportData": ImportData,
     "Opportunities": Opportunities,
     "Orders": Orders,
@@ -46,12 +48,10 @@ export const PAGES = {
     "Reports": Reports,
     "Settings": Settings,
     "Tasks": Tasks,
+    "TestDataGenerator": TestDataGenerator,
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
-    "TestDataGenerator": TestDataGenerator,
-    "Generate2025Data": Generate2025Data,
-    "GenerateHistoricalData": GenerateHistoricalData,
 }
 
 export const pagesConfig = {
