@@ -106,7 +106,7 @@ export default function OpportunityCard({ client, rank }) {
 
         {/* Last Purchase Info */}
         {client.last_purchase_product && (
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-4">
+          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-3">
             <p className="text-xs text-emerald-700 font-medium mb-1">Última compra:</p>
             <p className="text-sm text-emerald-900 font-semibold line-clamp-1">
               {client.last_purchase_product}
@@ -114,6 +114,38 @@ export default function OpportunityCard({ client, rank }) {
             <p className="text-xs text-emerald-600 mt-1">
               {formatCurrency(client.last_purchase_value)}
             </p>
+          </div>
+        )}
+
+        {/* Last Quote Info */}
+        {client.last_quoted_product && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-3">
+            <p className="text-xs text-blue-700 font-medium mb-1">Último orçamento:</p>
+            <p className="text-sm text-blue-900 font-semibold line-clamp-1">
+              {client.last_quoted_product}
+            </p>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-blue-600">
+                {formatCurrency(client.last_quoted_value)}
+              </p>
+              <p className="text-xs text-blue-500">
+                {client.last_quoted_date && new Date(client.last_quoted_date).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Inactivity Warning */}
+        {client.inactive_count > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3">
+            <p className="text-xs text-amber-800 font-medium">
+              ⚠️ Ficou inativo {client.inactive_count}x - Prospectar ativamente
+            </p>
+            {client.reactivation_notes && (
+              <p className="text-xs text-amber-700 mt-1 line-clamp-2">
+                {client.reactivation_notes}
+              </p>
+            )}
           </div>
         )}
 
