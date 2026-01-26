@@ -6,6 +6,108 @@
 import { base44 } from '@/api/base44Client';
 import { QUOTE_STATUS, OPPORTUNITY_STAGE, ORDER_STATUS, COMMISSION_STATUS } from './fluxoConstants';
 
+// Garantir que Opportunity GANHO sempre cria Order
+export const ensureOrderForWonOpportunity = async (opportunity) => {
+  try {
+    // Verificar se já existe order
+    const existingOrders = await base44.entities.Order.filter({ opportunity_id: opportunity.id }, '-created_date', 1);
+    if (existingOrders.length > 0) {
+      await ensureCommissionForOrder(existingOrders[0]);
+      return existingOrders[0];
+    }
+
+    // Buscar quote vinculado
+    const relatedQuotes = await base44.entities.Quote.filter({ opportunity_id: opportunity.id }, '-created_date', 1);
+    const quote = relatedQuotes[0];
+
+    // Criar order
+    const orderData = {
+      opportunity_id: opportunity.id,
+      quote_id: quote?.id || null,
+      client_id: opportunity.client_id,
+      client_name: opportunity.client_name,
+      principal_id: opportunity.principal_id,
+      principal_name: opportunity.principal_name,
+      items: quote?.items || [],
+      total_value: opportunity.value_estimated || quote?.total_value || 0,
+      total_weight: quote?.total_weight || 0,
+      total_icms: quote?.total_icms || 0,
+      total_ipi: quote?.total_ipi || 0,
+      status: 'confirmado',
+      created_date: opportunity.updated_date || new Date().toISOString(),
+      billing_date: new Date().toISOString().split('T')[0]
+    };
+
+    const newOrder = await base44.entities.Order.create(orderData);
+    
+    // Criar comissão automaticamente
+    await ensureCommissionForOrder(newOrder);
+    
+    return newOrder;
+  } catch (error) {
+    console.error('Erro ao criar order:', error);
+    throw error;
+  }
+};
+
+// Garantir que todo Order tenha Commission
+export const ensureCommissionForOrder = async (order) => {
+  try {
+    // Verificar se já existe commission
+    const existingCommissions = await base44.entities.Commission.filter({ order_id: order.id }, '-created_date', 1);
+    if (existingCommissions.length > 0) {
+      return existingCommissions[0];
+    }
+
+    // Buscar principal para taxa de comissão
+    const principals = await base44.entities.Principal.list('id', 100);
+    const principal = principals.find(p => p.id === order.principal_id);
+    
+    const commissionRate = principal?.commission_percentage || 3;
+    const salesValue = order.total_value || 0;
+    const commissionValue = (salesValue * commissionRate) / 100;
+
+    const commissionData = {
+      order_id: order.id,
+      opportunity_id: order.opportunity_id,
+      quote_id: order.quote_id,
+      principal_id: order.principal_id,
+      principal_name: order.principal_name,
+      client_id: order.client_id,
+      client_name: order.client_name,
+      sales_value: salesValue,
+      commission_rate: commissionRate,
+      commission_total_value: commissionValue,
+      commission_value: commissionValue,
+      status: 'prevista',
+      invoice_date: order.billing_date || order.created_date
+    };
+
+    const newCommission = await base44.entities.Commission.create(commissionData);
+    
+    // Criar parcela
+    const dueDate = new Date(order.billing_date || order.created_date);
+    dueDate.setDate(dueDate.getDate() + (principal?.payment_day || 30));
+
+    await base44.entities.CommissionInstallment.create({
+      commission_id: newCommission.id,
+      representada_id: order.principal_id,
+      order_id: order.id,
+      installment_no: 1,
+      installment_pct: 100,
+      installment_value: commissionValue,
+      due_date: dueDate.toISOString().split('T')[0],
+      status: 'prevista',
+      reference_month: new Date(order.billing_date || order.created_date).toISOString().slice(0, 7)
+    });
+    
+    return newCommission;
+  } catch (error) {
+    console.error('Erro ao criar commission:', error);
+    throw error;
+  }
+};
+
 /**
  * AUTO: Quote SENT → Criar Opportunity
  */
@@ -31,9 +133,10 @@ export async function automateQuoteToOpportunity(quote, client, principal) {
       principal_id: quote.principal_id,
       principal_name: quote.principal_name,
       total_value: quote.total_value,
+      value_estimated: quote.total_value,
       total_weight: quote.items?.reduce((sum, item) => sum + (item.total_weight || 0), 0) || 0,
       stage: OPPORTUNITY_STAGE.PROPOSAL_SENT,
-      next_action_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +2 dias
+      next_action_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       next_action_type: 'whatsapp',
       last_contact_date: new Date().toISOString().split('T')[0],
       priority_score: 50,
@@ -62,59 +165,11 @@ export async function automateOpportunityToOrderAndCommission(opportunity, quote
   try {
     if (opportunity.stage !== OPPORTUNITY_STAGE.WON) return null;
 
-    // 1. CRIAR ORDER
-    const orderNumber = `PED-${Date.now().toString().slice(-6)}`;
+    // Usar função garantidora
+    const order = await ensureOrderForWonOpportunity(opportunity);
     
-    // Calcular comissão (com fallback)
-    let commissionRate = principal?.commission_percentage || 0;
-    const expectedCommission = (quote?.total_value || 0) * (commissionRate / 100);
-
-    const order = await base44.entities.Order.create({
-      order_number: orderNumber,
-      quote_id: quote.id,
-      client_id: opportunity.client_id,
-      client_name: opportunity.client_name,
-      principal_id: opportunity.principal_id,
-      principal_name: opportunity.principal_name,
-      items: quote?.items || [],
-      total_value: quote?.total_value || 0,
-      total_weight: opportunity.total_weight || 0,
-      total_icms: quote?.total_icms || 0,
-      total_ipi: quote?.total_ipi || 0,
-      payment_terms: quote?.payment_terms || principal?.payment_terms || '30 dias',
-      status: ORDER_STATUS.ANALYZING,
-      commission_rate: commissionRate,
-      expected_commission: expectedCommission,
-      commission_status: COMMISSION_STATUS.EXPECTED,
-      notes: `Criado automaticamente ao ganhar oportunidade ${opportunity.quote_number}`,
-      status_history: [{
-        status: ORDER_STATUS.ANALYZING,
-        date: new Date().toISOString(),
-        notes: 'Pedido criado automaticamente'
-      }]
-    });
-
-    console.log('✅ Pedido criado automaticamente:', order.id);
-
-    // 2. CRIAR COMMISSION
-    const commission = await base44.entities.Commission.create({
-      order_id: order.id,
-      order_number: order.order_number,
-      principal_id: principal.id,
-      principal_name: principal.trade_name || principal.company_name,
-      client_id: opportunity.client_id,
-      client_name: opportunity.client_name,
-      invoice_date: null, // Será preenchido quando NF for registrada
-      invoice_value: quote?.total_value || 0,
-      commission_rate: commissionRate,
-      commission_value: expectedCommission,
-      status: COMMISSION_STATUS.EXPECTED,
-      notes: `Criada automaticamente ao ganhar pedido ${orderNumber}`
-    });
-
-    console.log('✅ Comissão criada automaticamente:', commission.id);
-
-    return { order, commission };
+    console.log('✅ Pedido e comissão criados automaticamente:', order.id);
+    return { order };
   } catch (error) {
     console.error('❌ Erro ao criar pedido/comissão automaticamente:', error);
     throw error;
@@ -128,7 +183,6 @@ export async function automateOrderInvoicedToCommission(order) {
   try {
     if (order.status !== ORDER_STATUS.INVOICED) return null;
 
-    // Encontrar comissão
     const commission = await base44.entities.Commission.filter(
       { order_id: order.id },
       '',
@@ -136,11 +190,10 @@ export async function automateOrderInvoicedToCommission(order) {
     ).then(r => r[0]);
 
     if (!commission) {
-      console.warn('⚠️ Pedido faturado mas comissão não encontrada');
-      return null;
+      console.warn('⚠️ Pedido faturado mas comissão não encontrada, criando...');
+      return await ensureCommissionForOrder(order);
     }
 
-    // Atualizar status
     const updated = await base44.entities.Commission.update(commission.id, {
       status: COMMISSION_STATUS.TO_RECEIVE,
       invoice_date: order.invoice_date,
