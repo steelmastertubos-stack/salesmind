@@ -12,9 +12,31 @@ const parseCSV = (fileContent) => {
   const lines = fileContent.trim().split('\n');
   if (lines.length < 2) return { headers: [], rows: [] };
   
-  const headers = lines[0].split(',').map(h => h.trim());
+  // Parser CSV melhorado que respeita aspas
+  const parseCSVLine = (line) => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+    return values;
+  };
+  
+  const headers = parseCSVLine(lines[0]);
   const rows = lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim());
+    const values = parseCSVLine(line);
     const row = {};
     headers.forEach((header, i) => {
       row[header] = values[i] || '';
@@ -148,18 +170,33 @@ export default function ProductImportForm({ onSuccess }) {
       try {
         const { rows } = parseCSV(event.target.result);
         
-        // Validar linhas
+        // Validar linhas e coletar erros
         const allErrors = [];
+        const validRows = [];
         rows.forEach((row, i) => {
-          allErrors.push(...validateRow(row, i));
+          const rowErrors = validateRow(row, i);
+          if (rowErrors.length > 0) {
+            allErrors.push(...rowErrors);
+          } else {
+            validRows.push(row);
+          }
         });
 
         if (allErrors.length > 0) {
+          console.warn(`⚠️ ${allErrors.length} linhas com erro ignoradas:`, allErrors);
+          toast.warning(`${allErrors.length} produto(s) com erro foram ignorados`, {
+            description: `${validRows.length} produtos válidos serão importados`
+          });
+        }
+
+        if (validRows.length === 0) {
           setErrors(allErrors);
-          toast.error(`${allErrors.length} erro(s) encontrado(s)`);
+          toast.error('Nenhum produto válido para importar');
           setIsLoading(false);
           return;
         }
+        
+        console.log(`✅ Produtos válidos: ${validRows.length} de ${rows.length} total`);
 
         // Identificar produtos existentes com os mesmos códigos da MESMA representada
         const existingProducts = allProducts.filter(p => 
@@ -203,8 +240,8 @@ export default function ProductImportForm({ onSuccess }) {
         // Gerar ID do lote
         const batchId = `PROD-${Date.now()}`;
 
-        // Preparar dados - aceitar formato exportado do CSV
-        const products = rows.map(row => {
+        // Preparar dados - aceitar formato exportado do CSV (usar apenas linhas válidas)
+        const products = validRows.map(row => {
           // Remover aspas dos valores
           const cleanValue = (v) => v?.toString().replace(/"/g, '').trim();
           
