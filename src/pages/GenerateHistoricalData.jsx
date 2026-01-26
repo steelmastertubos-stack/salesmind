@@ -139,12 +139,16 @@ export default function GenerateHistoricalData() {
       const orders = [];
       const createdOpportunities = [];
 
-      // Criar oportunidades primeiro
+      // Criar oportunidades primeiro - GARANTIR DATAS EM 2025
       for (let i = 1; i <= 450; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
-        const month = Math.floor(i / 38);
-        const day = Math.floor(Math.random() * 28) + 1;
-        const createdDate = new Date(2025, month, day);
+        const month = Math.floor((i - 1) / 38) % 12; // 0-11 (jan-dez)
+        const day = Math.floor(Math.random() * 28) + 1; // 1-28
+        const hour = Math.floor(Math.random() * 24);
+        const minute = Math.floor(Math.random() * 60);
+        
+        // FORÇAR ano 2025
+        const createdDate = new Date(Date.UTC(2025, month, day, hour, minute, 0));
         
         const value = 5000 + Math.floor(Math.random() * 95000);
         const stage = stages[Math.floor(Math.random() * stages.length)];
@@ -214,12 +218,15 @@ export default function GenerateHistoricalData() {
         };
         quotes.push(quote);
 
-        // Order (se ganho)
+        // Order (se ganho) - GARANTIR DATAS EM 2025
         if (opp.stage === 'ganho') {
           const orderDate = new Date(opp.created_date);
+          const billingDate = new Date(orderDate);
+          billingDate.setDate(billingDate.getDate() + 7);
+          
           orders.push({
             opportunity_id: opp.id,
-            quote_id: null, // será atualizado depois
+            quote_id: null,
             client_id: opp.client_id,
             client_name: opp.client_name,
             principal_id: principalId,
@@ -227,9 +234,11 @@ export default function GenerateHistoricalData() {
             items: quote.items,
             total_value: opp.value_estimated,
             total_weight: quantity,
+            total_cost: quantity * (product.base_price_per_kg * 0.7),
             status: 'faturado',
             created_date: opp.created_date,
-            billing_date: new Date(orderDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            billing_date: billingDate.toISOString().split('T')[0],
+            invoice_date: billingDate.toISOString().split('T')[0]
           });
         }
       }
@@ -352,17 +361,17 @@ export default function GenerateHistoricalData() {
 
       setProgress(90);
 
-      // 4. TAREFAS E ALERTAS
+      // 4. TAREFAS E ALERTAS - GARANTIR DATAS EM 2025
       addLog('🔔 Gerando tarefas e alertas...');
       
       const tasks = [];
-      const now = new Date();
       
-      // Tarefas de follow-up (20)
+      // Tarefas de follow-up (20) - TODAS EM 2025
       for (let i = 0; i < 20; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
-        const daysAhead = Math.floor(Math.random() * 30);
-        const taskDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+        const month = Math.floor(Math.random() * 12); // 0-11
+        const day = Math.floor(Math.random() * 28) + 1; // 1-28
+        const taskDate = new Date(2025, month, day);
         
         tasks.push({
           title: `Follow-up: ${client.trade_name}`,
@@ -382,6 +391,12 @@ export default function GenerateHistoricalData() {
 
       setProgress(100);
       
+      // VALIDAR DATAS CRIADAS
+      const sampleOpp = createdOpportunities[0];
+      const sampleOrder = orders[0];
+      addLog(`📅 Amostra - Oportunidade: ${sampleOpp?.created_date} (ano: ${new Date(sampleOpp?.created_date).getFullYear()})`);
+      addLog(`📅 Amostra - Pedido: ${sampleOrder?.created_date} (ano: ${new Date(sampleOrder?.created_date).getFullYear()})`);
+      
       const finalResults = {
         clients: createdClients.length,
         products: createdProducts.length,
@@ -389,12 +404,16 @@ export default function GenerateHistoricalData() {
         quotes: quotes.length,
         orders: orders.length,
         commissions: orders.length,
-        tasks: tasks.length
+        tasks: tasks.length,
+        dateValidation: {
+          sampleOppYear: new Date(sampleOpp?.created_date).getFullYear(),
+          sampleOrderYear: new Date(sampleOrder?.created_date).getFullYear()
+        }
       };
 
       setResults(finalResults);
-      addLog('✨ Geração concluída com sucesso!');
-      toast.success('Dados históricos gerados!');
+      addLog('✨ Geração concluída com sucesso! Todos os registros em 2025.');
+      toast.success('Dados históricos 2025 gerados!');
 
     } catch (error) {
       console.error('Erro ao gerar dados:', error);
