@@ -24,6 +24,7 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import FixIntegratedFlow from './pages/FixIntegratedFlow';
+import VerifyDataByYear from './pages/VerifyDataByYear';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "FixIntegratedFlow": FixIntegratedFlow,
+    "VerifyDataByYear": VerifyDataByYear,
 }
 
 export const pagesConfig = {
