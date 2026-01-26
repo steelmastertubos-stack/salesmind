@@ -80,27 +80,82 @@ export default function ProductsPage() {
   });
 
   const deleteProductMutation = useMutation({
-    mutationFn: (id) => base44.entities.Product.delete(id),
+    mutationFn: async (id) => {
+      // Tentar soft delete primeiro
+      try {
+        return await base44.entities.Product.update(id, { 
+          is_active: false,
+          deleted_at: new Date().toISOString()
+        });
+      } catch (error) {
+        // Se soft delete falhar, tentar hard delete
+        return await base44.entities.Product.delete(id);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['products']);
-      toast.success('Produto excluído!');
+      toast.success('Produto desativado!');
+    },
+    onError: (error) => {
+      const errorMsg = error?.message || String(error);
+      console.error('❌ Erro ao excluir produto:', error);
+      toast.error(`Erro ao excluir: ${errorMsg}`, { 
+        description: 'O produto pode estar vinculado a orçamentos/pedidos',
+        duration: 5000 
+      });
     }
   });
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids) => {
-      console.log('Deletando produtos:', ids);
-      const results = await Promise.all(ids.map(id => base44.entities.Product.delete(id)));
+      console.log('🗑️ Iniciando exclusão em lote:', ids.length, 'produtos');
+      const results = { softDeleted: 0, hardDeleted: 0, failed: [] };
+      
+      for (const id of ids) {
+        try {
+          // Tentar soft delete primeiro
+          await base44.entities.Product.update(id, { 
+            is_active: false,
+            deleted_at: new Date().toISOString()
+          });
+          results.softDeleted++;
+          console.log('✅ Soft delete:', id);
+        } catch (softError) {
+          console.log('⚠️ Soft delete falhou, tentando hard delete:', id);
+          try {
+            // Se soft delete falhar, tentar hard delete
+            await base44.entities.Product.delete(id);
+            results.hardDeleted++;
+            console.log('✅ Hard delete:', id);
+          } catch (hardError) {
+            const errorMsg = hardError?.message || String(hardError);
+            results.failed.push({ id, error: errorMsg });
+            console.error('❌ Hard delete falhou:', id, hardError);
+          }
+        }
+      }
+      
       return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries(['products']);
       setSelectedProducts([]);
-      toast.success('Produtos excluídos em massa!');
+      
+      const total = results.softDeleted + results.hardDeleted;
+      if (results.failed.length === 0) {
+        toast.success(`${total} produtos removidos!`, {
+          description: `${results.softDeleted} desativados, ${results.hardDeleted} excluídos`
+        });
+      } else {
+        toast.warning(`${total} produtos removidos, ${results.failed.length} falharam`, {
+          description: results.failed[0]?.error,
+          duration: 5000
+        });
+      }
     },
     onError: (error) => {
-      console.error('Erro ao deletar:', error);
-      toast.error('Erro ao excluir produtos: ' + error.message);
+      console.error('❌ Erro crítico na exclusão em lote:', error);
+      toast.error('Erro ao excluir produtos: ' + (error.message || String(error)));
     }
   });
 
@@ -184,6 +239,55 @@ export default function ProductsPage() {
     }
   };
 
+  const [showClearCatalogDialog, setShowClearCatalogDialog] = useState(false);
+
+  const clearCatalogMutation = useMutation({
+    mutationFn: async (principalId) => {
+      const productsToDelete = products.filter(p => p.principal_id === principalId);
+      const results = { total: productsToDelete.length, softDeleted: 0, hardDeleted: 0, failed: [] };
+      
+      // Processar em batches de 50
+      const batchSize = 50;
+      for (let i = 0; i < productsToDelete.length; i += batchSize) {
+        const batch = productsToDelete.slice(i, i + batchSize);
+        
+        for (const product of batch) {
+          try {
+            // Tentar soft delete
+            await base44.entities.Product.update(product.id, { 
+              is_active: false,
+              deleted_at: new Date().toISOString()
+            });
+            results.softDeleted++;
+          } catch (softError) {
+            try {
+              // Se soft delete falhar, tentar hard delete
+              await base44.entities.Product.delete(product.id);
+              results.hardDeleted++;
+            } catch (hardError) {
+              results.failed.push({ 
+                code: product.code, 
+                name: product.name,
+                error: hardError?.message || String(hardError) 
+              });
+            }
+          }
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries(['products']);
+      setShowClearCatalogDialog(false);
+      
+      const processed = results.softDeleted + results.hardDeleted;
+      toast.success(`Catálogo limpo: ${processed}/${results.total} produtos`, {
+        description: `${results.softDeleted} desativados, ${results.hardDeleted} excluídos, ${results.failed.length} falharam`
+      });
+    }
+  });
+
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
       <PageHeader
@@ -195,6 +299,16 @@ export default function ProductsPage() {
           setShowForm(true);
         }}
       >
+        {filterPrincipal && (
+          <Button 
+            variant="outline" 
+            className="border-red-300 text-red-700 hover:bg-red-50"
+            onClick={() => setShowClearCatalogDialog(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Limpar Catálogo
+          </Button>
+        )}
         {selectedProducts.length > 0 && (
           <Button 
             variant="destructive" 
@@ -446,6 +560,54 @@ export default function ProductsPage() {
               toast.success('Produtos importados com sucesso!');
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showClearCatalogDialog} onOpenChange={setShowClearCatalogDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">⚠️ Limpar Catálogo da Representada</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-900 font-medium">
+                Esta ação irá remover TODOS os produtos da representada:
+              </p>
+              <p className="text-sm font-bold text-red-900 mt-2">
+                {principalsMap[filterPrincipal]}
+              </p>
+              <p className="text-xs text-red-800 mt-3">
+                Total: {products.filter(p => p.principal_id === filterPrincipal).length} produtos
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-900">
+                <strong>Como funciona:</strong>
+              </p>
+              <ul className="text-xs text-blue-800 mt-2 space-y-1 ml-4">
+                <li>• Produtos com vínculos (orçamentos/pedidos): serão DESATIVADOS</li>
+                <li>• Produtos sem vínculos: serão EXCLUÍDOS</li>
+                <li>• Histórico de negociações não será afetado</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowClearCatalogDialog(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => clearCatalogMutation.mutate(filterPrincipal)}
+                disabled={clearCatalogMutation.isPending}
+              >
+                {clearCatalogMutation.isPending ? 'Limpando...' : 'Confirmar Limpeza'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

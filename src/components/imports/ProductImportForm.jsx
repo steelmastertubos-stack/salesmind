@@ -161,20 +161,43 @@ export default function ProductImportForm({ onSuccess }) {
           return;
         }
 
-        // Identificar produtos existentes com os mesmos códigos
+        // Identificar produtos existentes com os mesmos códigos da MESMA representada
         const existingProducts = allProducts.filter(p => 
+          p.principal_id === selectedPrincipalId &&
           rows.some(row => {
             const code = row.code || row['Código'] || row.Codigo;
             return p.code === code?.replace(/"/g, '');
           })
         );
 
-        // Excluir produtos duplicados
+        // Desativar/excluir produtos duplicados com tratamento de erro
         if (existingProducts.length > 0) {
-          toast.info(`Removendo ${existingProducts.length} produtos duplicados...`);
+          toast.info(`Processando ${existingProducts.length} produtos duplicados...`);
+          let softDeleted = 0;
+          let hardDeleted = 0;
+          let failed = 0;
+          
           for (const product of existingProducts) {
-            await base44.entities.Product.delete(product.id);
+            try {
+              // Tentar soft delete primeiro
+              await base44.entities.Product.update(product.id, { 
+                is_active: false,
+                deleted_at: new Date().toISOString()
+              });
+              softDeleted++;
+            } catch (softError) {
+              try {
+                // Se soft delete falhar, tentar hard delete
+                await base44.entities.Product.delete(product.id);
+                hardDeleted++;
+              } catch (hardError) {
+                console.error('Erro ao remover produto duplicado:', product.code, hardError);
+                failed++;
+              }
+            }
           }
+          
+          toast.success(`Duplicados processados: ${softDeleted} desativados, ${hardDeleted} excluídos${failed > 0 ? `, ${failed} falharam` : ''}`);
         }
 
         // Gerar ID do lote
