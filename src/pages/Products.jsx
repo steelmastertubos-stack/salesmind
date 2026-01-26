@@ -89,12 +89,18 @@ export default function ProductsPage() {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids) => {
-      await Promise.all(ids.map(id => base44.entities.Product.delete(id)));
+      console.log('Deletando produtos:', ids);
+      const results = await Promise.all(ids.map(id => base44.entities.Product.delete(id)));
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['products']);
       setSelectedProducts([]);
       toast.success('Produtos excluídos em massa!');
+    },
+    onError: (error) => {
+      console.error('Erro ao deletar:', error);
+      toast.error('Erro ao excluir produtos: ' + error.message);
     }
   });
 
@@ -154,7 +160,12 @@ export default function ProductsPage() {
   };
 
   const handleBulkDelete = () => {
-    if (confirm(`Deseja excluir ${selectedProducts.length} produtos selecionados?`)) {
+    console.log('Produtos selecionados:', selectedProducts);
+    if (selectedProducts.length === 0) {
+      toast.error('Nenhum produto selecionado');
+      return;
+    }
+    if (confirm(`Deseja REALMENTE excluir ${selectedProducts.length} produtos selecionados? Esta ação não pode ser desfeita.`)) {
       bulkDeleteMutation.mutate(selectedProducts);
     }
   };
