@@ -27,23 +27,22 @@ export default function GenerateHistoricalData() {
     try {
       addLog('🚀 Iniciando geração de dados históricos...');
 
-      // 1. CLIENTES (80 clientes)
+      // 1. CLIENTES (90 clientes: 40 ativos, 30 recorrentes, 20 inativos)
       addLog('📊 Criando clientes...');
       setProgress(10);
 
       const segments = ['Metalúrgica', 'Metalmecânica', 'Caldeiraria', 'Estruturas Metálicas', 'Engenharia', 'Construtoras', 'Implemento Agrícola', 'Implemento Rodoviário'];
       const states = ['SP', 'MG', 'RJ', 'RS', 'PR', 'SC', 'BA', 'PE', 'CE'];
-      const statuses = ['active', 'active', 'active', 'attention', 'at_risk', 'inactive'];
 
       const clients = [];
-      for (let i = 1; i <= 80; i++) {
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
+      
+      // 40 ativos
+      for (let i = 1; i <= 40; i++) {
         const segment = segments[Math.floor(Math.random() * segments.length)];
         const state = states[Math.floor(Math.random() * states.length)];
-        
         clients.push({
           company_name: `${segment} ${state} ${i} LTDA`,
-          trade_name: `Cliente ${i}`,
+          trade_name: `Cliente Ativo ${i}`,
           cnpj: `${String(i).padStart(8, '0')}/0001-00`,
           segment,
           state,
@@ -52,10 +51,54 @@ export default function GenerateHistoricalData() {
           phone: `(11) 9${String(i).padStart(4, '0')}-${String(i).padStart(4, '0')}`,
           email: `cliente${i}@email.com`,
           contact_name: `Contato ${i}`,
-          status,
-          last_purchase_date: status === 'active' ? new Date(2025, Math.floor(Math.random() * 12), 1).toISOString().split('T')[0] : null,
-          average_purchase_cycle: 30 + Math.floor(Math.random() * 60),
-          average_ticket: 5000 + Math.floor(Math.random() * 50000)
+          status: 'active',
+          last_purchase_date: new Date(2025, Math.floor(Math.random() * 3) + 9, Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+          average_purchase_cycle: 30 + Math.floor(Math.random() * 30),
+          average_ticket: 10000 + Math.floor(Math.random() * 40000)
+        });
+      }
+      
+      // 30 em atenção (recorrentes)
+      for (let i = 41; i <= 70; i++) {
+        const segment = segments[Math.floor(Math.random() * segments.length)];
+        const state = states[Math.floor(Math.random() * states.length)];
+        clients.push({
+          company_name: `${segment} ${state} ${i} LTDA`,
+          trade_name: `Cliente Recorrente ${i}`,
+          cnpj: `${String(i).padStart(8, '0')}/0001-00`,
+          segment,
+          state,
+          city: `Cidade ${i}`,
+          address: `Rua ${i}, ${i}00`,
+          phone: `(11) 9${String(i).padStart(4, '0')}-${String(i).padStart(4, '0')}`,
+          email: `cliente${i}@email.com`,
+          contact_name: `Contato ${i}`,
+          status: 'attention',
+          last_purchase_date: new Date(2025, Math.floor(Math.random() * 6) + 3, Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+          average_purchase_cycle: 45 + Math.floor(Math.random() * 45),
+          average_ticket: 8000 + Math.floor(Math.random() * 30000)
+        });
+      }
+      
+      // 20 inativos
+      for (let i = 71; i <= 90; i++) {
+        const segment = segments[Math.floor(Math.random() * segments.length)];
+        const state = states[Math.floor(Math.random() * states.length)];
+        clients.push({
+          company_name: `${segment} ${state} ${i} LTDA`,
+          trade_name: `Cliente Inativo ${i}`,
+          cnpj: `${String(i).padStart(8, '0')}/0001-00`,
+          segment,
+          state,
+          city: `Cidade ${i}`,
+          address: `Rua ${i}, ${i}00`,
+          phone: `(11) 9${String(i).padStart(4, '0')}-${String(i).padStart(4, '0')}`,
+          email: `cliente${i}@email.com`,
+          contact_name: `Contato ${i}`,
+          status: 'inactive',
+          last_purchase_date: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+          average_purchase_cycle: 60 + Math.floor(Math.random() * 60),
+          average_ticket: 5000 + Math.floor(Math.random() * 25000)
         });
       }
 
@@ -85,7 +128,7 @@ export default function GenerateHistoricalData() {
       addLog(`✅ ${createdProducts.length} produtos criados`);
       setProgress(40);
 
-      // 3. NEGOCIAÇÕES (400 ao longo de 2025)
+      // 3. NEGOCIAÇÕES (450 ao longo de 2025)
       addLog('💼 Criando negociações de 2025...');
       
       const stages = ['proposta_enviada', 'em_negociacao', 'ganho', 'perdido'];
@@ -95,9 +138,9 @@ export default function GenerateHistoricalData() {
       const quotes = [];
       const orders = [];
 
-      for (let i = 1; i <= 400; i++) {
+      for (let i = 1; i <= 450; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
-        const month = Math.floor(i / 35); // Distribuir ao longo de 12 meses
+        const month = Math.floor(i / 38); // Distribuir ao longo de 12 meses (450/38 ≈ 12)
         const day = Math.floor(Math.random() * 28) + 1;
         const createdDate = new Date(2025, month, day);
         
@@ -277,10 +320,10 @@ export default function GenerateHistoricalData() {
             <AlertDescription>
               <strong>Esta operação irá criar:</strong>
               <ul className="list-disc ml-6 mt-2 space-y-1">
-                <li>80 clientes (ativos, atenção, risco, inativos)</li>
-                <li>400 negociações distribuídas em 2025</li>
-                <li>Orçamentos e pedidos vinculados</li>
-                <li>20 tarefas de follow-up</li>
+                <li>90 clientes (40 ativos, 30 recorrentes, 20 inativos)</li>
+                <li>450 negociações distribuídas em 2025</li>
+                <li>Orçamentos e pedidos vinculados com datas reais</li>
+                <li>20 tarefas de follow-up agendadas</li>
               </ul>
             </AlertDescription>
           </Alert>

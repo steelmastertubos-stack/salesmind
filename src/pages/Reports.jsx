@@ -162,9 +162,9 @@ export default function Reports() {
     });
   };
 
-  const filteredOrders = useMemo(() => filterData(orders), [orders, period, clientFilter, principalFilter, statusFilter]);
-  const filteredQuotes = useMemo(() => filterData(quotes), [quotes, period, clientFilter, principalFilter, statusFilter]);
-  const filteredOpportunities = useMemo(() => filterData(opportunities), [opportunities, period, clientFilter, principalFilter, statusFilter]);
+  const filteredOrders = useMemo(() => filterData(orders), [orders, period, yearFilter, clientFilter, principalFilter, statusFilter]);
+  const filteredQuotes = useMemo(() => filterData(quotes), [quotes, period, yearFilter, clientFilter, principalFilter, statusFilter]);
+  const filteredOpportunities = useMemo(() => filterData(opportunities), [opportunities, period, yearFilter, clientFilter, principalFilter, statusFilter]);
 
   // Comparison data
   const comparisonOrders = useMemo(() => {
@@ -688,8 +688,23 @@ export default function Reports() {
         </CardContent>
       </Card>
 
+      {/* Empty State */}
+      {!isLoading && filteredOrders.length === 0 && filteredQuotes.length === 0 && (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 mx-auto bg-slate-100 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">Sem dados para o período selecionado</h3>
+              <p className="text-sm text-slate-500">Ajuste os filtros ou aguarde a importação de dados históricos</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* AI Insights Block */}
-      <AIInsightsBlock insights={aiInsights} onGenerateAction={handleGenerateAction} />
+      {filteredOrders.length > 0 && <AIInsightsBlock insights={aiInsights} onGenerateAction={handleGenerateAction} />}
 
       {/* KPIs com Comparação */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
