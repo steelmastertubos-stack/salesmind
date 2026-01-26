@@ -182,16 +182,24 @@ export default function GenerateHistoricalData() {
       }
 
       setProgress(45);
-      addLog(`💡 Criando orçamentos vinculados...`);
+      addLog(`💡 Criando fluxo integrado: Quote → Order → Commission → Installments...`);
 
-      // 4. QUOTES
-      const quotes = [];
-      for (const opp of createdOpportunities) {
+      // 4. CRIAR FLUXO COMPLETO PARA OPORTUNIDADES GANHAS
+      const wonOpportunities = createdOpportunities.filter(o => o.stage === 'ganho');
+      addLog(`🎯 ${wonOpportunities.length} oportunidades ganhas precisam de fluxo completo`);
+
+      const allQuotes = [];
+      const allOrders = [];
+      const allCommissions = [];
+      const allInstallments = [];
+
+      for (const opp of wonOpportunities) {
         const client = createdClients.find(c => c.id === opp.client_id);
         const product = createdProducts[Math.floor(Math.random() * createdProducts.length)];
         const quantity = 100 + Math.floor(Math.random() * 900);
         
-        quotes.push({
+        // 4.1) Quote
+        const quoteData = {
           opportunity_id: opp.id,
           client_id: opp.client_id,
           client_name: opp.client_name,
@@ -215,55 +223,53 @@ export default function GenerateHistoricalData() {
             item_total: quantity * product.base_price_per_kg * 1.05
           }],
           total_value: opp.value_estimated,
-          status: opp.stage === 'ganho' ? 'convertido' : opp.stage === 'perdido' ? 'cancelado' : 'enviado'
-        });
+          status: 'convertido'
+        };
+        allQuotes.push(quoteData);
       }
 
+      // Criar quotes em lote
       const quoteBatches = [];
-      for (let i = 0; i < quotes.length; i += 50) {
-        quoteBatches.push(quotes.slice(i, i + 50));
+      for (let i = 0; i < allQuotes.length; i += 50) {
+        quoteBatches.push(allQuotes.slice(i, i + 50));
       }
 
       const createdQuotes = [];
       for (let i = 0; i < quoteBatches.length; i++) {
         const batch = await base44.entities.Quote.bulkCreate(quoteBatches[i]);
         createdQuotes.push(...batch);
-        setProgress(45 + (i / quoteBatches.length) * 15);
+        setProgress(45 + (i / quoteBatches.length) * 5);
       }
+      addLog(`✅ ${createdQuotes.length} orçamentos criados para oportunidades ganhas`);
 
-      addLog(`✅ ${createdQuotes.length} orçamentos criados`);
-      setProgress(60);
+      // 5. ORDERS vinculados aos quotes
+      addLog('📦 Criando pedidos vinculados...');
+      setProgress(50);
 
-      // 5. ORDERS - APENAS OPORTUNIDADES GANHAS
-      addLog('📦 Criando pedidos das oportunidades ganhas...');
-      
-      const wonOpportunities = createdOpportunities.filter(o => o.stage === 'ganho');
-      const orders = [];
-
-      for (const opp of wonOpportunities) {
-        const quote = createdQuotes.find(q => q.opportunity_id === opp.id);
+      for (let i = 0; i < wonOpportunities.length; i++) {
+        const opp = wonOpportunities[i];
+        const quote = createdQuotes[i];
         const product = createdProducts[Math.floor(Math.random() * createdProducts.length)];
-        const quantity = quote?.items?.[0]?.quantity || 100 + Math.floor(Math.random() * 900);
+        const quantity = quote?.items?.[0]?.quantity || 100;
         
         const orderDate = new Date(opp.created_date);
         const billingDate = new Date(orderDate);
-        billingDate.setUTCDate(billingDate.getUTCDate() + 7);
+        billingDate.setUTCDate(billingDate.getUTCDate() + Math.floor(Math.random() * 30) + 1);
         
-        // Garantir que billing_date também está em 2025
         if (billingDate.getUTCFullYear() > 2025) {
           billingDate.setUTCFullYear(2025);
           billingDate.setUTCMonth(11);
           billingDate.setUTCDate(31);
         }
         
-        orders.push({
+        allOrders.push({
           opportunity_id: opp.id,
-          quote_id: quote?.id || null,
+          quote_id: quote.id,
           client_id: opp.client_id,
           client_name: opp.client_name,
           principal_id: principalId,
           principal_name: principals[0].trade_name,
-          items: quote?.items || [],
+          items: quote.items,
           total_value: opp.value_estimated,
           total_weight: quantity,
           total_cost: quantity * (product.cost_per_kg || product.base_price_per_kg * 0.7),
@@ -275,30 +281,29 @@ export default function GenerateHistoricalData() {
       }
 
       const orderBatches = [];
-      for (let i = 0; i < orders.length; i += 50) {
-        orderBatches.push(orders.slice(i, i + 50));
+      for (let i = 0; i < allOrders.length; i += 50) {
+        orderBatches.push(allOrders.slice(i, i + 50));
       }
 
       const createdOrders = [];
       for (let i = 0; i < orderBatches.length; i++) {
         const batch = await base44.entities.Order.bulkCreate(orderBatches[i]);
         createdOrders.push(...batch);
-        addLog(`✅ ${Math.min((i + 1) * 50, orders.length)} / ${orders.length} pedidos`);
-        setProgress(60 + (i / orderBatches.length) * 15);
+        setProgress(50 + (i / orderBatches.length) * 15);
       }
-
-      setProgress(75);
-      addLog(`💰 Criando comissões...`);
+      addLog(`✅ ${createdOrders.length} pedidos criados (100% vinculados)`);
 
       // 6. COMMISSIONS
-      const commissions = [];
+      addLog('💰 Criando comissões vinculadas...');
+      setProgress(65);
+
       for (const order of createdOrders) {
         const principal = principals[0];
         const commissionRate = principal?.commission_percentage || 3;
         const salesValue = order.total_value || 0;
         const commissionValue = (salesValue * commissionRate) / 100;
 
-        commissions.push({
+        allCommissions.push({
           order_id: order.id,
           opportunity_id: order.opportunity_id,
           quote_id: order.quote_id,
@@ -311,33 +316,38 @@ export default function GenerateHistoricalData() {
           commission_total_value: commissionValue,
           commission_value: commissionValue,
           status: 'prevista',
-          invoice_date: order.billing_date || order.created_date
+          invoice_date: order.billing_date
         });
       }
 
       const commissionBatches = [];
-      for (let i = 0; i < commissions.length; i += 50) {
-        commissionBatches.push(commissions.slice(i, i + 50));
+      for (let i = 0; i < allCommissions.length; i += 50) {
+        commissionBatches.push(allCommissions.slice(i, i + 50));
       }
 
       const createdCommissions = [];
       for (let i = 0; i < commissionBatches.length; i++) {
         const batch = await base44.entities.Commission.bulkCreate(commissionBatches[i]);
         createdCommissions.push(...batch);
-        setProgress(75 + (i / commissionBatches.length) * 10);
+        setProgress(65 + (i / commissionBatches.length) * 15);
       }
-
-      addLog(`✅ ${createdCommissions.length} comissões criadas`);
+      addLog(`✅ ${createdCommissions.length} comissões criadas (100% vinculadas)`);
 
       // 7. INSTALLMENTS
-      addLog(`💳 Criando parcelas...`);
+      addLog(`💳 Criando parcelas vinculadas...`);
+      setProgress(80);
       
-      const installments = [];
       for (const commission of createdCommissions) {
         const dueDate = new Date(commission.invoice_date);
-        dueDate.setDate(dueDate.getDate() + 30);
+        dueDate.setUTCDate(dueDate.getUTCDate() + 30);
+        
+        if (dueDate.getUTCFullYear() > 2025) {
+          dueDate.setUTCFullYear(2025);
+          dueDate.setUTCMonth(11);
+          dueDate.setUTCDate(31);
+        }
 
-        installments.push({
+        allInstallments.push({
           commission_id: commission.id,
           representada_id: commission.principal_id,
           order_id: commission.order_id,
@@ -351,16 +361,67 @@ export default function GenerateHistoricalData() {
       }
 
       const installmentBatches = [];
-      for (let i = 0; i < installments.length; i += 50) {
-        installmentBatches.push(installments.slice(i, i + 50));
+      for (let i = 0; i < allInstallments.length; i += 50) {
+        installmentBatches.push(allInstallments.slice(i, i + 50));
       }
 
       for (let i = 0; i < installmentBatches.length; i++) {
         await base44.entities.CommissionInstallment.bulkCreate(installmentBatches[i]);
-        setProgress(85 + (i / installmentBatches.length) * 5);
+        setProgress(80 + (i / installmentBatches.length) * 8);
+      }
+      addLog(`✅ ${allInstallments.length} parcelas criadas (100% vinculadas)`);
+
+      // 8. Criar quotes para as demais oportunidades (não ganhas)
+      addLog(`📄 Criando orçamentos para oportunidades não ganhas...`);
+      setProgress(88);
+      
+      const nonWonOpps = createdOpportunities.filter(o => o.stage !== 'ganho');
+      const nonWonQuotes = [];
+      
+      for (const opp of nonWonOpps) {
+        const client = createdClients.find(c => c.id === opp.client_id);
+        const product = createdProducts[Math.floor(Math.random() * createdProducts.length)];
+        const quantity = 100 + Math.floor(Math.random() * 900);
+        
+        nonWonQuotes.push({
+          opportunity_id: opp.id,
+          client_id: opp.client_id,
+          client_name: opp.client_name,
+          client_state: client?.state || 'SP',
+          principal_id: principalId,
+          principal_name: principals[0].trade_name,
+          items: [{
+            product_id: product.id,
+            product_code: product.code,
+            product_name: product.name,
+            category: product.category,
+            unit: 'kg',
+            quantity,
+            weight_per_meter: product.weight_per_meter,
+            total_weight: quantity,
+            base_price_per_kg: product.base_price_per_kg,
+            price_per_kg: product.base_price_per_kg,
+            icms_rate: 18,
+            ipi_rate: 5,
+            item_subtotal: quantity * product.base_price_per_kg,
+            item_total: quantity * product.base_price_per_kg * 1.05
+          }],
+          total_value: opp.value_estimated,
+          status: opp.stage === 'perdido' ? 'cancelado' : 'enviado'
+        });
       }
 
-      addLog(`✅ ${installments.length} parcelas criadas`);
+      if (nonWonQuotes.length > 0) {
+        const nonWonBatches = [];
+        for (let i = 0; i < nonWonQuotes.length; i += 50) {
+          nonWonBatches.push(nonWonQuotes.slice(i, i + 50));
+        }
+
+        for (let i = 0; i < nonWonBatches.length; i++) {
+          await base44.entities.Quote.bulkCreate(nonWonBatches[i]);
+        }
+        addLog(`✅ ${nonWonQuotes.length} orçamentos criados para demais oportunidades`);
+      }
 
       // 8. TAREFAS
       addLog('🔔 Criando tarefas...');
