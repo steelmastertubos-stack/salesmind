@@ -83,7 +83,8 @@ export default function Layout({ children, currentPageName }) {
       title: 'OPERAÇÃO',
       items: [
         { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
-        { name: 'Gerar Dados 2025', icon: Zap, page: 'Generate2025Data' },
+        { name: 'Gerar Dados 2025', icon: Zap, page: 'GenerateHistoricalData' },
+        { name: 'Verificar Anos', icon: Zap, page: 'VerifyDataByYear' },
         { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
         { name: 'Configurações', icon: Settings, page: 'Settings' }
       ]

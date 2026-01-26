@@ -78,15 +78,33 @@ export default function Reports() {
 
   const isLoading = loadingOrders || loadingClients || loadingQuotes || loadingOpportunities;
 
-  // Get available years from data
+  // Get available years from data - extrair de TODAS as datas relevantes
   const availableYears = useMemo(() => {
     const years = new Set();
-    [...orders, ...quotes, ...opportunities].forEach(item => {
-      const date = new Date(item.created_date);
-      if (!isNaN(date.getTime())) {
-        years.add(date.getFullYear());
+    
+    // Adicionar anos dos pedidos
+    orders.forEach(order => {
+      const createdDate = new Date(order.created_date);
+      if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
+      
+      if (order.billing_date) {
+        const billingDate = new Date(order.billing_date);
+        if (!isNaN(billingDate.getTime())) years.add(billingDate.getFullYear());
       }
     });
+    
+    // Adicionar anos das oportunidades
+    opportunities.forEach(opp => {
+      const createdDate = new Date(opp.created_date);
+      if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
+    });
+    
+    // Adicionar anos dos orçamentos
+    quotes.forEach(quote => {
+      const createdDate = new Date(quote.created_date);
+      if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
+    });
+    
     return Array.from(years).sort((a, b) => b - a);
   }, [orders, quotes, opportunities]);
 
@@ -146,19 +164,22 @@ export default function Reports() {
     return { start, end };
   };
 
-  // Filter data
+  // Filter data - CORRIGIDO para filtrar corretamente por ano
   const filterData = (data, dateField = 'created_date') => {
-    const { start, end } = getDateRange(period);
-    
     return data.filter(item => {
       const date = new Date(item[dateField]);
-      const matchesPeriod = date >= start && date <= end;
+      if (isNaN(date.getTime())) return false;
+      
+      // Filtro de ano
       const matchesYear = yearFilter === 'all' || date.getFullYear() === parseInt(yearFilter);
+      if (!matchesYear) return false;
+      
+      // Filtros adicionais
       const matchesClient = clientFilter === 'all' || item.client_id === clientFilter;
       const matchesPrincipal = principalFilter === 'all' || item.principal_id === principalFilter;
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
       
-      return matchesPeriod && matchesYear && matchesClient && matchesPrincipal && matchesStatus;
+      return matchesClient && matchesPrincipal && matchesStatus;
     });
   };
 
