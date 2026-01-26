@@ -142,7 +142,7 @@ export default function GenerateHistoricalData() {
         const createdDate = new Date(Date.UTC(2025, month, day, hour, 0, 0));
         const value = 5000 + Math.floor(Math.random() * 95000);
         
-        opportunities.push({
+        const oppData = {
           client_id: client.id,
           client_name: client.trade_name || client.company_name,
           principal_id: principalId,
@@ -150,7 +150,21 @@ export default function GenerateHistoricalData() {
           value_estimated: value,
           stage,
           loss_reason: stage === 'perdido' ? lossReasons[Math.floor(Math.random() * lossReasons.length)] : null
-        });
+        };
+        
+        // Se ganho, adicionar won_at
+        if (stage === 'ganho') {
+          const wonDate = new Date(createdDate);
+          wonDate.setUTCDate(wonDate.getUTCDate() + Math.floor(Math.random() * 14) + 1);
+          if (wonDate.getUTCFullYear() > 2025) {
+            wonDate.setUTCFullYear(2025);
+            wonDate.setUTCMonth(11);
+            wonDate.setUTCDate(31);
+          }
+          oppData.won_at = wonDate.toISOString();
+        }
+        
+        opportunities.push(oppData);
       }
 
       // Criar oportunidades com timestamp explícito
@@ -255,7 +269,8 @@ export default function GenerateHistoricalData() {
           total_cost: quantity * (product.cost_per_kg || product.base_price_per_kg * 0.7),
           status: 'faturado',
           billing_date: billingDate.toISOString().split('T')[0],
-          invoice_date: billingDate.toISOString().split('T')[0]
+          invoice_date: billingDate.toISOString().split('T')[0],
+          closed_at: billingDate.toISOString()
         });
       }
 

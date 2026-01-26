@@ -23,7 +23,7 @@ export default function DiagnosticoHistorico() {
 
       orders.forEach(o => {
         const created = new Date(o.created_date);
-        const closed = o.billing_date ? new Date(o.billing_date) : null;
+        const closed = o.closed_at ? new Date(o.closed_at) : (o.billing_date ? new Date(o.billing_date) : null);
 
         if (!minCreatedAt || created < minCreatedAt) minCreatedAt = created;
         if (!maxCreatedAt || created > maxCreatedAt) maxCreatedAt = created;
@@ -45,8 +45,9 @@ export default function DiagnosticoHistorico() {
 
       const ordersByYearClosed = {};
       orders.forEach(o => {
-        if (o.billing_date) {
-          const year = new Date(o.billing_date).getFullYear();
+        const closedDate = o.closed_at || o.billing_date;
+        if (closedDate) {
+          const year = new Date(closedDate).getFullYear();
           if (!isNaN(year)) {
             ordersByYearClosed[year] = (ordersByYearClosed[year] || 0) + 1;
           }
@@ -62,8 +63,8 @@ export default function DiagnosticoHistorico() {
         if (!minOppCreated || created < minOppCreated) minOppCreated = created;
         if (!maxOppCreated || created > maxOppCreated) maxOppCreated = created;
 
-        if (o.stage === 'ganho' && o.updated_date) {
-          const won = new Date(o.updated_date);
+        if (o.stage === 'ganho' && o.won_at) {
+          const won = new Date(o.won_at);
           if (!minWonAt || won < minWonAt) minWonAt = won;
           if (!maxWonAt || won > maxWonAt) maxWonAt = won;
         }
@@ -167,7 +168,7 @@ export default function DiagnosticoHistorico() {
                   </div>
 
                   <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-sm font-semibold mb-2">billing_date (closed_at)</p>
+                    <p className="text-sm font-semibold mb-2">closed_at / billing_date</p>
                     <div className="space-y-1">
                       <p className="text-xs text-slate-600">MIN: <span className="font-mono font-bold">{results.orders.minClosedAt || 'N/A'}</span></p>
                       <p className="text-xs text-slate-600">MAX: <span className="font-mono font-bold">{results.orders.maxClosedAt || 'N/A'}</span></p>
@@ -204,7 +205,7 @@ export default function DiagnosticoHistorico() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-semibold mb-3">Por billing_date (closed_at):</p>
+                  <p className="text-sm font-semibold mb-3">Por closed_at / billing_date:</p>
                   {Object.keys(results.orders.byYearClosed).length > 0 ? (
                     <div className="space-y-2">
                       {Object.entries(results.orders.byYearClosed)
@@ -246,7 +247,7 @@ export default function DiagnosticoHistorico() {
                   </div>
 
                   <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-sm font-semibold mb-2">updated_date (won_at para ganhas)</p>
+                    <p className="text-sm font-semibold mb-2">won_at (para ganhas)</p>
                     <div className="space-y-1">
                       <p className="text-xs text-slate-600">MIN: <span className="font-mono font-bold">{results.opportunities.minWonAt || 'N/A'}</span></p>
                       <p className="text-xs text-slate-600">MAX: <span className="font-mono font-bold">{results.opportunities.maxWonAt || 'N/A'}</span></p>

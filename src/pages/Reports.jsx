@@ -86,7 +86,7 @@ export default function Reports() {
   const availableYears = useMemo(() => {
     const years = new Set();
     
-    // Adicionar anos dos pedidos
+    // Adicionar anos dos pedidos (created_date, billing_date, closed_at)
     orders.forEach(order => {
       const createdDate = new Date(order.created_date);
       if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
@@ -95,12 +95,22 @@ export default function Reports() {
         const billingDate = new Date(order.billing_date);
         if (!isNaN(billingDate.getTime())) years.add(billingDate.getFullYear());
       }
+      
+      if (order.closed_at) {
+        const closedDate = new Date(order.closed_at);
+        if (!isNaN(closedDate.getTime())) years.add(closedDate.getFullYear());
+      }
     });
     
-    // Adicionar anos das oportunidades
+    // Adicionar anos das oportunidades (created_date e won_at)
     opportunities.forEach(opp => {
       const createdDate = new Date(opp.created_date);
       if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
+      
+      if (opp.won_at) {
+        const wonDate = new Date(opp.won_at);
+        if (!isNaN(wonDate.getTime())) years.add(wonDate.getFullYear());
+      }
     });
     
     // Adicionar anos dos orçamentos
@@ -108,6 +118,8 @@ export default function Reports() {
       const createdDate = new Date(quote.created_date);
       if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
     });
+    
+    console.log('📅 Anos disponíveis:', Array.from(years).sort());
     
     return Array.from(years).sort((a, b) => b - a);
   }, [orders, quotes, opportunities]);
@@ -168,15 +180,42 @@ export default function Reports() {
     return { start, end };
   };
 
-  // Filter data - CORRIGIDO para filtrar corretamente por ano
-  const filterData = (data, dateField = 'created_date') => {
+  // Filter data - usar campos corretos para cada entidade
+  const filterData = (data, config = {}) => {
     return data.filter(item => {
+      // Determinar campo de data baseado no tipo
+      let dateField = config.dateField || 'created_date';
+      
+      // Para orders financeiros, usar closed_at ou billing_date
+      if (config.useClosedDate && item.closed_at) {
+        dateField = 'closed_at';
+      } else if (config.useClosedDate && item.billing_date) {
+        dateField = 'billing_date';
+      }
+      
+      // Para opportunities ganhas, usar won_at se disponível
+      if (config.useWonDate && item.won_at && item.stage === 'ganho') {
+        dateField = 'won_at';
+      }
+      
       const date = new Date(item[dateField]);
       if (isNaN(date.getTime())) return false;
       
       // Filtro de ano
       const matchesYear = yearFilter === 'all' || date.getFullYear() === parseInt(yearFilter);
       if (!matchesYear) return false;
+      
+      // Filtro de período (se ano específico, considerar meses dentro daquele ano)
+      if (period !== 'all') {
+        const { start, end } = getDateRange(period);
+        // Ajustar para o ano selecionado se não for 'all'
+        if (yearFilter !== 'all') {
+          const selectedYear = parseInt(yearFilter);
+          start.setFullYear(selectedYear);
+          end.setFullYear(selectedYear);
+        }
+        if (date < start || date > end) return false;
+      }
       
       // Filtros adicionais
       const matchesClient = clientFilter === 'all' || item.client_id === clientFilter;
@@ -187,9 +226,9 @@ export default function Reports() {
     });
   };
 
-  const filteredOrders = useMemo(() => filterData(orders), [orders, period, yearFilter, clientFilter, principalFilter, statusFilter]);
+  const filteredOrders = useMemo(() => filterData(orders, { useClosedDate: true }), [orders, period, yearFilter, clientFilter, principalFilter, statusFilter]);
   const filteredQuotes = useMemo(() => filterData(quotes), [quotes, period, yearFilter, clientFilter, principalFilter, statusFilter]);
-  const filteredOpportunities = useMemo(() => filterData(opportunities), [opportunities, period, yearFilter, clientFilter, principalFilter, statusFilter]);
+  const filteredOpportunities = useMemo(() => filterData(opportunities, { useWonDate: true }), [opportunities, period, yearFilter, clientFilter, principalFilter, statusFilter]);
 
   // Comparison data
   const comparisonOrders = useMemo(() => {

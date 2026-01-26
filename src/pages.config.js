@@ -6,8 +6,10 @@ import ClientDetails from './pages/ClientDetails';
 import Clients from './pages/Clients';
 import Commissions from './pages/Commissions';
 import Dashboard from './pages/Dashboard';
+import DiagnosticoHistorico from './pages/DiagnosticoHistorico';
 import FieldMode from './pages/FieldMode';
 import Financeiro from './pages/Financeiro';
+import FixIntegratedFlow from './pages/FixIntegratedFlow';
 import Generate2025Data from './pages/Generate2025Data';
 import GenerateHistoricalData from './pages/GenerateHistoricalData';
 import ImportData from './pages/ImportData';
@@ -23,9 +25,7 @@ import TestDataGenerator from './pages/TestDataGenerator';
 import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
-import FixIntegratedFlow from './pages/FixIntegratedFlow';
 import VerifyDataByYear from './pages/VerifyDataByYear';
-import DiagnosticoHistorico from './pages/DiagnosticoHistorico';
 import __Layout from './Layout.jsx';
 
 
@@ -38,8 +38,10 @@ export const PAGES = {
     "Clients": Clients,
     "Commissions": Commissions,
     "Dashboard": Dashboard,
+    "DiagnosticoHistorico": DiagnosticoHistorico,
     "FieldMode": FieldMode,
     "Financeiro": Financeiro,
+    "FixIntegratedFlow": FixIntegratedFlow,
     "Generate2025Data": Generate2025Data,
     "GenerateHistoricalData": GenerateHistoricalData,
     "ImportData": ImportData,
@@ -55,9 +57,7 @@ export const PAGES = {
     "VTKAuditReport": VTKAuditReport,
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
-    "FixIntegratedFlow": FixIntegratedFlow,
     "VerifyDataByYear": VerifyDataByYear,
-    "DiagnosticoHistorico": DiagnosticoHistorico,
 }
 
 export const pagesConfig = {
