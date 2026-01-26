@@ -71,9 +71,19 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
   const [errors, setErrors] = useState({});
 
   const handleCNPJData = (data) => {
+    if (!data) return;
+    
     setFormData(prev => ({
       ...prev,
-      ...data
+      company_name: data.company_name || prev.company_name,
+      trade_name: data.trade_name || prev.trade_name,
+      cnpj: data.cnpj || prev.cnpj,
+      address: data.address || prev.address,
+      city: data.city || prev.city,
+      state: data.state || prev.state,
+      zip_code: data.zip_code || prev.zip_code,
+      cnae: data.cnae || prev.cnae,
+      segment: data.segment || prev.segment
     }));
   };
 
