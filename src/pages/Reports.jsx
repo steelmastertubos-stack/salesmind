@@ -905,7 +905,7 @@ export default function Reports() {
                         return [value, name];
                       }} />
                       <Legend />
-                      <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} name="Faturamento" dot={{ fill: '#10b981', r: 5 }} />
+                      <Line type="monotone" dataKey="revenue" stroke="#ef4444" strokeWidth={3} name="Faturamento" dot={{ fill: '#ef4444', r: 5 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
