@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -9,6 +11,7 @@ import { toast } from 'sonner';
 import PageHeader from '@/components/common/PageHeader';
 
 export default function GenerateHistoricalData() {
+  const navigate = useNavigate();
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState([]);
@@ -25,86 +28,71 @@ export default function GenerateHistoricalData() {
     setResults(null);
 
     try {
-      addLog('🚀 Iniciando geração de dados históricos...');
+      addLog('🚀 Iniciando geração de dados históricos 2025...');
 
-      // 1. CLIENTES (90 clientes: 40 ativos, 30 recorrentes, 20 inativos)
-      addLog('📊 Criando clientes...');
-      setProgress(10);
+      // 1. CLIENTES
+      addLog('📊 Criando 90 clientes...');
+      setProgress(5);
 
       const segments = ['Metalúrgica', 'Metalmecânica', 'Caldeiraria', 'Estruturas Metálicas', 'Engenharia', 'Construtoras', 'Implemento Agrícola', 'Implemento Rodoviário'];
       const states = ['SP', 'MG', 'RJ', 'RS', 'PR', 'SC', 'BA', 'PE', 'CE'];
 
       const clients = [];
       
-      // 40 ativos
       for (let i = 1; i <= 40; i++) {
-        const segment = segments[Math.floor(Math.random() * segments.length)];
-        const state = states[Math.floor(Math.random() * states.length)];
         clients.push({
-          company_name: `${segment} ${state} ${i} LTDA`,
+          company_name: `${segments[i % segments.length]} ${states[i % states.length]} ${i} LTDA`,
           trade_name: `Cliente Ativo ${i}`,
           cnpj: `${String(i).padStart(8, '0')}/0001-00`,
-          segment,
-          state,
+          segment: segments[i % segments.length],
+          state: states[i % states.length],
           city: `Cidade ${i}`,
           address: `Rua ${i}, ${i}00`,
           phone: `(11) 9${String(i).padStart(4, '0')}-${String(i).padStart(4, '0')}`,
           email: `cliente${i}@email.com`,
           contact_name: `Contato ${i}`,
           status: 'active',
-          last_purchase_date: new Date(2025, Math.floor(Math.random() * 3) + 9, Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-          average_purchase_cycle: 30 + Math.floor(Math.random() * 30),
-          average_ticket: 10000 + Math.floor(Math.random() * 40000)
+          last_purchase_date: new Date(2025, 9 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0]
         });
       }
       
-      // 30 em atenção (recorrentes)
       for (let i = 41; i <= 70; i++) {
-        const segment = segments[Math.floor(Math.random() * segments.length)];
-        const state = states[Math.floor(Math.random() * states.length)];
         clients.push({
-          company_name: `${segment} ${state} ${i} LTDA`,
+          company_name: `${segments[i % segments.length]} ${states[i % states.length]} ${i} LTDA`,
           trade_name: `Cliente Recorrente ${i}`,
           cnpj: `${String(i).padStart(8, '0')}/0001-00`,
-          segment,
-          state,
+          segment: segments[i % segments.length],
+          state: states[i % states.length],
           city: `Cidade ${i}`,
           address: `Rua ${i}, ${i}00`,
           phone: `(11) 9${String(i).padStart(4, '0')}-${String(i).padStart(4, '0')}`,
           email: `cliente${i}@email.com`,
           contact_name: `Contato ${i}`,
           status: 'attention',
-          last_purchase_date: new Date(2025, Math.floor(Math.random() * 6) + 3, Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-          average_purchase_cycle: 45 + Math.floor(Math.random() * 45),
-          average_ticket: 8000 + Math.floor(Math.random() * 30000)
+          last_purchase_date: new Date(2025, 3 + Math.floor(Math.random() * 6), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0]
         });
       }
       
-      // 20 inativos
       for (let i = 71; i <= 90; i++) {
-        const segment = segments[Math.floor(Math.random() * segments.length)];
-        const state = states[Math.floor(Math.random() * states.length)];
         clients.push({
-          company_name: `${segment} ${state} ${i} LTDA`,
+          company_name: `${segments[i % segments.length]} ${states[i % states.length]} ${i} LTDA`,
           trade_name: `Cliente Inativo ${i}`,
           cnpj: `${String(i).padStart(8, '0')}/0001-00`,
-          segment,
-          state,
+          segment: segments[i % segments.length],
+          state: states[i % states.length],
           city: `Cidade ${i}`,
           address: `Rua ${i}, ${i}00`,
           phone: `(11) 9${String(i).padStart(4, '0')}-${String(i).padStart(4, '0')}`,
           email: `cliente${i}@email.com`,
           contact_name: `Contato ${i}`,
           status: 'inactive',
-          last_purchase_date: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-          average_purchase_cycle: 60 + Math.floor(Math.random() * 60),
-          average_ticket: 5000 + Math.floor(Math.random() * 25000)
+          last_purchase_date: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0]
         });
       }
 
       const createdClients = await base44.entities.Client.bulkCreate(clients);
       addLog(`✅ ${createdClients.length} clientes criados`);
-      setProgress(30);
+      setProgress(15);
 
       // 2. PRODUTOS
       addLog('📦 Criando produtos...');
@@ -113,45 +101,47 @@ export default function GenerateHistoricalData() {
       const principalId = principals[0]?.id;
 
       if (!principalId) {
-        throw new Error('Nenhum representado encontrado. Crie ao menos um representado primeiro.');
+        throw new Error('❌ Nenhum representado encontrado. Crie ao menos um representado primeiro.');
       }
 
       const products = [
-        { code: 'TUB-001', name: 'TUBO QUADRADO 100X100X3MM', category: 'tubos_quadrados_retangulares', base_price_per_kg: 8.5, weight_per_meter: 9.42 },
-        { code: 'TUB-002', name: 'TUBO RETANGULAR 100X50X2,65MM', category: 'tubos_quadrados_retangulares', base_price_per_kg: 8.2, weight_per_meter: 6.12 },
-        { code: 'TUB-003', name: 'TUBO REDONDO 2" SCH40', category: 'tubos_redondos', base_price_per_kg: 9.0, weight_per_meter: 3.65 },
-        { code: 'CHA-001', name: 'CHAPA 1/4" (6,35MM)', category: 'chapas', base_price_per_kg: 7.8, weight_per_meter: 0 },
-        { code: 'PER-001', name: 'PERFIL U 100X50', category: 'perfis', base_price_per_kg: 8.3, weight_per_meter: 7.1 }
+        { code: 'TUB-001', name: 'TUBO QUADRADO 100X100X3MM', category: 'tubos_quadrados_retangulares', base_price_per_kg: 8.5, weight_per_meter: 9.42, cost_per_kg: 6.0 },
+        { code: 'TUB-002', name: 'TUBO RETANGULAR 100X50X2,65MM', category: 'tubos_quadrados_retangulares', base_price_per_kg: 8.2, weight_per_meter: 6.12, cost_per_kg: 5.8 },
+        { code: 'TUB-003', name: 'TUBO REDONDO 2" SCH40', category: 'tubos_redondos', base_price_per_kg: 9.0, weight_per_meter: 3.65, cost_per_kg: 6.3 },
+        { code: 'CHA-001', name: 'CHAPA 1/4" (6,35MM)', category: 'chapas', base_price_per_kg: 7.8, weight_per_meter: 0, cost_per_kg: 5.5 },
+        { code: 'PER-001', name: 'PERFIL U 100X50', category: 'perfis', base_price_per_kg: 8.3, weight_per_meter: 7.1, cost_per_kg: 5.9 }
       ].map(p => ({ ...p, principal_id: principalId, unit: 'kg', is_active: true }));
 
       const createdProducts = await base44.entities.Product.bulkCreate(products);
       addLog(`✅ ${createdProducts.length} produtos criados`);
-      setProgress(40);
+      setProgress(25);
 
-      // 3. NEGOCIAÇÕES (450 ao longo de 2025)
-      addLog('💼 Criando negociações de 2025...');
+      // 3. OPORTUNIDADES 2025
+      addLog('💼 Criando 450 oportunidades em 2025...');
       
       const stages = ['proposta_enviada', 'em_negociacao', 'ganho', 'perdido'];
+      const stageWeights = [0.3, 0.2, 0.35, 0.15]; // 35% ganho
       const lossReasons = ['Preço alto', 'Prazo', 'Concorrente', 'Sem retorno', 'Projeto cancelado'];
       
       const opportunities = [];
-      const quotes = [];
-      const orders = [];
       const createdOpportunities = [];
 
-      // Criar oportunidades primeiro - GARANTIR DATAS EM 2025
       for (let i = 1; i <= 450; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
-        const month = Math.floor((i - 1) / 38) % 12; // 0-11 (jan-dez)
-        const day = Math.floor(Math.random() * 28) + 1; // 1-28
+        const month = Math.floor((i - 1) * 12 / 450); // Distribuir uniformemente
+        const day = Math.floor(Math.random() * 28) + 1;
         const hour = Math.floor(Math.random() * 24);
-        const minute = Math.floor(Math.random() * 60);
         
-        // FORÇAR ano 2025
-        const createdDate = new Date(Date.UTC(2025, month, day, hour, minute, 0));
+        // Selecionar stage ponderado
+        const rand = Math.random();
+        let stage;
+        if (rand < stageWeights[0]) stage = stages[0];
+        else if (rand < stageWeights[0] + stageWeights[1]) stage = stages[1];
+        else if (rand < stageWeights[0] + stageWeights[1] + stageWeights[2]) stage = stages[2];
+        else stage = stages[3];
         
+        const createdDate = new Date(Date.UTC(2025, month, day, hour, 0, 0));
         const value = 5000 + Math.floor(Math.random() * 95000);
-        const stage = stages[Math.floor(Math.random() * stages.length)];
         
         opportunities.push({
           client_id: client.id,
@@ -161,12 +151,11 @@ export default function GenerateHistoricalData() {
           value_estimated: value,
           stage,
           created_date: createdDate.toISOString(),
-          loss_reason: stage === 'perdido' ? lossReasons[Math.floor(Math.random() * lossReasons.length)] : null,
-          _tempIndex: i
+          loss_reason: stage === 'perdido' ? lossReasons[Math.floor(Math.random() * lossReasons.length)] : null
         });
       }
 
-      // Criar oportunidades em lotes e guardar os IDs
+      // Criar em lotes
       const oppBatches = [];
       for (let i = 0; i < opportunities.length; i += 50) {
         oppBatches.push(opportunities.slice(i, i + 50));
@@ -175,21 +164,21 @@ export default function GenerateHistoricalData() {
       for (let i = 0; i < oppBatches.length; i++) {
         const batch = await base44.entities.Opportunity.bulkCreate(oppBatches[i]);
         createdOpportunities.push(...batch);
-        addLog(`📈 Criadas ${Math.min((i + 1) * 50, opportunities.length)} / ${opportunities.length} oportunidades`);
-        setProgress(40 + (i / oppBatches.length) * 20);
+        addLog(`📈 ${Math.min((i + 1) * 50, opportunities.length)} / ${opportunities.length} oportunidades`);
+        setProgress(25 + (i / oppBatches.length) * 20);
       }
 
-      setProgress(60);
-      addLog(`💡 ${createdOpportunities.length} oportunidades criadas, gerando orçamentos vinculados...`);
+      setProgress(45);
+      addLog(`💡 Criando orçamentos vinculados...`);
 
-      // Criar quotes vinculados às oportunidades
-      for (let i = 0; i < createdOpportunities.length; i++) {
-        const opp = createdOpportunities[i];
+      // 4. QUOTES
+      const quotes = [];
+      for (const opp of createdOpportunities) {
         const client = createdClients.find(c => c.id === opp.client_id);
         const product = createdProducts[Math.floor(Math.random() * createdProducts.length)];
         const quantity = 100 + Math.floor(Math.random() * 900);
         
-        const quote = {
+        quotes.push({
           opportunity_id: opp.id,
           client_id: opp.client_id,
           client_name: opp.client_name,
@@ -215,35 +204,9 @@ export default function GenerateHistoricalData() {
           total_value: opp.value_estimated,
           status: opp.stage === 'ganho' ? 'convertido' : opp.stage === 'perdido' ? 'cancelado' : 'enviado',
           created_date: opp.created_date
-        };
-        quotes.push(quote);
-
-        // Order (se ganho) - GARANTIR DATAS EM 2025
-        if (opp.stage === 'ganho') {
-          const orderDate = new Date(opp.created_date);
-          const billingDate = new Date(orderDate);
-          billingDate.setDate(billingDate.getDate() + 7);
-          
-          orders.push({
-            opportunity_id: opp.id,
-            quote_id: null,
-            client_id: opp.client_id,
-            client_name: opp.client_name,
-            principal_id: principalId,
-            principal_name: principals[0].trade_name,
-            items: quote.items,
-            total_value: opp.value_estimated,
-            total_weight: quantity,
-            total_cost: quantity * (product.base_price_per_kg * 0.7),
-            status: 'faturado',
-            created_date: opp.created_date,
-            billing_date: billingDate.toISOString().split('T')[0],
-            invoice_date: billingDate.toISOString().split('T')[0]
-          });
-        }
+        });
       }
 
-      // Criar quotes em lotes
       const quoteBatches = [];
       for (let i = 0; i < quotes.length; i += 50) {
         quoteBatches.push(quotes.slice(i, i + 50));
@@ -253,124 +216,141 @@ export default function GenerateHistoricalData() {
       for (let i = 0; i < quoteBatches.length; i++) {
         const batch = await base44.entities.Quote.bulkCreate(quoteBatches[i]);
         createdQuotes.push(...batch);
-        addLog(`📋 Criados ${Math.min((i + 1) * 50, quotes.length)} / ${quotes.length} orçamentos`);
-        setProgress(60 + (i / quoteBatches.length) * 15);
+        setProgress(45 + (i / quoteBatches.length) * 15);
+      }
+
+      addLog(`✅ ${createdQuotes.length} orçamentos criados`);
+      setProgress(60);
+
+      // 5. ORDERS - APENAS OPORTUNIDADES GANHAS
+      addLog('📦 Criando pedidos das oportunidades ganhas...');
+      
+      const wonOpportunities = createdOpportunities.filter(o => o.stage === 'ganho');
+      const orders = [];
+
+      for (const opp of wonOpportunities) {
+        const quote = createdQuotes.find(q => q.opportunity_id === opp.id);
+        const product = createdProducts[Math.floor(Math.random() * createdProducts.length)];
+        const quantity = quote?.items?.[0]?.quantity || 100 + Math.floor(Math.random() * 900);
+        
+        const orderDate = new Date(opp.created_date);
+        const billingDate = new Date(orderDate);
+        billingDate.setDate(billingDate.getDate() + 7);
+        
+        orders.push({
+          opportunity_id: opp.id,
+          quote_id: quote?.id || null,
+          client_id: opp.client_id,
+          client_name: opp.client_name,
+          principal_id: principalId,
+          principal_name: principals[0].trade_name,
+          items: quote?.items || [],
+          total_value: opp.value_estimated,
+          total_weight: quantity,
+          total_cost: quantity * (product.cost_per_kg || product.base_price_per_kg * 0.7),
+          status: 'faturado',
+          created_date: opp.created_date,
+          billing_date: billingDate.toISOString().split('T')[0],
+          invoice_date: billingDate.toISOString().split('T')[0]
+        });
+      }
+
+      const orderBatches = [];
+      for (let i = 0; i < orders.length; i += 50) {
+        orderBatches.push(orders.slice(i, i + 50));
+      }
+
+      const createdOrders = [];
+      for (let i = 0; i < orderBatches.length; i++) {
+        const batch = await base44.entities.Order.bulkCreate(orderBatches[i]);
+        createdOrders.push(...batch);
+        addLog(`✅ ${Math.min((i + 1) * 50, orders.length)} / ${orders.length} pedidos`);
+        setProgress(60 + (i / orderBatches.length) * 15);
       }
 
       setProgress(75);
-      addLog(`🔗 Vinculando registros e criando comissões...`);
+      addLog(`💰 Criando comissões...`);
 
-      if (orders.length > 0) {
-        // Vincular quote_id aos pedidos
-        for (let i = 0; i < orders.length; i++) {
-          const order = orders[i];
-          const quote = createdQuotes.find(q => q.opportunity_id === order.opportunity_id);
-          if (quote) {
-            order.quote_id = quote.id;
-          }
-        }
+      // 6. COMMISSIONS
+      const commissions = [];
+      for (const order of createdOrders) {
+        const principal = principals[0];
+        const commissionRate = principal?.commission_percentage || 3;
+        const salesValue = order.total_value || 0;
+        const commissionValue = (salesValue * commissionRate) / 100;
 
-        const orderBatches = [];
-        for (let i = 0; i < orders.length; i += 50) {
-          orderBatches.push(orders.slice(i, i + 50));
-        }
-
-        const createdOrders = [];
-        for (let i = 0; i < orderBatches.length; i++) {
-          const batch = await base44.entities.Order.bulkCreate(orderBatches[i]);
-          createdOrders.push(...batch);
-          addLog(`✅ Criados ${Math.min((i + 1) * 50, orders.length)} / ${orders.length} pedidos`);
-          setProgress(75 + (i / orderBatches.length) * 10);
-        }
-
-        // Criar comissões para todos os pedidos
-        addLog(`💰 Criando comissões para ${createdOrders.length} pedidos...`);
-        
-        const commissions = [];
-        for (const order of createdOrders) {
-          const principal = principals[0];
-          const commissionRate = principal?.commission_percentage || 3;
-          const salesValue = order.total_value || 0;
-          const commissionValue = (salesValue * commissionRate) / 100;
-
-          commissions.push({
-            order_id: order.id,
-            opportunity_id: order.opportunity_id,
-            quote_id: order.quote_id,
-            principal_id: order.principal_id,
-            principal_name: order.principal_name,
-            client_id: order.client_id,
-            client_name: order.client_name,
-            sales_value: salesValue,
-            commission_rate: commissionRate,
-            commission_total_value: commissionValue,
-            commission_value: commissionValue,
-            status: 'prevista',
-            invoice_date: order.billing_date || order.created_date
-          });
-        }
-
-        // Criar comissões em lotes
-        const commissionBatches = [];
-        for (let i = 0; i < commissions.length; i += 50) {
-          commissionBatches.push(commissions.slice(i, i + 50));
-        }
-
-        const createdCommissions = [];
-        for (let i = 0; i < commissionBatches.length; i++) {
-          const batch = await base44.entities.Commission.bulkCreate(commissionBatches[i]);
-          createdCommissions.push(...batch);
-          setProgress(85 + (i / commissionBatches.length) * 5);
-        }
-
-        addLog(`✅ ${createdCommissions.length} comissões criadas`);
-
-        // Criar parcelas para as comissões
-        addLog(`💳 Criando parcelas de comissão...`);
-        
-        const installments = [];
-        for (const commission of createdCommissions) {
-          const dueDate = new Date(commission.invoice_date);
-          dueDate.setDate(dueDate.getDate() + 30);
-
-          installments.push({
-            commission_id: commission.id,
-            representada_id: commission.principal_id,
-            order_id: commission.order_id,
-            installment_no: 1,
-            installment_pct: 100,
-            installment_value: commission.commission_total_value,
-            due_date: dueDate.toISOString().split('T')[0],
-            status: 'prevista',
-            reference_month: new Date(commission.invoice_date).toISOString().slice(0, 7)
-          });
-        }
-
-        // Criar parcelas em lotes
-        const installmentBatches = [];
-        for (let i = 0; i < installments.length; i += 50) {
-          installmentBatches.push(installments.slice(i, i + 50));
-        }
-
-        for (let i = 0; i < installmentBatches.length; i++) {
-          await base44.entities.CommissionInstallment.bulkCreate(installmentBatches[i]);
-        }
-
-        addLog(`✅ ${installments.length} parcelas criadas`);
+        commissions.push({
+          order_id: order.id,
+          opportunity_id: order.opportunity_id,
+          quote_id: order.quote_id,
+          principal_id: order.principal_id,
+          principal_name: order.principal_name,
+          client_id: order.client_id,
+          client_name: order.client_name,
+          sales_value: salesValue,
+          commission_rate: commissionRate,
+          commission_total_value: commissionValue,
+          commission_value: commissionValue,
+          status: 'prevista',
+          invoice_date: order.billing_date || order.created_date
+        });
       }
 
-      setProgress(90);
+      const commissionBatches = [];
+      for (let i = 0; i < commissions.length; i += 50) {
+        commissionBatches.push(commissions.slice(i, i + 50));
+      }
 
-      // 4. TAREFAS E ALERTAS - GARANTIR DATAS EM 2025
-      addLog('🔔 Gerando tarefas e alertas...');
+      const createdCommissions = [];
+      for (let i = 0; i < commissionBatches.length; i++) {
+        const batch = await base44.entities.Commission.bulkCreate(commissionBatches[i]);
+        createdCommissions.push(...batch);
+        setProgress(75 + (i / commissionBatches.length) * 10);
+      }
+
+      addLog(`✅ ${createdCommissions.length} comissões criadas`);
+
+      // 7. INSTALLMENTS
+      addLog(`💳 Criando parcelas...`);
+      
+      const installments = [];
+      for (const commission of createdCommissions) {
+        const dueDate = new Date(commission.invoice_date);
+        dueDate.setDate(dueDate.getDate() + 30);
+
+        installments.push({
+          commission_id: commission.id,
+          representada_id: commission.principal_id,
+          order_id: commission.order_id,
+          installment_no: 1,
+          installment_pct: 100,
+          installment_value: commission.commission_total_value,
+          due_date: dueDate.toISOString().split('T')[0],
+          status: 'prevista',
+          reference_month: new Date(commission.invoice_date).toISOString().slice(0, 7)
+        });
+      }
+
+      const installmentBatches = [];
+      for (let i = 0; i < installments.length; i += 50) {
+        installmentBatches.push(installments.slice(i, i + 50));
+      }
+
+      for (let i = 0; i < installmentBatches.length; i++) {
+        await base44.entities.CommissionInstallment.bulkCreate(installmentBatches[i]);
+        setProgress(85 + (i / installmentBatches.length) * 5);
+      }
+
+      addLog(`✅ ${installments.length} parcelas criadas`);
+
+      // 8. TAREFAS
+      addLog('🔔 Criando tarefas...');
       
       const tasks = [];
-      
-      // Tarefas de follow-up (20) - TODAS EM 2025
       for (let i = 0; i < 20; i++) {
         const client = createdClients[Math.floor(Math.random() * createdClients.length)];
-        const month = Math.floor(Math.random() * 12); // 0-11
-        const day = Math.floor(Math.random() * 28) + 1; // 1-28
+        const month = Math.floor(Math.random() * 12);
+        const day = Math.floor(Math.random() * 28) + 1;
         const taskDate = new Date(2025, month, day);
         
         tasks.push({
@@ -387,33 +367,60 @@ export default function GenerateHistoricalData() {
       }
 
       await base44.entities.Task.bulkCreate(tasks);
-      addLog(`✅ ${tasks.length} tarefas criadas`);
+      setProgress(92);
 
-      setProgress(100);
+      // 9. DADOS DO MÊS ATUAL (JAN/2026)
+      addLog('📅 Criando dados do mês atual (2026-01)...');
       
-      // VALIDAR DATAS CRIADAS
+      const currentMonthOpps = [];
+      for (let i = 0; i < 15; i++) {
+        const client = createdClients[Math.floor(Math.random() * 40)]; // Apenas ativos
+        const day = Math.floor(Math.random() * 26) + 1;
+        const value = 8000 + Math.floor(Math.random() * 50000);
+        
+        currentMonthOpps.push({
+          client_id: client.id,
+          client_name: client.trade_name,
+          principal_id: principalId,
+          principal_name: principals[0].trade_name,
+          value_estimated: value,
+          stage: ['proposta_enviada', 'em_negociacao'][Math.floor(Math.random() * 2)],
+          created_date: new Date(2026, 0, day, 10, 0, 0).toISOString()
+        });
+      }
+
+      const currentOpps = await base44.entities.Opportunity.bulkCreate(currentMonthOpps);
+      addLog(`✅ ${currentOpps.length} oportunidades jan/2026 criadas`);
+      
+      setProgress(96);
+
+      // VALIDAÇÃO FINAL
       const sampleOpp = createdOpportunities[0];
-      const sampleOrder = orders[0];
-      addLog(`📅 Amostra - Oportunidade: ${sampleOpp?.created_date} (ano: ${new Date(sampleOpp?.created_date).getFullYear()})`);
-      addLog(`📅 Amostra - Pedido: ${sampleOrder?.created_date} (ano: ${new Date(sampleOrder?.created_date).getFullYear()})`);
+      const sampleOrder = createdOrders[0];
+      addLog(`📅 Validação: Oportunidade ano ${new Date(sampleOpp?.created_date).getFullYear()}`);
+      addLog(`📅 Validação: Pedido ano ${new Date(sampleOrder?.created_date).getFullYear()}`);
+      
+      setProgress(100);
       
       const finalResults = {
         clients: createdClients.length,
         products: createdProducts.length,
-        opportunities: opportunities.length,
-        quotes: quotes.length,
-        orders: orders.length,
-        commissions: orders.length,
+        opportunities2025: createdOpportunities.length,
+        quotes: createdQuotes.length,
+        orders: createdOrders.length,
+        commissions: createdCommissions.length,
         tasks: tasks.length,
-        dateValidation: {
-          sampleOppYear: new Date(sampleOpp?.created_date).getFullYear(),
-          sampleOrderYear: new Date(sampleOrder?.created_date).getFullYear()
-        }
+        currentMonth: currentOpps.length
       };
 
       setResults(finalResults);
-      addLog('✨ Geração concluída com sucesso! Todos os registros em 2025.');
-      toast.success('Dados históricos 2025 gerados!');
+      addLog('✨ Geração concluída! Redirecionando para relatórios...');
+      toast.success('Dados históricos 2025 gerados com sucesso!');
+      
+      // Auto-redirecionar para Reports com filtro 2025
+      setTimeout(() => {
+        navigate(createPageUrl('Reports?year=2025'));
+      }, 2000);
 
     } catch (error) {
       console.error('Erro ao gerar dados:', error);
@@ -427,8 +434,8 @@ export default function GenerateHistoricalData() {
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       <PageHeader 
-        title="Gerar Dados Históricos 2025"
-        subtitle="Criar dados completos para testes de usabilidade"
+        title="Gerar Base Histórica 2025"
+        subtitle="Criar dados completos de jan/2025 a dez/2025 para validação do sistema"
       />
 
       <Card>
@@ -442,9 +449,11 @@ export default function GenerateHistoricalData() {
               <strong>Esta operação irá criar:</strong>
               <ul className="list-disc ml-6 mt-2 space-y-1">
                 <li>90 clientes (40 ativos, 30 recorrentes, 20 inativos)</li>
-                <li>450 negociações distribuídas em 2025</li>
-                <li>Orçamentos e pedidos vinculados com datas reais</li>
-                <li>20 tarefas de follow-up agendadas</li>
+                <li>450 oportunidades distribuídas em 2025</li>
+                <li>~157 pedidos (das oportunidades ganhas em 2025)</li>
+                <li>Comissões e parcelas vinculadas</li>
+                <li>20 tarefas de follow-up</li>
+                <li>15 oportunidades em jan/2026 (mês atual)</li>
               </ul>
             </AlertDescription>
           </Alert>
@@ -482,11 +491,11 @@ export default function GenerateHistoricalData() {
               <Alert className="bg-emerald-50 border-emerald-200">
                 <CheckCircle className="w-4 h-4 text-emerald-600" />
                 <AlertDescription className="text-emerald-900">
-                  <strong>Dados gerados com sucesso!</strong>
+                  <strong>Dados gerados com sucesso! Abrindo relatórios...</strong>
                 </AlertDescription>
               </Alert>
 
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3 mb-2">
@@ -502,10 +511,10 @@ export default function GenerateHistoricalData() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3 mb-2">
-                      <Target className="w-8 h-8 text-emerald-600" />
+                      <Target className="w-8 h-8 text-purple-600" />
                       <div>
-                        <p className="text-3xl font-bold">{results.opportunities}</p>
-                        <p className="text-sm text-slate-600">Negociações</p>
+                        <p className="text-3xl font-bold">{results.opportunities2025}</p>
+                        <p className="text-sm text-slate-600">Opps 2025</p>
                       </div>
                     </div>
                   </CardContent>
@@ -514,7 +523,7 @@ export default function GenerateHistoricalData() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3 mb-2">
-                      <CheckCircle className="w-8 h-8 text-purple-600" />
+                      <CheckCircle className="w-8 h-8 text-green-600" />
                       <div>
                         <p className="text-3xl font-bold">{results.orders}</p>
                         <p className="text-sm text-slate-600">Pedidos</p>
@@ -528,21 +537,13 @@ export default function GenerateHistoricalData() {
                     <div className="flex items-center gap-3 mb-2">
                       <Bell className="w-8 h-8 text-amber-600" />
                       <div>
-                        <p className="text-3xl font-bold">{results.tasks}</p>
-                        <p className="text-sm text-slate-600">Tarefas</p>
+                        <p className="text-3xl font-bold">{results.currentMonth}</p>
+                        <p className="text-sm text-slate-600">Jan/2026</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
-              <Button 
-                onClick={() => window.location.href = '/Reports'}
-                className="w-full"
-                size="lg"
-              >
-                Ver Relatórios
-              </Button>
 
               <div className="bg-slate-50 rounded-lg p-4 max-h-64 overflow-y-auto">
                 <div className="space-y-1 font-mono text-xs">

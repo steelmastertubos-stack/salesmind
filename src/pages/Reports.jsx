@@ -41,9 +41,13 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function Reports() {
   const navigate = useNavigate();
   
+  // Ler ano da URL se presente
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlYear = urlParams.get('year');
+  
   // Filtros globais
-  const [period, setPeriod] = useState('thisMonth');
-  const [yearFilter, setYearFilter] = useState('2025');
+  const [period, setPeriod] = useState('all');
+  const [yearFilter, setYearFilter] = useState(urlYear || 'all');
   const [comparisonPeriod, setComparisonPeriod] = useState('lastMonth');
   const [clientFilter, setClientFilter] = useState('all');
   const [principalFilter, setPrincipalFilter] = useState('all');
@@ -729,23 +733,29 @@ export default function Reports() {
 
       {/* KPIs com Comparação */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-start justify-between mb-2">
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
-              </div>
-              <TrendIndicator value={kpis.changes.revenue} />
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{formatCurrency(kpis.current.revenue)}</p>
-            <p className="text-sm text-slate-500">Faturamento</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Anterior: {formatCurrency(kpis.previous.revenue)}
-            </p>
-          </CardContent>
-        </Card>
+      <Card 
+      className="cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={() => navigate(createPageUrl('Orders'))}
+      >
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between mb-2">
+          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <DollarSign className="w-5 h-5 text-emerald-600" />
+          </div>
+          <TrendIndicator value={kpis.changes.revenue} />
+        </div>
+        <p className="text-2xl font-bold text-slate-900">{formatCurrency(kpis.current.revenue)}</p>
+        <p className="text-sm text-slate-500">Faturamento</p>
+        <p className="text-xs text-slate-400 mt-1">
+          Anterior: {formatCurrency(kpis.previous.revenue)}
+        </p>
+      </CardContent>
+      </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate(createPageUrl('Orders'))}
+        >
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -777,7 +787,10 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate(createPageUrl('Opportunities?stage=ganho'))}
+        >
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-2">
               <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
