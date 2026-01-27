@@ -16,6 +16,15 @@ export default function QuotePrintView({ quote, representative, onClose }) {
   const validityDate = new Date();
   validityDate.setDate(validityDate.getDate() + (quote.validity_days || 7));
 
+  // Detectar se é Intersteel
+  const isIntersteel = quote.principal_name?.toUpperCase().includes('INTERSTEEL') || 
+                       quote.principal_cnpj === '67.889.634/0001-18';
+
+  const intersteelLogo = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696020fa4f321d016688f8c7/467d64d7a_inter.png';
+  const intersteelAddress = 'Estrada Particular Sadae Takagi, 450 - Cooperativa, São Bernardo do Campo - SP, 09852-070';
+  const intersteelPhone = '(11) 2067-3536';
+  const intersteelCNPJ = '67.889.634/0001-18';
+
   return (
     <div className="bg-white p-8 max-w-5xl mx-auto print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Header */}
@@ -23,23 +32,44 @@ export default function QuotePrintView({ quote, representative, onClose }) {
         <div className="flex items-start justify-between p-4 gap-4">
           {/* Logo e Dados do Representado */}
           <div className="flex-1">
-            {quote.principal_logo_url && (
-              <img 
-                src={quote.principal_logo_url} 
-                alt="Logo" 
-                className="h-16 mb-2 object-contain"
-              />
+            {isIntersteel ? (
+              <>
+                <img 
+                  src={intersteelLogo} 
+                  alt="Intersteel Logo" 
+                  className="h-20 mb-3 object-contain"
+                />
+                <div className="text-sm space-y-0.5">
+                  <p className="font-bold text-base">{quote.principal_name}</p>
+                  <p>CNPJ: {intersteelCNPJ}</p>
+                  {quote.principal_state_registration && (
+                    <p>I.E.: {quote.principal_state_registration}</p>
+                  )}
+                  <p>{intersteelAddress}</p>
+                  <p>Fone: {intersteelPhone}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                {quote.principal_logo_url && (
+                  <img 
+                    src={quote.principal_logo_url} 
+                    alt="Logo" 
+                    className="h-16 mb-2 object-contain"
+                  />
+                )}
+                <div className="text-sm space-y-0.5">
+                  <p className="font-bold text-base">{quote.principal_name}</p>
+                  <p>CNPJ: {quote.principal_cnpj}</p>
+                  {quote.principal_state_registration && (
+                    <p>I.E.: {quote.principal_state_registration}</p>
+                  )}
+                  {quote.principal_phone && (
+                    <p>Fone: {quote.principal_phone}</p>
+                  )}
+                </div>
+              </>
             )}
-            <div className="text-sm space-y-0.5">
-              <p className="font-bold text-base">{quote.principal_name}</p>
-              <p>CNPJ: {quote.principal_cnpj}</p>
-              {quote.principal_state_registration && (
-                <p>I.E.: {quote.principal_state_registration}</p>
-              )}
-              {quote.principal_phone && (
-                <p>Fone: {quote.principal_phone}</p>
-              )}
-            </div>
           </div>
 
           {/* Dados do Representante Comercial */}
