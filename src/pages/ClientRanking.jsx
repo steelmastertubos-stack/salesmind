@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 
 export default function ClientRanking() {
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedYear, setSelectedYear] = useState(2025);
   const [rankingSize, setRankingSize] = useState('10');
 
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
