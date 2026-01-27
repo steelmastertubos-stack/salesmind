@@ -66,6 +66,66 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Opportunity.list('-created_date', 100)
   });
 
+  // Enriquecer clientes com dados de ciclo, ticket e último material
+  const enrichClientData = (client) => {
+    // Pedidos do cliente
+    const clientOrders = orders.filter(o => o.client_id === client.id);
+    
+    // Orçamentos do cliente
+    const clientQuotes = quotes.filter(q => q.client_id === client.id);
+    
+    // Calcular ciclo médio de compra
+    let averageCycle = client.average_purchase_cycle;
+    if (!averageCycle && clientOrders.length >= 2) {
+      const orderDates = clientOrders
+        .map(o => new Date(o.created_date))
+        .sort((a, b) => a - b);
+      
+      const intervals = [];
+      for (let i = 1; i < orderDates.length; i++) {
+        const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
+        intervals.push(days);
+      }
+      
+      if (intervals.length > 0) {
+        averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+      }
+    }
+    
+    // Calcular ticket médio
+    let averageTicket = client.average_ticket;
+    if (!averageTicket && clientOrders.length > 0) {
+      const totalValue = clientOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
+      averageTicket = totalValue / clientOrders.length;
+    }
+    
+    // Último material orçado
+    let lastQuotedProduct = client.last_quoted_product;
+    let lastQuotedValue = client.last_quoted_value;
+    let lastQuotedDate = client.last_quoted_date;
+    
+    if (!lastQuotedProduct && clientQuotes.length > 0) {
+      const lastQuote = clientQuotes.sort((a, b) => 
+        new Date(b.created_date) - new Date(a.created_date)
+      )[0];
+      
+      if (lastQuote?.items?.[0]) {
+        lastQuotedProduct = lastQuote.items[0].product_name;
+        lastQuotedValue = lastQuote.total_value;
+        lastQuotedDate = lastQuote.created_date;
+      }
+    }
+    
+    return {
+      ...client,
+      average_purchase_cycle: averageCycle,
+      average_ticket: averageTicket,
+      last_quoted_product: lastQuotedProduct,
+      last_quoted_value: lastQuotedValue,
+      last_quoted_date: lastQuotedDate
+    };
+  };
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me()
@@ -92,10 +152,13 @@ export default function Dashboard() {
     return Math.min(100, Math.max(0, index));
   };
 
-  const processedClients = clients.map(client => ({
-    ...client,
-    opportunity_index: client.opportunity_index || calculateOpportunityIndex(client)
-  })).sort((a, b) => (b.opportunity_index || 0) - (a.opportunity_index || 0));
+  const processedClients = clients.map(client => {
+    const enriched = enrichClientData(client);
+    return {
+      ...enriched,
+      opportunity_index: enriched.opportunity_index || calculateOpportunityIndex(enriched)
+    };
+  }).sort((a, b) => (b.opportunity_index || 0) - (a.opportunity_index || 0));
 
   const top10Clients = processedClients.slice(0, 10);
 
