@@ -215,7 +215,7 @@ export default function Layout({ children, currentPageName }) {
                   <span className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 text-slate-400 ${isExpanded ? 'rotate-90' : ''}`}>
                     <span className="text-sm">▸</span>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest flex-1 text-left text-white">
+                  <span className="text-xs font-bold uppercase tracking-widest flex-1 text-left text-white/95">
                     {section.title}
                   </span>
                   {hasSectionActive && (
