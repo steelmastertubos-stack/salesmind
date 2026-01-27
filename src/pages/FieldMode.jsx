@@ -29,6 +29,16 @@ import { format } from 'date-fns';
 
 export default function FieldMode() {
   const [search, setSearch] = useState('');
+  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [contactForm, setContactForm] = useState({
+    notes: '',
+    next_action_date: format(new Date(), 'yyyy-MM-dd'),
+    next_action_type: 'whatsapp',
+    create_task: false
+  });
+  
+  const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients-field'],
