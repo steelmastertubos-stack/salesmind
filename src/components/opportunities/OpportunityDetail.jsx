@@ -157,9 +157,14 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
         client_name: opportunity.client_name,
         vendor_email: (await base44.auth.me()).email,
         vendor_name: (await base44.auth.me()).full_name,
+        principal_id: opportunity.principal_id,
         deal_value: opportunity.total_value || 0,
-        loss_reason: lossData.loss_reason,
-        loss_notes: lossData.loss_notes,
+        motivo_primario: lossData.motivo_primario,
+        motivos_secundarios: lossData.motivos_secundarios || [],
+        observacao: lossData.observacao,
+        concorrente: lossData.concorrente,
+        etapa_perda: lossData.etapa_perda,
+        perda_evitavel: lossData.perda_evitavel,
         loss_date: lossDate.toISOString().split('T')[0],
         loss_month: lossDate.getMonth() + 1,
         loss_year: lossDate.getFullYear(),
@@ -170,7 +175,11 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
         days_since_creation: daysInFunnel
       };
 
-      await createLostDealMutation.mutateAsync(lossRecord);
+      const createdLostDeal = await createLostDealMutation.mutateAsync(lossRecord);
+      
+      // Criar ações corretivas automáticas
+      const { createCorrectiveActions } = await import('@/components/utils/lossActionsEngine');
+      await createCorrectiveActions(createdLostDeal, opportunity);
 
       // Atualizar estágio
       const timeline = opportunity.timeline || [];
