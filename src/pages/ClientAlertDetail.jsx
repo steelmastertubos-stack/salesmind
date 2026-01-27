@@ -40,6 +40,18 @@ export default function ClientAlertDetail() {
   const [classificationNotes, setClassificationNotes] = useState('');
   const [nextFollowUp, setNextFollowUp] = useState('');
 
+  // Se não tiver clientId e for INACTIVE, buscar primeira inativa
+  const { data: inactiveClients = [] } = useQuery({
+    queryKey: ['inactive-clients'],
+    queryFn: () => base44.entities.Client.filter({ status: 'inactive' }, '', 1),
+    enabled: !clientId && alertType === 'INACTIVE'
+  });
+
+  // Se não tiver clientId, usar a primeira cliente inativa
+  if (!clientId && inactiveClients.length > 0) {
+    clientId = inactiveClients[0].id;
+  }
+
   const { data: client } = useQuery({
     queryKey: ['client', clientId],
     queryFn: () => base44.entities.Client.filter({ id: clientId }, '', 1).then(r => r[0]),
