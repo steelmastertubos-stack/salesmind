@@ -36,11 +36,12 @@ export default function ClientRanking() {
     queryFn: () => base44.entities.Client.list('company_name', 500)
   });
 
-  // Filtrar pedidos do ano selecionado
+  // Filtrar pedidos do ano selecionado (usar billing_date, não created_date)
   const yearOrders = useMemo(() => {
     return orders.filter(o => {
-      if (!o.created_date) return false;
-      const orderYear = new Date(o.created_date).getFullYear();
+      const dateToUse = o.billing_date || o.invoice_date || o.created_date;
+      if (!dateToUse) return false;
+      const orderYear = new Date(dateToUse).getFullYear();
       return orderYear === parseInt(selectedYear);
     });
   }, [orders, selectedYear]);
@@ -169,12 +170,13 @@ export default function ClientRanking() {
     return null;
   };
 
-  // Anos disponíveis
+  // Anos disponíveis (baseado em billing_date, não created_date)
   const availableYears = useMemo(() => {
     const years = new Set();
     orders.forEach(o => {
-      if (o.created_date) {
-        years.add(new Date(o.created_date).getFullYear());
+      const dateToUse = o.billing_date || o.invoice_date || o.created_date;
+      if (dateToUse) {
+        years.add(new Date(dateToUse).getFullYear());
       }
     });
     return Array.from(years).sort((a, b) => b - a);
