@@ -22,6 +22,8 @@ import {
   } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
+import QuickActionsMenu from '@/components/productivity/QuickActionsMenu';
+import ContextualActionButton from '@/components/productivity/ContextualActionButton';
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
