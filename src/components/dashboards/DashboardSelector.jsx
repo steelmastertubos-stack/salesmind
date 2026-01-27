@@ -145,7 +145,7 @@ export default function DashboardSelector({
                   </p>
                 </div>
               </div>
-            )))}
+            ))}
           </div>
         </div>
       )}
