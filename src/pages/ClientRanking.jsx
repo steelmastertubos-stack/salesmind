@@ -438,7 +438,7 @@ export default function ClientRanking() {
             </div>
           )}
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {awardClients.slice(0, 20).map((r, idx) => (
+            {awardClients.length > 0 && awardClients.slice(0, 20).map((r, idx) => (
               <div 
                 key={r.client_id} 
                 className="bg-white rounded-lg p-3 border border-amber-200 flex items-center justify-between"
@@ -446,7 +446,7 @@ export default function ClientRanking() {
                 <div className="flex-1">
                   <p className="font-semibold text-slate-900">{r.client_name}</p>
                   <p className="text-xs text-slate-600">
-                    {r.client_contact} • {r.client_phone}
+                    {r.client_contact} • {r.client_phone} • {r.months_active} meses ativos
                   </p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px]">
@@ -464,11 +464,10 @@ export default function ClientRanking() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-emerald-600">{formatCurrency(r.total_revenue)}</p>
-                  <p className="text-xs text-slate-500">{r.order_count} pedidos</p>
+                  <p className="text-xs text-slate-500">{r.order_count} pedidos • Ticket: {formatCurrency(r.avg_ticket)}</p>
                 </div>
               </div>
             ))}
-          </div>
         </CardContent>
       </Card>
     </div>
