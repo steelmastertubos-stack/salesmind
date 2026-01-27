@@ -29,8 +29,8 @@ import { processClientAlerts, replaceTemplateVariables } from '@/components/util
 
 export default function ClientAlertDetail() {
   const [searchParams] = useSearchParams();
-  const clientId = searchParams.get('clientId');
-  const alertType = searchParams.get('alertType');
+  let clientId = searchParams.get('clientId');
+  const alertType = searchParams.get('alertType') || searchParams.get('type');
   const queryClient = useQueryClient();
 
   const [selectedTemplate, setSelectedTemplate] = useState('');
