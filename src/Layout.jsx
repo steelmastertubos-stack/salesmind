@@ -42,24 +42,31 @@ export default function Layout({ children, currentPageName }) {
 
   const navigationSections = [
     {
-      title: 'VISÃO GERAL',
+      title: 'MINHA ROTINA',
       items: [
-        { name: 'Painel', icon: LayoutDashboard, page: 'Dashboard' }
+        { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
+        { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' }
       ]
     },
     {
       title: 'VENDAS',
       items: [
         { name: 'Orçamentos', icon: FileText, page: 'Quotes' },
-        { name: 'CRM', icon: Target, page: 'Opportunities' },
-        { name: 'Tarefas', icon: CheckSquare, page: 'Tasks' },
+        { name: 'Oportunidades', icon: Target, page: 'Opportunities' },
         { name: 'Pedidos', icon: ShoppingCart, page: 'Orders' }
       ]
     },
     {
-      title: 'BASE COMERCIAL',
+      title: 'CLIENTES',
       items: [
         { name: 'Clientes', icon: Users, page: 'Clients' },
+        { name: 'Ranking', icon: Trophy, page: 'ClientRanking' },
+        { name: 'Gamificação', icon: Target, page: 'Gamification' }
+      ]
+    },
+    {
+      title: 'PRODUTOS & ESTOQUE',
+      items: [
         { name: 'Produtos', icon: Package, page: 'Products' }
       ]
     },
@@ -75,13 +82,11 @@ export default function Layout({ children, currentPageName }) {
       title: 'INTELIGÊNCIA',
       items: [
         { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
-        { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
-        { name: 'Ranking Clientes', icon: Trophy, page: 'ClientRanking' },
-        { name: 'Gamificação', icon: Target, page: 'Gamification' }
+        { name: 'Insights IA', icon: Zap, page: 'AIInsights' }
       ]
     },
     {
-      title: 'CONFIGURAÇÕES',
+      title: 'AUTOMAÇÃO & CONFIG',
       items: [
         { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
         { name: 'Recalcular Tags', icon: Zap, page: 'RecalculateTags' },
