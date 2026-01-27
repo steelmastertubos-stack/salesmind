@@ -336,6 +336,91 @@ export default function FieldMode() {
           <p className="text-slate-500">Nenhum cliente encontrado</p>
         </div>
       )}
+
+      {/* Contact Dialog */}
+      <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedClient?.trade_name || selectedClient?.company_name}
+            </DialogTitle>
+            <p className="text-sm text-slate-500">{selectedClient?.company_name}</p>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Registrar Contato</Label>
+              <Textarea
+                value={contactForm.notes}
+                onChange={(e) => setContactForm(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="cobrar follow"
+                rows={3}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Próxima Ação</Label>
+                <Input
+                  type="date"
+                  value={contactForm.next_action_date}
+                  onChange={(e) => setContactForm(prev => ({ ...prev, next_action_date: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select 
+                  value={contactForm.next_action_type} 
+                  onValueChange={(v) => setContactForm(prev => ({ ...prev, next_action_type: v }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="call">Ligação</SelectItem>
+                    <SelectItem value="email">E-mail</SelectItem>
+                    <SelectItem value="visit">Visita</SelectItem>
+                    <SelectItem value="meeting">Reunião</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="create_task"
+                checked={contactForm.create_task}
+                onChange={(e) => setContactForm(prev => ({ ...prev, create_task: e.target.checked }))}
+                className="w-4 h-4 rounded border-slate-300"
+              />
+              <Label htmlFor="create_task" className="cursor-pointer">
+                Criar tarefa de acompanhamento
+              </Label>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowContactDialog(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitContact}
+                disabled={createFollowUpMutation.isPending}
+                className="flex-1 bg-[#1DB954] hover:bg-[#15803d]"
+              >
+                Registrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
