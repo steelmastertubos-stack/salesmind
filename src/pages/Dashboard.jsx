@@ -3,6 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import IntegratedAlerts from '@/components/dashboard/IntegratedAlerts';
 import SuggestedActionCard from '@/components/productivity/SuggestedActionCard';
+import DailyActionAlert from '@/components/productivity/DailyActionAlert';
+import FollowUpSection from '@/components/dashboard/FollowUpSection';
 import { toast } from 'sonner';
 import { 
   Users, 
