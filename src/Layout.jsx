@@ -39,6 +39,12 @@ export default function Layout({ children, currentPageName }) {
       }
     };
     loadUser();
+
+    // Restaurar estado do accordion
+    const savedState = localStorage.getItem('sidebar-accordion-state');
+    if (savedState) {
+      setExpandedSections(JSON.parse(savedState));
+    }
   }, []);
 
   const navigationSections = [
