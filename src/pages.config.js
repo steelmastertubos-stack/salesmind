@@ -32,6 +32,7 @@ import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
 import AutoTest from './pages/AutoTest';
+import AuditComplete from './pages/AuditComplete';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +71,7 @@ export const PAGES = {
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
     "AutoTest": AutoTest,
+    "AuditComplete": AuditComplete,
 }
 
 export const pagesConfig = {
