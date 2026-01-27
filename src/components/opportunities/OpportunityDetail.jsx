@@ -22,6 +22,7 @@ import {
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import LossReasonModal from './LossReasonModal';
 
 export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
   const [activeTab, setActiveTab] = useState('overview');
