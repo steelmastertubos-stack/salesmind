@@ -458,18 +458,6 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
               </Select>
             </div>
 
-            {newStage === 'perdido' && (
-              <div>
-                <Label>Motivo da Perda</Label>
-                <Textarea
-                  value={lossReason}
-                  onChange={(e) => setLossReason(e.target.value)}
-                  placeholder="Preço, prazo, concorrente, etc..."
-                  rows={3}
-                />
-              </div>
-            )}
-
             <Button 
               onClick={handleStageChange} 
               className="w-full"
