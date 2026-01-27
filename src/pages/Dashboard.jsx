@@ -291,8 +291,11 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Suggested Action Card */}
-      <SuggestedActionCard />
+      {/* Daily Action Alert - Ação do Dia (Regra D1) */}
+      <DailyActionAlert tasks={tasks} opportunities={opportunities} clients={clients} />
+
+      {/* Follow-up Section - Follow-ups Atrasados, Hoje e Próximos */}
+      <FollowUpSection tasks={tasks} />
 
       {/* Integrated Alerts */}
       <IntegratedAlerts />
