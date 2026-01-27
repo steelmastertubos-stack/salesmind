@@ -46,7 +46,7 @@ export default function LossReport() {
     return lostDeals.filter(deal => {
       if (filterPeriod === 'month' && (deal.loss_month !== filterMonth || deal.loss_year !== filterYear)) return false;
       if (filterPeriod === 'quarter' && (deal.loss_quarter !== filterQuarter || deal.loss_year !== filterYear)) return false;
-      if (filterPeriod === 'semester' && (deal.loss_semester !== filterPeriod || deal.loss_year !== filterYear)) return false;
+      if (filterPeriod === 'semester' && (deal.loss_semester !== filterQuarter || deal.loss_year !== filterYear)) return false;
       if (filterPeriod === 'year' && deal.loss_year !== filterYear) return false;
       if (filterVendor && deal.vendor_email !== filterVendor) return false;
       if (filterClient && deal.client_id !== filterClient) return false;
@@ -99,7 +99,8 @@ export default function LossReport() {
         name: LOSS_REASONS_MAP[item.reason]?.label || item.reason,
         count: item.count,
         value: item.value,
-        color: LOSS_REASONS_MAP[item.reason]?.color
+        color: LOSS_REASONS_MAP[item.reason]?.color,
+        reason: item.reason
       }))
       .sort((a, b) => b.count - a.count);
   }, [filteredDeals]);
@@ -431,7 +432,7 @@ export default function LossReport() {
                     <td className="py-3">{deal.client_name}</td>
                     <td className="py-3">
                       <Badge variant="outline" className="text-xs">
-                        {LOSS_REASONS_MAP[deal.loss_reason]?.label || deal.loss_reason}
+                        {LOSS_REASONS_MAP[deal.motivo_primario]?.label || deal.motivo_primario}
                       </Badge>
                     </td>
                     <td className="py-3 text-right font-semibold">{formatCurrency(deal.deal_value)}</td>

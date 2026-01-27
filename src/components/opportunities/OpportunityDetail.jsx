@@ -186,7 +186,7 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
       timeline.push({
         date: new Date().toISOString(),
         type: 'stage_change',
-        description: `Mudou para: Perdido - ${lossData.loss_reason}`,
+        description: `Mudou para: Perdido - ${lossData.motivo_primario}`,
         user: 'user'
       });
 

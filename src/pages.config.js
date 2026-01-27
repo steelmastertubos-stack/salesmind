@@ -19,6 +19,7 @@ import Gamification from './pages/Gamification';
 import Generate2025Data from './pages/Generate2025Data';
 import GenerateHistoricalData from './pages/GenerateHistoricalData';
 import ImportData from './pages/ImportData';
+import LossReport from './pages/LossReport';
 import Opportunities from './pages/Opportunities';
 import Orders from './pages/Orders';
 import Principals from './pages/Principals';
@@ -33,7 +34,6 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
-import LossReport from './pages/LossReport';
 import __Layout from './Layout.jsx';
 
 
@@ -59,6 +59,7 @@ export const PAGES = {
     "Generate2025Data": Generate2025Data,
     "GenerateHistoricalData": GenerateHistoricalData,
     "ImportData": ImportData,
+    "LossReport": LossReport,
     "Opportunities": Opportunities,
     "Orders": Orders,
     "Principals": Principals,
@@ -73,7 +74,6 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
-    "LossReport": LossReport,
 }
 
 export const pagesConfig = {

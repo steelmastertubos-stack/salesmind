@@ -197,8 +197,8 @@ export default function AutoTest() {
     // Validar ações por motivo
     const priceDeals = deals.filter(d => d.motivo_primario === 'preco');
     const priceActions = tasks.filter(t => 
-      priceDeals.some(d => d.opportunity_id === t.opportunity_id) &&
-      t.title.includes('preço') || t.title.includes('alternativa')
+     priceDeals.some(d => d.opportunity_id === t.opportunity_id) &&
+     (t.title.includes('preço') || t.title.includes('alternativa'))
     );
     if (priceDeals.length > 0 && priceActions.length === 0) {
       issues.push('Perdas por preço não geram tarefas');
@@ -208,7 +208,7 @@ export default function AutoTest() {
     const deliveryDeals = deals.filter(d => d.motivo_primario === 'prazo_entrega');
     const deliveryActions = tasks.filter(t =>
       deliveryDeals.some(d => d.opportunity_id === t.opportunity_id) &&
-      t.title.includes('estoque') || t.title.includes('prazo')
+      (t.title.includes('estoque') || t.title.includes('prazo'))
     );
     if (deliveryDeals.length > 0 && deliveryActions.length === 0) {
       issues.push('Perdas por prazo não geram tarefas');
