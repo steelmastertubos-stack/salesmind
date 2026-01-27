@@ -179,33 +179,70 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
 
-        <nav className="mt-20 lg:mt-4 px-3 space-y-1 overflow-y-auto pb-24" style={{ maxHeight: 'calc(100vh - 180px)' }}>
-                  {navigationSections.map((section, sectionIdx) => (
-                    <div key={section.title} className={sectionIdx > 0 ? 'mt-6 pt-4 border-t border-slate-600' : ''}>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 mb-2">
-                        {section.title}
-                      </p>
-                      <div className="space-y-1">
-                        {section.items.map((item) => (
-                          <Link
-                            key={item.page}
-                            to={createPageUrl(item.page)}
-                            onClick={() => setSidebarOpen(false)}
-                            className={`
-                              flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200
-                              ${isActive(item.page) 
-                                ? 'bg-[#1DB954] text-white shadow-lg' 
-                                : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
-                            `}
-                          >
-                            <item.icon className="w-4 h-4" />
-                            <span className="text-sm font-medium">{item.name}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </nav>
+        <nav className="mt-20 lg:mt-4 px-3 space-y-0 overflow-y-auto pb-24" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+          {/* Breadcrumb */}
+          {activeBreadcrumb && (
+            <div className="px-3 py-2 mb-4 rounded-lg bg-[#1F4E79]/30 border border-[#1DB954]/20">
+              <p className="text-xs text-slate-300">
+                <span className="text-slate-400">{activeBreadcrumb.section}</span>
+                <span className="mx-1 text-slate-500">›</span>
+                <span className="text-[#1DB954] font-medium">{activeBreadcrumb.item}</span>
+              </p>
+            </div>
+          )}
+
+          {navigationSections.map((section, sectionIdx) => {
+            const isExpanded = expandedSections[section.title] !== false; // Expandido por padrão
+            const hasSectionActive = section.items.some(item => isActive(item.page));
+
+            return (
+              <div key={section.title} className={sectionIdx > 0 ? 'mt-2' : ''}>
+                {/* Section Header (Accordion Trigger) */}
+                <button
+                  onClick={() => toggleSection(section.title)}
+                  className={`
+                    w-full flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200
+                    ${hasSectionActive 
+                      ? 'bg-[#1F4E79]/40 text-white' 
+                      : 'text-slate-300 hover:bg-[#1F4E79]/20 hover:text-white'}
+                  `}
+                >
+                  <span className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                    <span className="text-sm">▸</span>
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-widest flex-1 text-left">
+                    {section.title}
+                  </span>
+                  {hasSectionActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954]"></span>
+                  )}
+                </button>
+
+                {/* Section Items (Accordion Content) */}
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="space-y-0.5 mt-0.5 ml-2 pl-2 border-l border-slate-600">
+                    {section.items.map((item) => (
+                      <Link
+                        key={item.page}
+                        to={createPageUrl(item.page)}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`
+                          flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
+                          ${isActive(item.page) 
+                            ? 'bg-[#1DB954] text-white shadow-md' 
+                            : 'text-slate-300 hover:bg-[#1F4E79] hover:text-white'}
+                        `}
+                      >
+                        <item.icon className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-sm font-medium truncate">{item.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </nav>
 
         {user && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
