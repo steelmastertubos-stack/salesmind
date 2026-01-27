@@ -3,6 +3,7 @@ import AlertList from './pages/AlertList';
 import AuditFluxo from './pages/AuditFluxo';
 import ClientAlertDetail from './pages/ClientAlertDetail';
 import ClientDetails from './pages/ClientDetails';
+import ClientRanking from './pages/ClientRanking';
 import Clients from './pages/Clients';
 import Commissions from './pages/Commissions';
 import Dashboard from './pages/Dashboard';
@@ -19,6 +20,7 @@ import Orders from './pages/Orders';
 import Principals from './pages/Principals';
 import Products from './pages/Products';
 import Quotes from './pages/Quotes';
+import RecalculateTags from './pages/RecalculateTags';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Tasks from './pages/Tasks';
@@ -27,8 +29,7 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
-import ClientRanking from './pages/ClientRanking';
-import RecalculateTags from './pages/RecalculateTags';
+import FixNewAcoPrices from './pages/FixNewAcoPrices';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "AuditFluxo": AuditFluxo,
     "ClientAlertDetail": ClientAlertDetail,
     "ClientDetails": ClientDetails,
+    "ClientRanking": ClientRanking,
     "Clients": Clients,
     "Commissions": Commissions,
     "Dashboard": Dashboard,
@@ -54,6 +56,7 @@ export const PAGES = {
     "Principals": Principals,
     "Products": Products,
     "Quotes": Quotes,
+    "RecalculateTags": RecalculateTags,
     "Reports": Reports,
     "Settings": Settings,
     "Tasks": Tasks,
@@ -62,8 +65,7 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
-    "ClientRanking": ClientRanking,
-    "RecalculateTags": RecalculateTags,
+    "FixNewAcoPrices": FixNewAcoPrices,
 }
 
 export const pagesConfig = {
