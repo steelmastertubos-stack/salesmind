@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import DashboardConfigurator from '@/components/dashboards/DashboardConfigurator';
+import DashboardSelector from '@/components/dashboards/DashboardSelector';
+import CustomDashboardView from '@/components/dashboards/CustomDashboardView';
 import { 
   BarChart3, 
   TrendingUp,
@@ -41,6 +44,7 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function Reports() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   // Ler ano da URL se presente
   const urlParams = new URLSearchParams(window.location.search);
@@ -54,6 +58,16 @@ export default function Reports() {
   const [principalFilter, setPrincipalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('executive');
+  
+  // Custom Dashboards
+  const [showDashboardConfig, setShowDashboardConfig] = useState(false);
+  const [editingDashboard, setEditingDashboard] = useState(null);
+  const [activeDashboard, setActiveDashboard] = useState(null);
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   // Data fetching
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
@@ -81,7 +95,42 @@ export default function Reports() {
     queryFn: () => base44.entities.Principal.list('company_name', 500)
   });
 
+  const { data: customDashboards = [] } = useQuery({
+    queryKey: ['customDashboards'],
+    queryFn: () => base44.entities.CustomDashboard.list('-created_date', 100)
+  });
+
   const isLoading = loadingOrders || loadingClients || loadingQuotes || loadingOpportunities;
+
+  // Mutations for custom dashboards
+  const createDashboardMutation = useMutation({
+    mutationFn: (data) => base44.entities.CustomDashboard.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customDashboards'] });
+      toast.success('Dashboard criado com sucesso!');
+      setShowDashboardConfig(false);
+      setEditingDashboard(null);
+    }
+  });
+
+  const updateDashboardMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.CustomDashboard.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customDashboards'] });
+      toast.success('Dashboard atualizado!');
+      setShowDashboardConfig(false);
+      setEditingDashboard(null);
+    }
+  });
+
+  const deleteDashboardMutation = useMutation({
+    mutationFn: (id) => base44.entities.CustomDashboard.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customDashboards'] });
+      toast.success('Dashboard excluído!');
+      setActiveDashboard(null);
+    }
+  });
 
   // Get available years from data - extrair de TODAS as datas relevantes
   const availableYears = useMemo(() => {
@@ -538,6 +587,59 @@ export default function Reports() {
 
   const aiInsights = generateInsights();
 
+  const handleSaveDashboard = (data) => {
+    if (editingDashboard) {
+      updateDashboardMutation.mutate({ id: editingDashboard.id, data });
+    } else {
+      createDashboardMutation.mutate(data);
+    }
+  };
+
+  const handleDeleteDashboard = (dashboard) => {
+    if (confirm(`Excluir dashboard "${dashboard.name}"?`)) {
+      deleteDashboardMutation.mutate(dashboard.id);
+    }
+  };
+
+  // Prepare data for custom dashboards
+  const kpiData = {
+    total_orders: kpis.current.orders,
+    total_value: kpis.current.revenue,
+    avg_ticket: kpis.current.avgTicket,
+    conversion_rate: kpis.current.conversionRate,
+    total_quotes: kpis.current.quotesCreated,
+    active_opportunities: filteredOpportunities.filter(o => o.stage === 'proposta_enviada' || o.stage === 'em_negociacao').length,
+    new_clients: clients.filter(c => {
+      const created = new Date(c.created_date);
+      const yearMatches = yearFilter === 'all' || created.getFullYear() === parseInt(yearFilter);
+      return yearMatches;
+    }).length,
+    clients_at_risk: clients.filter(c => c.status === 'at_risk' || c.status === 'inactive').length,
+    total_commission: kpis.current.commission,
+    commission_pending: kpis.current.commission * 0.7, // estimativa
+    margin_avg: 15, // calculado se disponível
+    total_weight: filteredOrders.reduce((sum, o) => sum + (o.total_weight || 0), 0)
+  };
+
+  const comparisonKpiData = {
+    total_orders: kpis.previous.orders,
+    total_value: kpis.previous.revenue,
+    avg_ticket: kpis.previous.avgTicket
+  };
+
+  const chartData = {
+    monthlyData: monthlyEvolution,
+    principalData: principalAnalysis.map(p => ({ name: p.name, value: p.revenue })),
+    clientData: clientAnalysis.map(c => ({ name: c.name, value: c.revenue })),
+    funnelData: funnelAnalysis,
+    statusData: [
+      { name: 'Ativos', value: clients.filter(c => c.status === 'active').length },
+      { name: 'Atenção', value: clients.filter(c => c.status === 'attention').length },
+      { name: 'Em Risco', value: clients.filter(c => c.status === 'at_risk').length },
+      { name: 'Inativos', value: clients.filter(c => c.status === 'inactive').length }
+    ]
+  };
+
   const handleGenerateAction = async (insight) => {
     try {
       // Create activity log
@@ -645,8 +747,48 @@ export default function Reports() {
         subtitle="Análise integrada de desempenho e decisão estratégica"
       />
 
+      {/* Dashboard Selector */}
+      <DashboardSelector
+        dashboards={customDashboards}
+        activeDashboard={activeDashboard}
+        onSelect={setActiveDashboard}
+        onNew={() => {
+          setEditingDashboard(null);
+          setShowDashboardConfig(true);
+        }}
+        onEdit={(d) => {
+          setEditingDashboard(d);
+          setShowDashboardConfig(true);
+        }}
+        onDelete={handleDeleteDashboard}
+        currentUser={user}
+      />
+
+      {/* Dashboard Configurator */}
+      <DashboardConfigurator
+        open={showDashboardConfig}
+        onClose={() => {
+          setShowDashboardConfig(false);
+          setEditingDashboard(null);
+        }}
+        dashboard={editingDashboard}
+        onSave={handleSaveDashboard}
+        currentUser={user}
+      />
+
+      {/* Custom Dashboard View */}
+      {activeDashboard && (
+        <CustomDashboardView
+          dashboard={activeDashboard}
+          kpiData={kpiData}
+          chartData={chartData}
+          comparisonData={comparisonKpiData}
+          filters={{ yearFilter, period, clientFilter, principalFilter }}
+        />
+      )}
+
       {/* Filtros Globais */}
-      <Card>
+      {!activeDashboard && <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -862,7 +1004,7 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      {!activeDashboard && <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8">
           <TabsTrigger value="ia">🤖 IA</TabsTrigger>
           <TabsTrigger value="executive">Executiva</TabsTrigger>
