@@ -468,6 +468,7 @@ export default function ClientRanking() {
                 </div>
               </div>
             ))}
+          </div>
         </CardContent>
       </Card>
     </div>
