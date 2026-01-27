@@ -158,12 +158,15 @@ export default function Layout({ children, currentPageName }) {
           <Zap className="w-7 h-7 text-[#1DB954]" />
           <span className="font-bold text-lg">SalesMind</span>
         </div>
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <QuickActionsMenu />
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Sidebar */}
