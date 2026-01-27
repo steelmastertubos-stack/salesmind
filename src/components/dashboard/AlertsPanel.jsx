@@ -132,10 +132,12 @@ export default function AlertsPanel({ clients, commissionAlerts, orders = [] }) 
             );
           }
           
+          const isInactiveAlert = alert.type === 'INACTIVE';
+          
           return (
             <Link 
               key={alert.id}
-              to={createPageUrl(`AlertList?type=${alert.type}`)}
+              to={isInactiveAlert ? createPageUrl(`ClientAlertDetail?type=INACTIVE`) : createPageUrl(`AlertList?type=${alert.type}`)}
               className={`${alert.bgColor} rounded-xl p-3 flex items-center justify-between cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all block`}
             >
               <div className="flex items-center gap-3">
