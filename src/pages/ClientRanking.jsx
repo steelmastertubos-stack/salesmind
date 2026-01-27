@@ -94,21 +94,10 @@ export default function ClientRanking() {
   const topClients = ranking.slice(0, parseInt(rankingSize));
 
   // Identificar clientes para premiação
-  // REGRA: Top 20% dos clientes do ano com pelo menos 2 pedidos
+  // REGRA: Faturamento >= R$ 100.000 no ano selecionado
   const awardClients = useMemo(() => {
-    // Filtrar clientes que compraram no ano selecionado
-    const eligibleClients = ranking.filter(r => {
-      const client = clients.find(c => c.id === r.client_id);
-      if (!client) return false;
-      
-      // Critérios: pelo menos 2 pedidos no ano
-      return r.order_count >= 2;
-    });
-    
-    // Pegar top 20% (mínimo 5, máximo 20)
-    const top20Percent = Math.max(5, Math.min(20, Math.ceil(eligibleClients.length * 0.2)));
-    return eligibleClients.slice(0, top20Percent);
-  }, [ranking, clients]);
+    return ranking.filter(r => r.total_revenue >= 100000);
+  }, [ranking]);
 
   // Exportar para CSV
   const handleExport = () => {
