@@ -30,6 +30,7 @@ import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
 import FixNewAcoPrices from './pages/FixNewAcoPrices';
+import CleanNewAcoProducts from './pages/CleanNewAcoProducts';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
     "FixNewAcoPrices": FixNewAcoPrices,
+    "CleanNewAcoProducts": CleanNewAcoProducts,
 }
 
 export const pagesConfig = {
