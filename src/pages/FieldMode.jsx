@@ -286,9 +286,17 @@ export default function FieldMode() {
 
                 {/* Quick Actions */}
                 <div className="flex border-t border-slate-100">
+                  <button 
+                    onClick={() => handleOpenContactDialog(client)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Contatar
+                  </button>
+                  
                   <Link 
                     to={createPageUrl(`Quotes?clientId=${client.id}`)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-[#1e3a5f] hover:bg-slate-50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-[#1e3a5f] hover:bg-slate-50 transition-colors border-l border-slate-100"
                   >
                     <FileText className="w-4 h-4" />
                     Orçar
