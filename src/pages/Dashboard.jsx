@@ -360,8 +360,8 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Alerts Panel */}
-        <div>
+        {/* Right Sidebar - Alerts & Actions */}
+        <div className="space-y-4">
           <AlertsPanel 
             clients={processedClients}
             orders={orders}
@@ -370,6 +370,11 @@ export default function Dashboard() {
               blockedCount: orders.filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status)).length
             }}
           />
+
+          {/* Priority Clients - Compacto */}
+          {!isLoading && clients.length > 0 && (
+            <PriorityClients clients={clients} orders={orders} />
+          )}
 
           {/* AI Insights Teaser */}
           <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-4 mt-4">
