@@ -133,10 +133,13 @@ export default function StockImportForm({ onSuccess }) {
         });
 
         // Atualizar estoque da representada
-        await base44.entities.Principal.update(selectedPrincipal, {
+        console.log('Atualizando estoque:', { principal_id: selectedPrincipal, stock: updatedStock });
+        
+        const result = await base44.entities.Principal.update(selectedPrincipal, {
           stock: updatedStock
         });
-
+        
+        console.log('Resultado da atualização:', result);
         toast.success(`${rows.length} itens de estoque importados para ${principal.trade_name || principal.company_name}!`);
         setFile(null);
         setPreview(null);
