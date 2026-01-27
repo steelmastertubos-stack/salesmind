@@ -93,13 +93,13 @@ export default function ClientRanking() {
   const topClients = ranking.slice(0, parseInt(rankingSize));
 
   // Identificar clientes para premiação
+  // REGRA CORRETA: Apenas clientes Ativos com is_premium = TRUE
   const awardClients = useMemo(() => {
-    return ranking.filter(r => 
-      r.auto_tags.includes('Cliente Premium') ||
-      r.auto_tags.includes('Cliente Recorrente') ||
-      ranking.indexOf(r) < 20 // Top 20
-    );
-  }, [ranking]);
+    return ranking.filter(r => {
+      const client = clients.find(c => c.id === r.client_id);
+      return client && client.status === 'active' && client.is_premium === true;
+    });
+  }, [ranking, clients]);
 
   // Exportar para CSV
   const handleExport = () => {
@@ -337,19 +337,25 @@ export default function ClientRanking() {
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1 justify-center">
-                        {r.auto_tags.slice(0, 2).map((tag, i) => (
-                          <Badge 
-                            key={i} 
-                            className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px]"
-                          >
-                            {tag}
+                        {r.is_premium && r.client_status === 'active' && (
+                          <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px]">
+                            ⭐ PREMIUM
                           </Badge>
-                        ))}
-                        {r.manual_tags.slice(0, 1).map((tag, i) => (
+                        )}
+                        {r.client_status === 'at_risk' && (
+                          <Badge className="bg-orange-100 text-orange-700 text-[10px]">
+                            ⚠️ Em Risco
+                          </Badge>
+                        )}
+                        {r.client_status === 'inactive' && (
+                          <Badge className="bg-slate-200 text-slate-600 text-[10px]">
+                            Inativo
+                          </Badge>
+                        )}
+                        {r.auto_tags.slice(0, 1).map((tag, i) => (
                           <Badge 
                             key={i} 
-                            variant="outline"
-                            className="text-[10px]"
+                            className="bg-indigo-100 text-indigo-700 text-[10px]"
                           >
                             {tag}
                           </Badge>
@@ -422,8 +428,15 @@ export default function ClientRanking() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-slate-700 mb-4">
-            <strong>{awardClients.length} clientes</strong> qualificados para ações de premiação, brindes ou campanhas especiais.
+            <strong>{awardClients.length} clientes</strong> qualificados para premiação (Ativos + Premium).
           </p>
+          {awardClients.length === 0 && (
+            <div className="text-center py-8 text-slate-500">
+              <Trophy className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+              <p>Nenhum cliente Premium ativo encontrado em {selectedYear}</p>
+              <p className="text-xs mt-1">Execute o recálculo de tags para atualizar</p>
+            </div>
+          )}
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {awardClients.slice(0, 20).map((r, idx) => (
               <div 
@@ -436,10 +449,13 @@ export default function ClientRanking() {
                     {r.client_contact} • {r.client_phone}
                   </p>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {r.auto_tags.map((tag, i) => (
+                    <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px]">
+                      ⭐ PREMIUM ATIVO
+                    </Badge>
+                    {r.auto_tags.slice(0, 1).map((tag, i) => (
                       <Badge 
                         key={i} 
-                        className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px]"
+                        className="bg-indigo-100 text-indigo-700 text-[10px]"
                       >
                         {tag}
                       </Badge>

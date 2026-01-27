@@ -338,14 +338,108 @@ export async function checkClientInactive(client, orders) {
 }
 
 /**
- * 🏆 TAGS HISTÓRICAS (não alteram status operacional)
+ * 🏆 CLASSIFICAÇÃO PREMIUM (derivada, não tag)
+ * Regras obrigatórias:
+ * - status = Ativo
+ * - ≥ 3 compras em meses distintos no ano
+ * - ticket_medio ≥ threshold configurável
+ * - dias_desde_ultima_compra dentro do ciclo
+ * 
+ * Se virar Inativo → remove is_premium, mantém apenas histórico
+ */
+export async function updatePremiumClassification(client, orders, year = 2025, ticketThreshold = 50000) {
+  try {
+    // Cliente Inativo NUNCA pode ser Premium
+    if (client.status === 'inactive') {
+      if (client.is_premium) {
+        // Remover classificação Premium mas manter histórico
+        const historicalTag = `Premium - ${year}`;
+        const existingTags = client.auto_tags || [];
+        
+        await base44.entities.Client.update(client.id, {
+          is_premium: false,
+          auto_tags: existingTags.includes(historicalTag) ? existingTags : [...existingTags, historicalTag],
+          tags_last_updated: new Date().toISOString()
+        });
+        
+        console.log('✅ Premium removido (cliente inativo), histórico mantido:', client.id);
+      }
+      return { is_premium: false, reason: 'Cliente inativo' };
+    }
+
+    // Filtrar pedidos do ano
+    const ordersYear = orders.filter(o => {
+      const date = new Date(o.created_date);
+      return date.getFullYear() === year && o.client_id === client.id;
+    });
+
+    // Verificar recorrência (3+ meses distintos)
+    const monthsWithPurchase = new Set(
+      ordersYear.map(o => new Date(o.created_date).getMonth())
+    );
+    
+    const isRecurrent = monthsWithPurchase.size >= 3;
+
+    // Calcular ticket médio
+    const revenue = ordersYear.reduce((sum, o) => sum + (o.total_value || 0), 0);
+    const avgTicket = ordersYear.length > 0 ? revenue / ordersYear.length : 0;
+    const hasHighTicket = avgTicket >= ticketThreshold;
+
+    // Verificar última compra dentro do ciclo
+    const lastOrder = ordersYear.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+    const daysSince = lastOrder ? 
+      Math.floor((new Date() - new Date(lastOrder.created_date)) / (1000 * 60 * 60 * 24)) : 999;
+    const avgCycle = client.average_purchase_cycle || 30;
+    const withinCycle = daysSince <= avgCycle;
+
+    // Cliente Premium = Ativo + Recorrente + Ticket Alto + Dentro do Ciclo
+    const shouldBePremium = (client.status === 'active') && isRecurrent && hasHighTicket && withinCycle;
+
+    // Atualizar se mudou
+    if (client.is_premium !== shouldBePremium) {
+      const updateData = {
+        is_premium: shouldBePremium,
+        tags_last_updated: new Date().toISOString()
+      };
+
+      if (shouldBePremium) {
+        updateData.premium_since = formatDate(new Date());
+        updateData.premium_year = year;
+        
+        // Adicionar tag histórica
+        const historicalTag = `Premium - ${year}`;
+        const existingTags = client.auto_tags || [];
+        updateData.auto_tags = existingTags.includes(historicalTag) ? existingTags : [...existingTags, historicalTag];
+      }
+
+      await base44.entities.Client.update(client.id, updateData);
+
+      console.log(`✅ Premium atualizado: ${client.id} → ${shouldBePremium}`);
+      return { 
+        is_premium: shouldBePremium, 
+        revenue, 
+        avg_ticket: avgTicket,
+        months_active: monthsWithPurchase.size,
+        days_since_purchase: daysSince
+      };
+    }
+
+    return { skipped: true, is_premium: client.is_premium };
+  } catch (error) {
+    console.error('❌ Erro em updatePremiumClassification:', error);
+    throw error;
+  }
+}
+
+/**
+ * 🏷️ TAGS HISTÓRICAS (complementares)
  * Aplicar tags de HISTÓRICO por ano
  */
 export async function applyHistoricalTags(client, orders, year = 2025) {
   try {
     const ordersYear = orders.filter(o => {
       const date = new Date(o.created_date);
-      return date.getFullYear() === year;
+      return date.getFullYear() === year && o.client_id === client.id;
     });
 
     const tags = [];
@@ -357,13 +451,6 @@ export async function applyHistoricalTags(client, orders, year = 2025) {
     
     if (monthsWithPurchase.size >= 3) {
       tags.push(`Recorrente - ${year}`);
-    }
-
-    // Tag: Premium (top 20% por faturamento do ano)
-    const revenue = ordersYear.reduce((sum, o) => sum + (o.total_value || 0), 0);
-    
-    if (revenue > 100000) { // threshold configurável
-      tags.push(`Premium - ${year}`);
     }
 
     if (tags.length > 0) {
@@ -564,6 +651,7 @@ export default {
   automateGanho,
   checkClientAtRisk,
   checkClientInactive,
+  updatePremiumClassification,
   applyHistoricalTags,
   checkStockMinimum
 };
