@@ -85,6 +85,7 @@ export default function Layout({ children, currentPageName }) {
       items: [
         { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
         { name: 'Recalcular Tags', icon: Zap, page: 'RecalculateTags' },
+        { name: 'AutoTest', icon: CheckSquare, page: 'AutoTest' },
         { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
         { name: 'Configurações', icon: Settings, page: 'Settings' }
       ]
