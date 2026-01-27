@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, Search, Edit, Trash2, Filter, X, Download, Upload } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Filter, X, Download, Upload, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import ProductImportForm from '@/components/imports/ProductImportForm';
+import BulkEditDialog from '@/components/products/BulkEditDialog';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +22,7 @@ export default function ProductsPage() {
   const [filterStatus, setFilterStatus] = useState('active');
   const [showForm, setShowForm] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showBulkEditDialog, setShowBulkEditDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const queryClient = useQueryClient();
@@ -241,6 +243,39 @@ export default function ProductsPage() {
 
   const [showClearCatalogDialog, setShowClearCatalogDialog] = useState(false);
 
+  const bulkEditMutation = useMutation({
+    mutationFn: async ({ productIds, field, value }) => {
+      let updated = 0;
+      let failed = 0;
+
+      for (const id of productIds) {
+        try {
+          await base44.entities.Product.update(id, { [field]: value });
+          updated++;
+        } catch (error) {
+          console.error('Erro ao atualizar produto:', id, error);
+          failed++;
+        }
+      }
+
+      return { updated, failed, total: productIds.length };
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries(['products']);
+      setSelectedProducts([]);
+      setShowBulkEditDialog(false);
+      
+      if (results.failed === 0) {
+        toast.success(`${results.updated} produtos atualizados com sucesso!`);
+      } else {
+        toast.warning(`${results.updated} atualizados, ${results.failed} falharam`);
+      }
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar produtos em lote');
+    }
+  });
+
   const clearCatalogMutation = useMutation({
     mutationFn: async (principalId) => {
       const productsToDelete = products.filter(p => p.principal_id === principalId);
@@ -310,14 +345,24 @@ export default function ProductsPage() {
           </Button>
         )}
         {selectedProducts.length > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={handleBulkDelete}
-            disabled={bulkDeleteMutation.isPending}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Excluir {selectedProducts.length}
-          </Button>
+          <>
+            <Button 
+              variant="outline"
+              className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+              onClick={() => setShowBulkEditDialog(true)}
+            >
+              <Edit3 className="w-4 h-4 mr-2" />
+              Editar {selectedProducts.length}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleBulkDelete}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir {selectedProducts.length}
+            </Button>
+          </>
         )}
         <Button variant="outline" onClick={() => setShowImportDialog(true)}>
           <Upload className="w-4 h-4 mr-2" />
@@ -562,6 +607,19 @@ export default function ProductsPage() {
           />
         </DialogContent>
       </Dialog>
+
+      <BulkEditDialog
+        open={showBulkEditDialog}
+        onClose={() => setShowBulkEditDialog(false)}
+        selectedCount={selectedProducts.length}
+        onApply={(field, value) => {
+          bulkEditMutation.mutate({ 
+            productIds: selectedProducts, 
+            field, 
+            value 
+          });
+        }}
+      />
 
       <Dialog open={showClearCatalogDialog} onOpenChange={setShowClearCatalogDialog}>
         <DialogContent className="max-w-lg">

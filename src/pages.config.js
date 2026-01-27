@@ -1,6 +1,7 @@
 import AIInsights from './pages/AIInsights';
 import AlertList from './pages/AlertList';
 import AuditFluxo from './pages/AuditFluxo';
+import CleanNewAcoProducts from './pages/CleanNewAcoProducts';
 import ClientAlertDetail from './pages/ClientAlertDetail';
 import ClientDetails from './pages/ClientDetails';
 import ClientRanking from './pages/ClientRanking';
@@ -11,6 +12,7 @@ import DiagnosticoHistorico from './pages/DiagnosticoHistorico';
 import FieldMode from './pages/FieldMode';
 import Financeiro from './pages/Financeiro';
 import FixIntegratedFlow from './pages/FixIntegratedFlow';
+import FixNewAcoPrices from './pages/FixNewAcoPrices';
 import Gamification from './pages/Gamification';
 import Generate2025Data from './pages/Generate2025Data';
 import GenerateHistoricalData from './pages/GenerateHistoricalData';
@@ -29,8 +31,6 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
-import FixNewAcoPrices from './pages/FixNewAcoPrices';
-import CleanNewAcoProducts from './pages/CleanNewAcoProducts';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +38,7 @@ export const PAGES = {
     "AIInsights": AIInsights,
     "AlertList": AlertList,
     "AuditFluxo": AuditFluxo,
+    "CleanNewAcoProducts": CleanNewAcoProducts,
     "ClientAlertDetail": ClientAlertDetail,
     "ClientDetails": ClientDetails,
     "ClientRanking": ClientRanking,
@@ -48,6 +49,7 @@ export const PAGES = {
     "FieldMode": FieldMode,
     "Financeiro": Financeiro,
     "FixIntegratedFlow": FixIntegratedFlow,
+    "FixNewAcoPrices": FixNewAcoPrices,
     "Gamification": Gamification,
     "Generate2025Data": Generate2025Data,
     "GenerateHistoricalData": GenerateHistoricalData,
@@ -66,8 +68,6 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
-    "FixNewAcoPrices": FixNewAcoPrices,
-    "CleanNewAcoProducts": CleanNewAcoProducts,
 }
 
 export const pagesConfig = {
