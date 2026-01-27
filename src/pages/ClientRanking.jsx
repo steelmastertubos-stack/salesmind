@@ -427,13 +427,13 @@ export default function ClientRanking() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-slate-700 mb-4">
-            <strong>{awardClients.length} clientes</strong> qualificados para premiação (Top 20% com mínimo 2 pedidos no ano).
+            <strong>{awardClients.length} clientes</strong> qualificados para premiação (Faturamento ≥ R$ 100.000).
           </p>
           {awardClients.length === 0 && (
             <div className="text-center py-8 text-slate-500">
               <Trophy className="w-12 h-12 mx-auto mb-2 text-slate-300" />
               <p>Nenhum cliente qualificado em {selectedYear}</p>
-              <p className="text-xs mt-1">É necessário ter pelo menos 2 pedidos no ano</p>
+              <p className="text-xs mt-1">É necessário faturamento mínimo de R$ 100.000</p>
             </div>
           )}
           <div className="space-y-2 max-h-96 overflow-y-auto">
