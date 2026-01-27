@@ -50,8 +50,8 @@ export default function CleanNewAcoProducts() {
             }
           }
 
-          // Definir preço fixo de R$ 11,90/kg
-          cleanData.base_price_per_kg = 11.90;
+          // Definir preço fixo de R$ 11,90/kg para todos
+          cleanData.base_price_per_kg = 11.9;
 
           await base44.entities.Product.update(product.id, cleanData);
           cleaned++;
