@@ -196,6 +196,8 @@ export default function AutoTest() {
         'TESTE D',
         'Proposta enviada cria tarefa de follow-up',
         async () => {
+          const { automatePropostaEnviada } = await import('@/components/utils/smartAutomation');
+          
           const clients = await base44.entities.Client.list('company_name', 10);
           const principals = await base44.entities.Principal.list('company_name', 10);
           
@@ -217,21 +219,14 @@ export default function AutoTest() {
             notes: '[AUTOTEST] Teste de automação de tarefa'
           });
           
-          // Aguardar 2 segundos para automação processar
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Executar automação
+          const result = await automatePropostaEnviada(opportunity);
           
-          // Buscar tarefas criadas
-          const tasks = await base44.entities.Task.filter(
-            { opportunity_id: opportunity.id },
-            '-created_date',
-            10
-          );
-          
-          if (tasks.length === 0) {
-            throw new Error('Nenhuma tarefa criada automaticamente');
+          if (!result.task) {
+            throw new Error('Automação não criou tarefa');
           }
           
-          const task = tasks[0];
+          const task = result.task;
           const scheduledDate = new Date(task.scheduled_date);
           const expectedDate = new Date();
           expectedDate.setDate(expectedDate.getDate() + 3);
@@ -239,13 +234,18 @@ export default function AutoTest() {
           const daysDiff = Math.abs((scheduledDate - expectedDate) / (1000 * 60 * 60 * 24));
           
           if (daysDiff > 1) {
-            throw new Error(`Tarefa criada com data incorreta: ${task.scheduled_date}`);
+            throw new Error(`Tarefa criada com data incorreta: esperado +3 dias, obteve ${task.scheduled_date}`);
+          }
+          
+          if (task.priority !== 'medium') {
+            throw new Error(`Prioridade incorreta: esperado medium, obteve ${task.priority}`);
           }
           
           return {
             opportunity_id: opportunity.id,
             task_id: task.id,
             task_type: task.task_type,
+            task_priority: task.priority,
             scheduled_date: task.scheduled_date,
             client_name: testClient.company_name
           };
@@ -257,6 +257,8 @@ export default function AutoTest() {
         'TESTE E',
         'Fluxo integrado: Ganho gera Order e Commission',
         async () => {
+          const { automateGanho } = await import('@/components/utils/smartAutomation');
+          
           const clients = await base44.entities.Client.list('company_name', 10);
           const principals = await base44.entities.Principal.list('company_name', 10);
           const products = await base44.entities.Product.list('name', 10);
@@ -284,6 +286,7 @@ export default function AutoTest() {
               item_total: 10000
             }],
             total_value: 10000,
+            total_weight: 1000,
             status: 'emitido',
             notes: '[AUTOTEST] Quote para teste de conversão'
           });
@@ -296,49 +299,36 @@ export default function AutoTest() {
             principal_id: testPrincipal.id,
             principal_name: testPrincipal.company_name,
             value_estimated: 10000,
-            stage: 'em_negociacao',
+            stage: 'ganho',
             notes: '[AUTOTEST] Opp para teste de conversão'
           });
           
-          // Marcar como ganho
-          await base44.entities.Opportunity.update(opportunity.id, {
-            stage: 'ganho',
-            approved_date: new Date().toISOString()
-          });
+          // Executar automação
+          const result = await automateGanho(opportunity, quote, testPrincipal);
           
-          // Aguardar processamento
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          if (!result.order) {
+            throw new Error('Automação não criou Order');
+          }
           
-          // Verificar Order criado
-          const orders = await base44.entities.Order.filter(
-            { opportunity_id: opportunity.id },
+          if (!result.commission) {
+            throw new Error('Automação não criou Commission');
+          }
+          
+          // Verificar parcelas criadas
+          const installments = await base44.entities.CommissionInstallment.filter(
+            { commission_id: result.commission.id },
             '-created_date',
             10
           );
-          
-          if (orders.length === 0) {
-            throw new Error('Order não foi criado automaticamente');
-          }
-          
-          const order = orders[0];
-          
-          // Verificar Commission criada
-          const commissions = await base44.entities.Commission.filter(
-            { order_id: order.id },
-            '-created_date',
-            10
-          );
-          
-          if (commissions.length === 0) {
-            throw new Error('Commission não foi criada automaticamente');
-          }
           
           return {
             quote_id: quote.id,
             opportunity_id: opportunity.id,
-            order_id: order.id,
-            commission_id: commissions[0].id,
-            commission_value: commissions[0].commission_total_value
+            order_id: result.order.id,
+            order_number: result.order.order_number,
+            commission_id: result.commission.id,
+            commission_value: result.commission.commission_total_value,
+            installments_count: installments.length
           };
         }
       );
