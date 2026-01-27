@@ -26,6 +26,7 @@ import TaskNotifications from '@/components/tasks/TaskNotifications';
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
   const location = useLocation();
 
   useEffect(() => {
