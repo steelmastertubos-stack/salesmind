@@ -275,7 +275,15 @@ export default function Layout({ children, currentPageName }) {
       {/* Main Content */}
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen bg-[#F2F4F7]">
         <div className="p-4 lg:p-6">
-          {children}
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div className="flex-1">
+              {children}
+            </div>
+            <div className="hidden lg:flex flex-col gap-3 sticky top-6">
+              <ContextualActionButton />
+              <QuickActionsMenu />
+            </div>
+          </div>
         </div>
         <TaskNotifications />
       </main>
