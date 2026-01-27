@@ -111,7 +111,9 @@ export default function ClientCard({ client, onEdit, onAddFollowUp }) {
         </div>
         <div className="text-center">
           <p className="text-xs text-slate-500 mb-1">Ciclo médio</p>
-          <p className="text-lg font-bold text-slate-900">{client.average_purchase_cycle || '-'}d</p>
+          <p className="text-lg font-bold text-slate-900">
+            {client.average_purchase_cycle ? `${client.average_purchase_cycle}d` : '-'}
+          </p>
         </div>
         <div className="text-center">
           <p className="text-xs text-slate-500 mb-1">Ticket médio</p>
