@@ -67,6 +67,63 @@ export default function FieldMode() {
 
   const topOpportunities = filteredClients.slice(0, 10);
 
+  const createFollowUpMutation = useMutation({
+    mutationFn: (data) => base44.entities.FollowUp.create(data),
+    onSuccess: () => {
+      toast.success('Contato registrado!');
+      queryClient.invalidateQueries(['clients-field']);
+      setShowContactDialog(false);
+      setContactForm({
+        notes: '',
+        next_action_date: format(new Date(), 'yyyy-MM-dd'),
+        next_action_type: 'whatsapp',
+        create_task: false
+      });
+    }
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: (data) => base44.entities.Task.create(data),
+    onSuccess: () => {
+      toast.success('Tarefa criada!');
+    }
+  });
+
+  const handleOpenContactDialog = (client) => {
+    setSelectedClient(client);
+    setShowContactDialog(true);
+  };
+
+  const handleSubmitContact = async () => {
+    if (!selectedClient) return;
+
+    // Criar follow-up
+    await createFollowUpMutation.mutateAsync({
+      client_id: selectedClient.id,
+      client_name: selectedClient.trade_name || selectedClient.company_name,
+      type: contactForm.next_action_type,
+      notes: contactForm.notes,
+      outcome: 'neutral',
+      next_action_date: contactForm.next_action_date,
+      contact_date: format(new Date(), 'yyyy-MM-dd')
+    });
+
+    // Criar tarefa se solicitado
+    if (contactForm.create_task) {
+      await createTaskMutation.mutateAsync({
+        title: `Acompanhamento: ${selectedClient.trade_name || selectedClient.company_name}`,
+        description: contactForm.notes,
+        task_type: contactForm.next_action_type,
+        client_id: selectedClient.id,
+        client_name: selectedClient.trade_name || selectedClient.company_name,
+        scheduled_date: contactForm.next_action_date,
+        scheduled_time: '09:00',
+        status: 'pending',
+        priority: 'medium'
+      });
+    }
+  };
+
   return (
     <div className="pb-24 min-h-screen bg-slate-50">
       {/* Compact Header */}
