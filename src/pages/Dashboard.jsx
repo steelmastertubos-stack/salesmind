@@ -289,6 +289,9 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Suggested Action Card */}
+      <SuggestedActionCard />
+
       {/* Integrated Alerts */}
       <IntegratedAlerts />
 
