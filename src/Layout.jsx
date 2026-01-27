@@ -91,6 +91,7 @@ export default function Layout({ children, currentPageName }) {
       title: 'INTELIGÊNCIA',
       items: [
         { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
+        { name: 'Perdas', icon: TrendingDown, page: 'LossReport' },
         { name: 'Insights IA', icon: Zap, page: 'AIInsights' }
       ]
     },
