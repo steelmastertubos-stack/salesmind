@@ -120,8 +120,13 @@ export default function StockImportForm({ onSuccess }) {
 
         // Preparar dados de estoque
         const principal = principals.find(p => p.id === selectedPrincipal);
+        console.log('Principal selecionado:', principal);
+        console.log('Total de produtos cadastrados:', products.length);
+        
         const updatedStock = rows.map(row => {
           const product = products.find(p => p.code === row.product_code);
+          console.log(`Processando ${row.product_code}:`, product ? 'Encontrado' : 'NÃO ENCONTRADO');
+          
           return {
             product_id: product?.id || '',
             product_code: row.product_code,
@@ -132,11 +137,26 @@ export default function StockImportForm({ onSuccess }) {
           };
         });
 
-        // Atualizar estoque da representada
-        console.log('Atualizando estoque:', { principal_id: selectedPrincipal, stock: updatedStock });
+        console.log('Stock preparado:', updatedStock);
         
+        // Merge com estoque existente
+        const existingStock = principal.stock || [];
+        const mergedStock = [...existingStock];
+        
+        updatedStock.forEach(newItem => {
+          const existingIndex = mergedStock.findIndex(s => s.product_code === newItem.product_code);
+          if (existingIndex >= 0) {
+            mergedStock[existingIndex] = newItem;
+          } else {
+            mergedStock.push(newItem);
+          }
+        });
+
+        console.log('Stock mesclado final:', mergedStock);
+
+        // Atualizar estoque da representada
         const result = await base44.entities.Principal.update(selectedPrincipal, {
-          stock: updatedStock
+          stock: mergedStock
         });
         
         console.log('Resultado da atualização:', result);
