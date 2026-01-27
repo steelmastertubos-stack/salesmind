@@ -81,7 +81,7 @@ export default function StockImportForm({ onSuccess }) {
     const rowErrors = [];
     
     if (!row.product_code?.trim()) rowErrors.push(`Linha ${index + 2}: Código do produto obrigatório`);
-    if (!row.quantity) rowErrors.push(`Linha ${index + 2}: Quantidade obrigatória`);
+    if (row.quantity === undefined || row.quantity === null || row.quantity === '') rowErrors.push(`Linha ${index + 2}: Quantidade obrigatória`);
     if (isNaN(parseFloat(row.quantity))) rowErrors.push(`Linha ${index + 2}: Quantidade deve ser um número`);
     
     return rowErrors;
