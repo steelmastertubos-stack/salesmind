@@ -107,6 +107,28 @@ export default function Layout({ children, currentPageName }) {
 
   const isActive = (page) => currentPageName === page;
 
+  const toggleSection = (sectionTitle) => {
+    const newState = {
+      ...expandedSections,
+      [sectionTitle]: !expandedSections[sectionTitle]
+    };
+    setExpandedSections(newState);
+    localStorage.setItem('sidebar-accordion-state', JSON.stringify(newState));
+  };
+
+  // Encontrar seção ativa para breadcrumb
+  const getActiveBreadcrumb = () => {
+    for (const section of navigationSections) {
+      const activeItem = section.items.find(item => isActive(item.page));
+      if (activeItem) {
+        return { section: section.title, item: activeItem.name };
+      }
+    }
+    return null;
+  };
+
+  const activeBreadcrumb = getActiveBreadcrumb();
+
   return (
     <div className="min-h-screen bg-slate-50">
       <style>{`
