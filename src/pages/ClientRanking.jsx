@@ -93,13 +93,25 @@ export default function ClientRanking() {
   const topClients = ranking.slice(0, parseInt(rankingSize));
 
   // Identificar clientes para premiação
-  // REGRA CORRETA: Apenas clientes Ativos com is_premium = TRUE
+  // REGRA: Clientes que compraram no ano + têm tag histórica "Premium - {ano}" OU is_premium=true (ano atual)
   const awardClients = useMemo(() => {
+    const yearStr = String(selectedYear);
     return ranking.filter(r => {
       const client = clients.find(c => c.id === r.client_id);
-      return client && client.status === 'active' && client.is_premium === true;
+      if (!client) return false;
+      
+      // Para o ano atual: status Ativo + is_premium
+      const isCurrentYear = parseInt(selectedYear) === currentYear;
+      if (isCurrentYear) {
+        return client.status === 'active' && client.is_premium === true;
+      }
+      
+      // Para anos anteriores: verificar tag histórica "Premium - {ano}"
+      const historicalTag = `Premium - ${yearStr}`;
+      const autoTags = client.auto_tags || [];
+      return autoTags.includes(historicalTag);
     });
-  }, [ranking, clients]);
+  }, [ranking, clients, selectedYear, currentYear]);
 
   // Exportar para CSV
   const handleExport = () => {
