@@ -546,6 +546,18 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
             </div>
           </div>
         )}
+
+        {/* Loss Reason Modal */}
+        <LossReasonModal 
+          isOpen={showLossModal} 
+          opportunity={opportunity}
+          onConfirm={handleLossConfirm}
+          onCancel={() => {
+            setShowLossModal(false);
+            setPendingStageChange(null);
+            setNewStage(opportunity.stage);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
