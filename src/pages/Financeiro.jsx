@@ -72,60 +72,33 @@ export default function FinanceiroPage() {
       return monthMatch && principalMatch;
     });
 
-    // PREVISTO: Apenas parcelas de pedidos com comissão parcelada (não faturados ainda)
-    // Buscar pedidos relacionados às comissões para verificar se são parcelados
-    const ordersMap = {};
-    orders.forEach(o => ordersMap[o.id] = o);
+    // PREVISTO: Parcelas com status "prevista"
+    const previsto = filtered
+      .filter(i => i.status === 'prevista')
+      .reduce((sum, i) => sum + (i.installment_value || 0), 0);
+
+    // A RECEBER: Parcelas com status "a_receber" (não vencidas e não recebidas)
+    const aReceber = filtered
+      .filter(i => i.status === 'a_receber')
+      .reduce((sum, i) => sum + (i.installment_value || 0), 0);
+
+    // RECEBIDO: Parcelas com status "recebida"
+    const recebido = filtered
+      .filter(i => i.status === 'recebida')
+      .reduce((sum, i) => sum + (i.received_value || i.installment_value || 0), 0);
     
-    const commissionsMap = {};
-    commissions.forEach(c => commissionsMap[c.id] = c);
-
-    const previsto = filtered.filter(i => {
-      // Deve estar com status "prevista"
-      if (i.status !== 'prevista') return false;
-      
-      // Buscar comissão e pedido relacionados
-      const commission = commissionsMap[i.commission_id];
-      if (!commission) return false;
-      
-      const order = ordersMap[commission.order_id];
-      if (!order) return false;
-      
-      // Aceitar apenas se o pedido ainda não foi faturado e tem parcelas configuradas
-      // (pedidos parcelados têm payment_installments ou terms definidos tipo "30/45/60")
-      const isNotInvoiced = !order.billing_date && order.status !== 'faturado';
-      const hasInstallments = order.payment_installments?.length > 0 || 
-                              (order.terms && order.terms.includes('/'));
-      
-      return isNotInvoiced && hasInstallments;
-    }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
-
-    // A RECEBER: Parcelas de pedidos faturados (ganhos)
-    const aReceber = filtered.filter(i => {
-      if (i.status === 'recebida') return false;
-      
-      const commission = commissionsMap[i.commission_id];
-      if (!commission) return false;
-      
-      const order = ordersMap[commission.order_id];
-      if (!order) return false;
-      
-      // Pedido deve estar faturado
-      const isInvoiced = order.status === 'faturado' || order.billing_date;
-      
-      return isInvoiced;
-    }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
-
-    const recebido = filtered.filter(i => i.status === 'recebida').reduce((sum, i) => sum + (i.received_value || 0), 0);
-    
-    const atrasado = filtered.filter(i => {
-      if (i.status === 'recebida') return false;
-      const dueDate = new Date(i.due_date);
-      return dueDate < now;
-    }).reduce((sum, i) => sum + (i.installment_value || 0), 0);
+    // ATRASADO: Parcelas não recebidas com vencimento passado
+    const atrasado = filtered
+      .filter(i => {
+        if (i.status === 'recebida') return false;
+        if (!i.due_date) return false;
+        const dueDate = new Date(i.due_date);
+        return dueDate < now;
+      })
+      .reduce((sum, i) => sum + (i.installment_value || 0), 0);
 
     return { previsto, aReceber, recebido, atrasado, total: previsto + aReceber + recebido };
-  }, [installments, commissions, orders, selectedMonth, selectedPrincipal]);
+  }, [installments, selectedMonth, selectedPrincipal]);
 
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
