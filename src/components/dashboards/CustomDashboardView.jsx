@@ -3,6 +3,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Package, Users, Target, BarChart3, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+const AVAILABLE_KPIS = [
+  { id: 'total_orders', name: 'Total de Pedidos', category: 'vendas' },
+  { id: 'total_value', name: 'Faturamento Total', category: 'vendas' },
+  { id: 'avg_ticket', name: 'Ticket Médio', category: 'vendas' },
+  { id: 'conversion_rate', name: 'Taxa de Conversão', category: 'vendas' },
+  { id: 'total_quotes', name: 'Orçamentos Criados', category: 'vendas' },
+  { id: 'active_opportunities', name: 'Oportunidades Ativas', category: 'crm' },
+  { id: 'new_clients', name: 'Novos Clientes', category: 'crm' },
+  { id: 'clients_at_risk', name: 'Clientes em Risco', category: 'crm' },
+  { id: 'total_commission', name: 'Comissão Total', category: 'financeiro' },
+  { id: 'commission_pending', name: 'Comissão Pendente', category: 'financeiro' },
+  { id: 'margin_avg', name: 'Margem Média', category: 'financeiro' },
+  { id: 'total_weight', name: 'Peso Total', category: 'operacional' }
+];
+
+const AVAILABLE_CHARTS = [
+  { id: 'monthly_evolution', name: 'Evolução Mensal', category: 'vendas' },
+  { id: 'sales_by_principal', name: 'Vendas por Representada', category: 'vendas' },
+  { id: 'sales_by_client', name: 'Vendas por Cliente', category: 'vendas' },
+  { id: 'funnel_analysis', name: 'Funil de Vendas', category: 'crm' },
+  { id: 'client_status', name: 'Status dos Clientes', category: 'crm' }
+];
+
 const KPI_ICONS = {
   total_orders: Package,
   total_value: DollarSign,
