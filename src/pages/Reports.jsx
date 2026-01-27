@@ -788,115 +788,117 @@ export default function Reports() {
       )}
 
       {/* Filtros Globais */}
-      {!activeDashboard && <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-slate-600" />
-              <CardTitle className="text-base">Filtros de Análise</CardTitle>
+      {!activeDashboard && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-slate-600" />
+                <CardTitle className="text-base">Filtros de Análise</CardTitle>
+              </div>
+              {(clientFilter !== 'all' || principalFilter !== 'all' || statusFilter !== 'all') && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setClientFilter('all');
+                    setPrincipalFilter('all');
+                    setStatusFilter('all');
+                  }}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Limpar Filtros
+                </Button>
+              )}
             </div>
-            {(clientFilter !== 'all' || principalFilter !== 'all' || statusFilter !== 'all') && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  setClientFilter('all');
-                  setPrincipalFilter('all');
-                  setStatusFilter('all');
-                }}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Limpar Filtros
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Anos</SelectItem>
-                {availableYears.map(year => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="thisMonth">Este Mês</SelectItem>
-                <SelectItem value="lastMonth">Mês Passado</SelectItem>
-                <SelectItem value="thisQuarter">Este Trimestre</SelectItem>
-                <SelectItem value="lastQuarter">Trimestre Passado</SelectItem>
-                <SelectItem value="thisYear">Este Ano</SelectItem>
-                <SelectItem value="lastYear">Ano Passado</SelectItem>
-                <SelectItem value="all">Todo Período</SelectItem>
-              </SelectContent>
-            </Select>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Anos</SelectItem>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={period} onValueChange={setPeriod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="thisMonth">Este Mês</SelectItem>
+                  <SelectItem value="lastMonth">Mês Passado</SelectItem>
+                  <SelectItem value="thisQuarter">Este Trimestre</SelectItem>
+                  <SelectItem value="lastQuarter">Trimestre Passado</SelectItem>
+                  <SelectItem value="thisYear">Este Ano</SelectItem>
+                  <SelectItem value="lastYear">Ano Passado</SelectItem>
+                  <SelectItem value="all">Todo Período</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={comparisonPeriod} onValueChange={setComparisonPeriod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Comparar com" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lastMonth">Mês Anterior</SelectItem>
-                <SelectItem value="lastQuarter">Trimestre Anterior</SelectItem>
-                <SelectItem value="lastYear">Ano Anterior</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={comparisonPeriod} onValueChange={setComparisonPeriod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Comparar com" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lastMonth">Mês Anterior</SelectItem>
+                  <SelectItem value="lastQuarter">Trimestre Anterior</SelectItem>
+                  <SelectItem value="lastYear">Ano Anterior</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Clientes</SelectItem>
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.trade_name || c.company_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Clientes</SelectItem>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.trade_name || c.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={principalFilter} onValueChange={setPrincipalFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Representada" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Representadas</SelectItem>
-                {principals.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.trade_name || p.company_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select value={principalFilter} onValueChange={setPrincipalFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Representada" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Representadas</SelectItem>
+                  {principals.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.trade_name || p.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Status</SelectItem>
-                <SelectItem value="em_analise">Em Análise</SelectItem>
-                <SelectItem value="confirmado">Confirmado</SelectItem>
-                <SelectItem value="faturado">Faturado</SelectItem>
-                <SelectItem value="entregue">Entregue</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="em_analise">Em Análise</SelectItem>
+                  <SelectItem value="confirmado">Confirmado</SelectItem>
+                  <SelectItem value="faturado">Faturado</SelectItem>
+                  <SelectItem value="entregue">Entregue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Empty State */}
-      {!isLoading && filteredOrders.length === 0 && filteredQuotes.length === 0 && (
+      {!activeDashboard && !isLoading && filteredOrders.length === 0 && filteredQuotes.length === 0 && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center space-y-3">
@@ -911,10 +913,10 @@ export default function Reports() {
       )}
 
       {/* AI Insights Block */}
-      {filteredOrders.length > 0 && <AIInsightsBlock insights={aiInsights} onGenerateAction={handleGenerateAction} />}
+      {!activeDashboard && filteredOrders.length > 0 && <AIInsightsBlock insights={aiInsights} onGenerateAction={handleGenerateAction} />}
 
       {/* AI Report Analyzer */}
-      {filteredOrders.length > 0 && (
+      {!activeDashboard && filteredOrders.length > 0 && (
         <AIReportAnalyzer
           orders={filteredOrders}
           opportunities={filteredOpportunities}
@@ -926,7 +928,8 @@ export default function Reports() {
       )}
 
       {/* KPIs com Comparação */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {!activeDashboard && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card 
       className="cursor-pointer hover:shadow-lg transition-shadow"
       onClick={() => navigate(createPageUrl('Orders'))}
@@ -1001,10 +1004,12 @@ export default function Reports() {
             </p>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
 
       {/* Tabs */}
-      {!activeDashboard && <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      {!activeDashboard && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8">
           <TabsTrigger value="ia">🤖 IA</TabsTrigger>
           <TabsTrigger value="executive">Executiva</TabsTrigger>
