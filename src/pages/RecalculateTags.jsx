@@ -41,22 +41,40 @@ export default function RecalculateTags() {
     const updates = [];
     let processedCount = 0;
     let changedCount = 0;
+    let premiumCount = 0;
 
     try {
+      // Importar classificador Premium
+      const { evaluatePremiumStatus } = await import('@/components/utils/premiumClassifier');
+      const currentYear = new Date().getFullYear();
+      
       for (const client of clients) {
         const clientOrders = orders.filter(o => o.client_id === client.id);
+        
+        // 1. Calcular tags históricas
         const autoTags = calculateAutoTags(client, orders, clientOrders);
+
+        // 2. Avaliar classificação Premium
+        const premiumResult = await evaluatePremiumStatus(client, orders, currentYear, 50000);
+        
+        if (premiumResult.is_premium) {
+          premiumCount++;
+        }
 
         const currentAutoTags = client.auto_tags || [];
         const tagsChanged = 
           autoTags.length !== currentAutoTags.length ||
-          autoTags.some(tag => !currentAutoTags.includes(tag));
+          autoTags.some(tag => !currentAutoTags.includes(tag)) ||
+          premiumResult.changed;
 
-        if (tagsChanged) {
+        if (tagsChanged && !premiumResult.changed) {
+          // Atualizar apenas tags (Premium já foi atualizado)
           await base44.entities.Client.update(client.id, {
             auto_tags: autoTags,
             tags_last_updated: new Date().toISOString()
           });
+          changedCount++;
+        } else if (premiumResult.changed) {
           changedCount++;
         }
 
@@ -67,11 +85,12 @@ export default function RecalculateTags() {
       setResults({
         total: clients.length,
         updated: changedCount,
-        unchanged: clients.length - changedCount
+        unchanged: clients.length - changedCount,
+        premium: premiumCount
       });
 
       queryClient.invalidateQueries(['clients']);
-      toast.success('Tags recalculadas com sucesso!');
+      toast.success(`✅ ${changedCount} clientes atualizados (${premiumCount} Premium)!`);
 
     } catch (error) {
       console.error('Error recalculating tags:', error);
@@ -102,13 +121,12 @@ export default function RecalculateTags() {
               <div className="flex-1 text-sm text-blue-900">
                 <p className="font-semibold mb-2">Tags que serão calculadas:</p>
                 <ul className="space-y-1 text-xs">
-                  <li>• <strong>Cliente Premium:</strong> Top 20% faturamento, ticket médio alto ou +R$100k</li>
-                  <li>• <strong>Cliente Recorrente:</strong> 3+ compras em meses diferentes</li>
-                  <li>• <strong>Cliente Ativo:</strong> Compra ou contato nos últimos 60 dias</li>
-                  <li>• <strong>Cliente em Risco:</strong> 90+ dias sem compra/contato</li>
-                  <li>• <strong>Cliente Inativo:</strong> 120+ dias sem compra</li>
-                  <li>• <strong>Alto Ticket:</strong> Ticket médio 2x acima da média</li>
-                  <li>• <strong>Comprador Frequente:</strong> 5+ pedidos</li>
+                  <li>• <strong>is_premium (campo):</strong> Status Ativo + 3+ meses recorrentes + ticket ≥ R$50k + dentro do ciclo</li>
+                  <li>• <strong>Recorrente - {new Date().getFullYear()}:</strong> 3+ compras em meses diferentes</li>
+                  <li>• <strong>Premium - {new Date().getFullYear()}:</strong> Tag histórica (mantida mesmo se inativar)</li>
+                  <li>• <strong>Status exclusivo:</strong> Ativo / Em Risco / Inativo (apenas 1)</li>
+                  <li className="pt-2 border-t border-blue-200">⚠️ Cliente Inativo REMOVE is_premium automaticamente</li>
+                  <li>✅ Listas de premiação usam apenas: status=Ativo + is_premium=TRUE</li>
                 </ul>
               </div>
             </div>
@@ -142,7 +160,7 @@ export default function RecalculateTags() {
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                 <p className="font-semibold text-green-900">Processamento Concluído</p>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="grid grid-cols-4 gap-3 text-center">
                 <div>
                   <p className="text-xl font-bold text-slate-900">{results.total}</p>
                   <p className="text-xs text-slate-600">Total</p>
@@ -154,6 +172,10 @@ export default function RecalculateTags() {
                 <div>
                   <p className="text-xl font-bold text-slate-500">{results.unchanged}</p>
                   <p className="text-xs text-slate-600">Sem mudanças</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-amber-600">{results.premium || 0}</p>
+                  <p className="text-xs text-slate-600">Premium Ativos</p>
                 </div>
               </div>
             </div>
