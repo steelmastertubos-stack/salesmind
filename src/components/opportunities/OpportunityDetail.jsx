@@ -30,10 +30,11 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
   const [nextActionDate, setNextActionDate] = useState('');
   const [nextActionType, setNextActionType] = useState('whatsapp');
   const [newStage, setNewStage] = useState(opportunity.stage);
-  const [lossReason, setLossReason] = useState('');
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreview, setEmailPreview] = useState({ subject: '', body: '' });
   const [editableEmailBody, setEditableEmailBody] = useState('');
+  const [showLossModal, setShowLossModal] = useState(false);
+  const [pendingStageChange, setPendingStageChange] = useState(null);
 
   const queryClient = useQueryClient();
 
