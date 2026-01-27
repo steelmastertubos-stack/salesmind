@@ -46,7 +46,10 @@ export default function LossReport() {
     return lostDeals.filter(deal => {
       if (filterPeriod === 'month' && (deal.loss_month !== filterMonth || deal.loss_year !== filterYear)) return false;
       if (filterPeriod === 'quarter' && (deal.loss_quarter !== filterQuarter || deal.loss_year !== filterYear)) return false;
-      if (filterPeriod === 'semester' && (deal.loss_semester !== filterQuarter || deal.loss_year !== filterYear)) return false;
+       if (filterPeriod === 'semester') {
+        const filterSemester = filterMonth <= 6 ? 1 : 2;
+        if (deal.loss_semester !== filterSemester || deal.loss_year !== filterYear) return false;
+      }
       if (filterPeriod === 'year' && deal.loss_year !== filterYear) return false;
       if (filterVendor && deal.vendor_email !== filterVendor) return false;
       if (filterClient && deal.client_id !== filterClient) return false;
@@ -68,11 +71,11 @@ export default function LossReport() {
     const lossRate = totalOpportunities > 0 ? Math.round((totalLost / totalOpportunities) * 100) : 0;
 
     // Top motivo
-    const reasonCounts = {};
-    filteredDeals.forEach(d => {
-      reasonCounts[d.loss_reason] = (reasonCounts[d.loss_reason] || 0) + 1;
-    });
-    const topReason = Object.entries(reasonCounts).sort(([,a], [,b]) => b - a)[0];
+     const reasonCounts = {};
+     filteredDeals.forEach(d => {
+       reasonCounts[d.motivo_primario] = (reasonCounts[d.motivo_primario] || 0) + 1;
+     });
+     const topReason = Object.entries(reasonCounts).sort(([,a], [,b]) => b - a)[0];
 
     return {
       totalLost,
@@ -145,10 +148,10 @@ export default function LossReport() {
 
   // Insights automáticos
   const insights = useMemo(() => {
-    const reasonCounts = {};
-    filteredDeals.forEach(d => {
-      reasonCounts[d.loss_reason] = (reasonCounts[d.loss_reason] || 0) + 1;
-    });
+     const reasonCounts = {};
+     filteredDeals.forEach(d => {
+       reasonCounts[d.motivo_primario] = (reasonCounts[d.motivo_primario] || 0) + 1;
+     });
 
     const topReason = Object.entries(reasonCounts).sort(([,a], [,b]) => b - a)[0];
     const topReasonPct = filteredDeals.length > 0 
@@ -156,10 +159,10 @@ export default function LossReport() {
       : 0;
 
     const vendorLosses = {};
-    filteredDeals.forEach(d => {
-      if (!vendorLosses[d.vendor_email]) vendorLosses[d.vendor_email] = [];
-      vendorLosses[d.vendor_email].push(d.loss_reason);
-    });
+     filteredDeals.forEach(d => {
+       if (!vendorLosses[d.vendor_email]) vendorLosses[d.vendor_email] = [];
+       vendorLosses[d.vendor_email].push(d.motivo_primario);
+     });
 
     const insights_list = [];
 
