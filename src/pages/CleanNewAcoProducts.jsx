@@ -50,10 +50,8 @@ export default function CleanNewAcoProducts() {
             }
           }
 
-          // Aplicar o aumento de R$ 2,00/kg no preço
-          if (product.base_price_per_kg) {
-            cleanData.base_price_per_kg = product.base_price_per_kg + 2.0;
-          }
+          // Definir preço fixo de R$ 11,90/kg
+          cleanData.base_price_per_kg = 11.90;
 
           await base44.entities.Product.update(product.id, cleanData);
           cleaned++;
@@ -87,8 +85,8 @@ export default function CleanNewAcoProducts() {
   return (
     <div className="pb-20 lg:pb-6 space-y-6">
       <PageHeader
-        title="Limpar Produtos New Aço"
-        subtitle="Remover campos $inc e $unset incorretos"
+        title="Atualizar Produtos New Aço"
+        subtitle="Definir preço de R$ 11,90/kg para todos os produtos"
       />
 
       <Card>
