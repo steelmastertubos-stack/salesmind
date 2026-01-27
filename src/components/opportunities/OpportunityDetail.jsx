@@ -47,6 +47,14 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
     }
   });
 
+  const createLostDealMutation = useMutation({
+    mutationFn: (data) => base44.entities.LostDeal.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['opportunities']);
+      toast.success('Perda registrada e analisada!');
+    }
+  });
+
   const handleAddContact = () => {
     if (!contactNote.trim()) {
       toast.error('Adicione uma nota sobre o contato');
