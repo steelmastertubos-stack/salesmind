@@ -90,7 +90,7 @@ export default function OpportunityCard({ client, rank }) {
               <span className="text-[10px] uppercase font-medium">Ciclo</span>
             </div>
             <p className="text-lg font-bold text-slate-900">
-              {client.average_purchase_cycle || '-'}d
+              {client.average_purchase_cycle ? `${client.average_purchase_cycle}d` : '-'}
             </p>
           </div>
           <div className="bg-slate-50 rounded-xl p-2.5 text-center">

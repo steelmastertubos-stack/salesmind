@@ -10,6 +10,7 @@ import DiagnosticoHistorico from './pages/DiagnosticoHistorico';
 import FieldMode from './pages/FieldMode';
 import Financeiro from './pages/Financeiro';
 import FixIntegratedFlow from './pages/FixIntegratedFlow';
+import Gamification from './pages/Gamification';
 import Generate2025Data from './pages/Generate2025Data';
 import GenerateHistoricalData from './pages/GenerateHistoricalData';
 import ImportData from './pages/ImportData';
@@ -26,7 +27,6 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
-import Gamification from './pages/Gamification';
 import __Layout from './Layout.jsx';
 
 
@@ -43,6 +43,7 @@ export const PAGES = {
     "FieldMode": FieldMode,
     "Financeiro": Financeiro,
     "FixIntegratedFlow": FixIntegratedFlow,
+    "Gamification": Gamification,
     "Generate2025Data": Generate2025Data,
     "GenerateHistoricalData": GenerateHistoricalData,
     "ImportData": ImportData,
@@ -59,7 +60,6 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
-    "Gamification": Gamification,
 }
 
 export const pagesConfig = {

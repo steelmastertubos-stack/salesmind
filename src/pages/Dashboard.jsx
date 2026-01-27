@@ -69,32 +69,40 @@ export default function Dashboard() {
   // Enriquecer clientes com dados de ciclo, ticket e último material
   const enrichClientData = (client) => {
     // Pedidos do cliente
-    const clientOrders = orders.filter(o => o.client_id === client.id);
+    const clientOrders = orders.filter(o => o.client_id === client.id && o.created_date);
     
     // Orçamentos do cliente
-    const clientQuotes = quotes.filter(q => q.client_id === client.id);
+    const clientQuotes = quotes.filter(q => q.client_id === client.id && q.created_date);
     
     // Calcular ciclo médio de compra
     let averageCycle = client.average_purchase_cycle;
-    if (!averageCycle && clientOrders.length >= 2) {
+    if ((!averageCycle || averageCycle === 0) && clientOrders.length >= 2) {
       const orderDates = clientOrders
         .map(o => new Date(o.created_date))
+        .filter(d => !isNaN(d.getTime()))
         .sort((a, b) => a - b);
       
-      const intervals = [];
-      for (let i = 1; i < orderDates.length; i++) {
-        const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
-        intervals.push(days);
+      if (orderDates.length >= 2) {
+        const intervals = [];
+        for (let i = 1; i < orderDates.length; i++) {
+          const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
+          if (days > 0) intervals.push(days);
+        }
+        
+        if (intervals.length > 0) {
+          averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+        }
       }
-      
-      if (intervals.length > 0) {
-        averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
-      }
+    }
+    
+    // Se ainda não tiver ciclo, usar padrão de 30 dias
+    if (!averageCycle || averageCycle === 0) {
+      averageCycle = 30;
     }
     
     // Calcular ticket médio
     let averageTicket = client.average_ticket;
-    if (!averageTicket && clientOrders.length > 0) {
+    if ((!averageTicket || averageTicket === 0) && clientOrders.length > 0) {
       const totalValue = clientOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
       averageTicket = totalValue / clientOrders.length;
     }
@@ -105,9 +113,10 @@ export default function Dashboard() {
     let lastQuotedDate = client.last_quoted_date;
     
     if (!lastQuotedProduct && clientQuotes.length > 0) {
-      const lastQuote = clientQuotes.sort((a, b) => 
+      const sortedQuotes = [...clientQuotes].sort((a, b) => 
         new Date(b.created_date) - new Date(a.created_date)
-      )[0];
+      );
+      const lastQuote = sortedQuotes[0];
       
       if (lastQuote?.items?.[0]) {
         lastQuotedProduct = lastQuote.items[0].product_name;
