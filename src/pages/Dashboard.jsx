@@ -304,6 +304,14 @@ export default function Dashboard() {
       {/* Follow-up Section - Follow-ups Atrasados, Hoje e Próximos */}
       <FollowUpSection tasks={tasks} />
 
+      {/* Goals Panel - Compact */}
+      <div className="lg:col-span-2">
+        <GoalsPanel orders={orders} quotes={quotes} opportunities={opportunities} />
+      </div>
+
+      {/* Integrated Alerts */}
+      <IntegratedAlerts />
+
       {/* Main Content */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Top 10 Opportunities */}
