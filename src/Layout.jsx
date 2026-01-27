@@ -2,24 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { 
-    LayoutDashboard, 
-    Users, 
-    Building2, 
-    FileText, 
-    ShoppingCart, 
-    BarChart3,
-    Settings,
-    Menu,
-    X,
-    Zap,
-    MapPin,
-    Target,
-    Upload,
-    CheckSquare,
-    Package,
-    DollarSign,
-    Trophy
-  } from 'lucide-react';
+          LayoutDashboard, 
+          Users, 
+          Building2, 
+          FileText, 
+          ShoppingCart, 
+          BarChart3,
+          Settings,
+          Menu,
+          X,
+          Zap,
+          MapPin,
+          Target,
+          Upload,
+          CheckSquare,
+          Package,
+          DollarSign,
+          Trophy,
+          TrendingDown
+        } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
 import QuickActionsMenu from '@/components/productivity/QuickActionsMenu';
