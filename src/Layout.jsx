@@ -88,6 +88,7 @@ export default function Layout({ children, currentPageName }) {
     {
       title: 'AUTOMAÇÃO & CONFIG',
       items: [
+        { name: 'Auditoria Total', icon: CheckSquare, page: 'AuditComplete' },
         { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
         { name: 'Recalcular Tags', icon: Zap, page: 'RecalculateTags' },
         { name: 'AutoTest', icon: CheckSquare, page: 'AutoTest' },
