@@ -963,21 +963,29 @@ export default function Opportunities() {
                 }
 
                 try {
+                  // Executar automação de perda
                   await CRMAutomation.automatePerdido(
                     opportunityToLose,
                     lossReason,
                     reactivationDays
                   );
                   
-                  updateStageMutation.mutate({ 
-                    id: opportunityToLose.id, 
-                    newStage: 'perdido' 
+                  // Atualizar estágio
+                  await base44.entities.Opportunity.update(opportunityToLose.id, {
+                    stage: 'perdido',
+                    loss_reason: lossReason
                   });
                   
+                  // Fechar dialog
                   setShowLossReasonDialog(false);
                   setLossReason('');
                   setOpportunityToLose(null);
+                  
+                  // Recarregar dados
+                  queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+                  toast.success('Oportunidade marcada como perdida');
                 } catch (error) {
+                  console.error('Erro ao processar perda:', error);
                   toast.error('Erro ao processar perda');
                 }
               }}
