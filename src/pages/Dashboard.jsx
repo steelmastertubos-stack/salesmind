@@ -296,22 +296,13 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Daily Action Alert - Ação do Dia (Regra D1) */}
-      <DailyActionAlert tasks={tasks} opportunities={opportunities} clients={clients} />
+      {/* Daily Action Alert - Ação do Dia (Regra D1) - Compacto */}
+      <div className="lg:col-span-2">
+        <DailyActionAlert tasks={tasks} opportunities={opportunities} clients={clients} />
+      </div>
 
       {/* Follow-up Section - Follow-ups Atrasados, Hoje e Próximos */}
       <FollowUpSection tasks={tasks} />
-
-      {/* Integrated Alerts */}
-      <IntegratedAlerts />
-
-      {/* Goals Panel - Destaque */}
-      <GoalsPanel orders={orders} quotes={quotes} opportunities={opportunities} />
-
-      {/* Priority Clients - NEW */}
-      {!isLoading && clients.length > 0 && (
-        <PriorityClients clients={clients} orders={orders} />
-      )}
 
       {/* Main Content */}
       <div className="grid lg:grid-cols-3 gap-6">
