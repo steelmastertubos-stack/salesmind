@@ -376,6 +376,7 @@ export default function LossReport() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
+                <YAxis yAxisId="right" orientation="right" />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="count" stroke="#EF4444" name="Quantidade" />
