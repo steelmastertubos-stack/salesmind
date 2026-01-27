@@ -17,11 +17,13 @@ import {
   Save,
   X,
   Heart,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CNPJLookup from '@/components/clients/CNPJLookup';
 import { SEGMENTS, COMPLEXITY_OPTIONS, APPLICATIONS, getSegmentCode } from '@/components/utils/segmentMapping';
+import TagManager from '@/components/clients/TagManager';
 
 const STATES = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
@@ -65,7 +67,9 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
     last_contact_date: client?.last_contact_date || '',
     next_contact_date: client?.next_contact_date || '',
     status: client?.status || 'active',
-    is_active: client?.is_active !== false
+    is_active: client?.is_active !== false,
+    manual_tags: client?.manual_tags || [],
+    auto_tags: client?.auto_tags || []
   });
 
   const [errors, setErrors] = useState({});
@@ -137,7 +141,7 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
           <TabsTrigger value="basic" className="text-xs sm:text-sm">
             <Building2 className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Dados</span>
@@ -145,6 +149,10 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
           <TabsTrigger value="contact" className="text-xs sm:text-sm">
             <Phone className="w-4 h-4 mr-1 sm:mr-2" />
             Contato
+          </TabsTrigger>
+          <TabsTrigger value="tags" className="text-xs sm:text-sm">
+            <Sparkles className="w-4 h-4 mr-1 sm:mr-2" />
+            Tags
           </TabsTrigger>
           <TabsTrigger value="relationship" className="text-xs sm:text-sm">
             <Heart className="w-4 h-4 mr-1 sm:mr-2" />
@@ -416,6 +424,13 @@ export default function ClientForm({ client, onSave, onCancel, isLoading }) {
               />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="tags" className="space-y-4">
+          <TagManager 
+            client={formData}
+            onUpdate={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
+          />
         </TabsContent>
 
         <TabsContent value="relationship" className="space-y-4">

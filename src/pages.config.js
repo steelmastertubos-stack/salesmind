@@ -27,6 +27,8 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
+import ClientRanking from './pages/ClientRanking';
+import RecalculateTags from './pages/RecalculateTags';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +62,8 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
+    "ClientRanking": ClientRanking,
+    "RecalculateTags": RecalculateTags,
 }
 
 export const pagesConfig = {

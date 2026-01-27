@@ -76,13 +76,15 @@ export default function Layout({ children, currentPageName }) {
       items: [
         { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
         { name: 'Insights IA', icon: Zap, page: 'AIInsights' },
-        { name: 'Ranking 🏆', icon: Trophy, page: 'Gamification' }
+        { name: 'Ranking Clientes', icon: Trophy, page: 'ClientRanking' },
+        { name: 'Gamificação', icon: Target, page: 'Gamification' }
       ]
     },
     {
       title: 'CONFIGURAÇÕES',
       items: [
         { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
+        { name: 'Recalcular Tags', icon: Zap, page: 'RecalculateTags' },
         { name: 'Modo Campo', icon: MapPin, page: 'FieldMode' },
         { name: 'Configurações', icon: Settings, page: 'Settings' }
       ]
