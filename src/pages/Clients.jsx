@@ -61,22 +61,48 @@ export default function Clients() {
       
       // Calcular ciclo médio de compra
       let averageCycle = client.average_purchase_cycle;
-      if ((!averageCycle || averageCycle === 0) && clientOrders.length >= 2) {
-        const orderDates = clientOrders
-          .map(o => new Date(o.created_date))
-          .filter(d => !isNaN(d.getTime()))
-          .sort((a, b) => a - b);
-        
-        if (orderDates.length >= 2) {
-          const intervals = [];
-          for (let i = 1; i < orderDates.length; i++) {
-            const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
-            if (days > 0) intervals.push(days);
-          }
+      if (!averageCycle || averageCycle === 0) {
+        // Usar pedidos se houver pelo menos 2
+        if (clientOrders.length >= 2) {
+          const orderDates = clientOrders
+            .map(o => new Date(o.created_date))
+            .filter(d => !isNaN(d.getTime()))
+            .sort((a, b) => a - b);
           
-          if (intervals.length > 0) {
-            averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+          if (orderDates.length >= 2) {
+            const intervals = [];
+            for (let i = 1; i < orderDates.length; i++) {
+              const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
+              if (days > 0) intervals.push(days);
+            }
+            
+            if (intervals.length > 0) {
+              averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+            }
           }
+        }
+        // Se não tiver pedidos suficientes, usar orçamentos como estimativa
+        else if (clientQuotes.length >= 2) {
+          const quoteDates = clientQuotes
+            .map(q => new Date(q.created_date))
+            .filter(d => !isNaN(d.getTime()))
+            .sort((a, b) => a - b);
+          
+          if (quoteDates.length >= 2) {
+            const intervals = [];
+            for (let i = 1; i < quoteDates.length; i++) {
+              const days = Math.floor((quoteDates[i] - quoteDates[i-1]) / (1000 * 60 * 60 * 24));
+              if (days > 0) intervals.push(days);
+            }
+            
+            if (intervals.length > 0) {
+              averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+            }
+          }
+        }
+        // Ciclo padrão se não houver dados suficientes
+        else if (clientOrders.length > 0 || clientQuotes.length > 0) {
+          averageCycle = 60; // Estimativa padrão de 60 dias
         }
       }
       
