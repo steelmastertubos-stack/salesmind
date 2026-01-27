@@ -25,6 +25,13 @@ export default function QuotePrintView({ quote, representative, onClose }) {
   const intersteelPhone = '(11) 2067-3536';
   const intersteelCNPJ = '67.889.634/0001-18';
 
+  // Detectar se é NEW AÇO
+  const isNewAco = quote.principal_name?.toUpperCase().includes('NEW AÇO') || 
+                   quote.principal_name?.toUpperCase().includes('NEW ACO');
+  
+  const newAcoAddress = 'R. García Lorca, 105 - Paulicéia, São Bernardo do Campo - SP, 09695-000';
+  const newAcoPhone = '(11) 4477-2533';
+
   return (
     <div className="bg-white p-8 max-w-5xl mx-auto print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Header */}
@@ -47,6 +54,25 @@ export default function QuotePrintView({ quote, representative, onClose }) {
                   )}
                   <p>{intersteelAddress}</p>
                   <p>Fone: {intersteelPhone}</p>
+                </div>
+              </>
+            ) : isNewAco ? (
+              <>
+                {quote.principal_logo_url && (
+                  <img 
+                    src={quote.principal_logo_url} 
+                    alt="Logo" 
+                    className="h-16 mb-2 object-contain"
+                  />
+                )}
+                <div className="text-sm space-y-0.5">
+                  <p className="font-bold text-base">{quote.principal_name}</p>
+                  <p>CNPJ: {quote.principal_cnpj}</p>
+                  {quote.principal_state_registration && (
+                    <p>I.E.: {quote.principal_state_registration}</p>
+                  )}
+                  <p>{newAcoAddress}</p>
+                  <p>Fone: {newAcoPhone}</p>
                 </div>
               </>
             ) : (
