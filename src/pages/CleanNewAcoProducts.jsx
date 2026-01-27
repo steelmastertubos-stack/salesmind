@@ -50,6 +50,11 @@ export default function CleanNewAcoProducts() {
             }
           }
 
+          // Aplicar o aumento de R$ 2,00/kg no preço
+          if (product.base_price_per_kg) {
+            cleanData.base_price_per_kg = product.base_price_per_kg + 2.0;
+          }
+
           await base44.entities.Product.update(product.id, cleanData);
           cleaned++;
         } catch (err) {
