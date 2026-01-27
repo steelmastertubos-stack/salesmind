@@ -43,6 +43,71 @@ export default function Clients() {
     queryFn: () => base44.entities.Client.list('-opportunity_index', 200)
   });
 
+  const { data: orders = [] } = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => base44.entities.Order.list('-created_date', 500)
+  });
+
+  const { data: quotes = [] } = useQuery({
+    queryKey: ['quotes'],
+    queryFn: () => base44.entities.Quote.list('-created_date', 500)
+  });
+
+  // Enriquecer clientes com dados calculados
+  const enrichedClients = React.useMemo(() => {
+    return clients.map(client => {
+      const clientOrders = orders.filter(o => o.client_id === client.id && o.created_date);
+      const clientQuotes = quotes.filter(q => q.client_id === client.id && q.created_date);
+      
+      // Calcular ciclo médio de compra
+      let averageCycle = client.average_purchase_cycle;
+      if ((!averageCycle || averageCycle === 0) && clientOrders.length >= 2) {
+        const orderDates = clientOrders
+          .map(o => new Date(o.created_date))
+          .filter(d => !isNaN(d.getTime()))
+          .sort((a, b) => a - b);
+        
+        if (orderDates.length >= 2) {
+          const intervals = [];
+          for (let i = 1; i < orderDates.length; i++) {
+            const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
+            if (days > 0) intervals.push(days);
+          }
+          
+          if (intervals.length > 0) {
+            averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+          }
+        }
+      }
+      
+      // Calcular ticket médio
+      let averageTicket = client.average_ticket;
+      if ((!averageTicket || averageTicket === 0) && clientOrders.length > 0) {
+        const totalValue = clientOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
+        averageTicket = totalValue / clientOrders.length;
+      }
+      
+      // Calcular índice de oportunidade
+      let opportunityIndex = client.opportunity_index || 0;
+      if (opportunityIndex === 0 && (averageTicket || clientOrders.length > 0)) {
+        const ticketScore = averageTicket ? Math.min((averageTicket / 50000) * 40, 40) : 0;
+        const frequencyScore = clientOrders.length >= 3 ? 30 : clientOrders.length * 10;
+        const recencyScore = client.last_purchase_date 
+          ? Math.max(0, 30 - Math.floor((new Date() - new Date(client.last_purchase_date)) / (1000 * 60 * 60 * 24)))
+          : 0;
+        
+        opportunityIndex = Math.round(ticketScore + frequencyScore + recencyScore);
+      }
+      
+      return {
+        ...client,
+        average_purchase_cycle: averageCycle,
+        average_ticket: averageTicket,
+        opportunity_index: opportunityIndex
+      };
+    });
+  }, [clients, orders, quotes]);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Client.create(data),
     onSuccess: () => {
@@ -80,10 +145,10 @@ export default function Clients() {
     window.location.href = `/ClientDetails?id=${client.id}&action=followup`;
   };
 
-  const segments = [...new Set(clients.map(c => c.segment).filter(Boolean))];
-  const states = [...new Set(clients.map(c => c.state).filter(Boolean))];
+  const segments = [...new Set(enrichedClients.map(c => c.segment).filter(Boolean))];
+  const states = [...new Set(enrichedClients.map(c => c.state).filter(Boolean))];
 
-  const filteredClients = clients.filter(client => {
+  const filteredClients = enrichedClients.filter(client => {
     const matchesSearch = 
       (client.company_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
       (client.trade_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
@@ -106,7 +171,7 @@ export default function Clients() {
     <div className="pb-20 lg:pb-6">
       <PageHeader 
         title="Clientes" 
-        subtitle={`${clients.length} clientes cadastrados`}
+        subtitle={`${enrichedClients.length} clientes cadastrados`}
         actionLabel="Novo Cliente"
         onAction={() => {
           setEditingClient(null);
