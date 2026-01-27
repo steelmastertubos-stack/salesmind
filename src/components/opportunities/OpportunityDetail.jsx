@@ -82,8 +82,10 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
   };
 
   const handleStageChange = async () => {
-    if (newStage === 'perdido' && !lossReason.trim()) {
-      toast.error('Informe o motivo da perda');
+    // Se mudou para PERDIDO, mostrar modal obrigatório
+    if (newStage === 'perdido' && opportunity.stage !== 'perdido') {
+      setPendingStageChange('perdido');
+      setShowLossModal(true);
       return;
     }
 
