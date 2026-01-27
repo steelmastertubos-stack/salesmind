@@ -133,15 +133,66 @@ export default function OpportunityDetail({ opportunity, onClose, onUpdate }) {
     timeline.push({
       date: new Date().toISOString(),
       type: 'stage_change',
-      description: `Mudou para: ${stages[newStage].label}${newStage === 'perdido' ? ` - ${lossReason}` : ''}`,
+      description: `Mudou para: ${stages[newStage].label}`,
       user: 'user'
     });
 
     updateOpportunityMutation.mutate({
       stage: newStage,
-      timeline,
-      loss_reason: newStage === 'perdido' ? lossReason : null
+      timeline
     });
+  };
+
+  const handleLossConfirm = async (lossData) => {
+    try {
+      // Calcular data criação e dias no funil
+      const createdDate = opportunity.created_date ? new Date(opportunity.created_date) : new Date();
+      const lossDate = new Date();
+      const daysInFunnel = Math.floor((lossDate - createdDate) / (1000 * 60 * 60 * 24));
+
+      // Criar registro LostDeal com todos os dados
+      const lossRecord = {
+        opportunity_id: opportunity.id,
+        client_id: opportunity.client_id,
+        client_name: opportunity.client_name,
+        vendor_email: (await base44.auth.me()).email,
+        vendor_name: (await base44.auth.me()).full_name,
+        deal_value: opportunity.total_value || 0,
+        loss_reason: lossData.loss_reason,
+        loss_notes: lossData.loss_notes,
+        loss_date: lossDate.toISOString().split('T')[0],
+        loss_month: lossDate.getMonth() + 1,
+        loss_year: lossDate.getFullYear(),
+        loss_quarter: Math.ceil((lossDate.getMonth() + 1) / 3),
+        loss_semester: lossDate.getMonth() < 6 ? 1 : 2,
+        loss_day_of_week: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][lossDate.getDay()],
+        time_in_funnel_days: daysInFunnel,
+        days_since_creation: daysInFunnel
+      };
+
+      await createLostDealMutation.mutateAsync(lossRecord);
+
+      // Atualizar estágio
+      const timeline = opportunity.timeline || [];
+      timeline.push({
+        date: new Date().toISOString(),
+        type: 'stage_change',
+        description: `Mudou para: Perdido - ${lossData.loss_reason}`,
+        user: 'user'
+      });
+
+      await updateOpportunityMutation.mutateAsync({
+        stage: 'perdido',
+        timeline
+      });
+
+      setShowLossModal(false);
+      setPendingStageChange(null);
+      setNewStage(opportunity.stage);
+    } catch (error) {
+      console.error('Erro ao registrar perda:', error);
+      toast.error('Erro ao registrar perda');
+    }
   };
 
   const confirmSendEmail = async () => {
