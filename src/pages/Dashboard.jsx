@@ -69,6 +69,11 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Opportunity.list('-created_date', 100)
   });
 
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => base44.entities.Task.list('-scheduled_date', 100)
+  });
+
   // Enriquecer clientes com dados de ciclo, ticket e último material
   const enrichClientData = (client) => {
     // Pedidos do cliente

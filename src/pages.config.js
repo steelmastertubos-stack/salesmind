@@ -1,6 +1,8 @@
 import AIInsights from './pages/AIInsights';
 import AlertList from './pages/AlertList';
+import AuditComplete from './pages/AuditComplete';
 import AuditFluxo from './pages/AuditFluxo';
+import AutoTest from './pages/AutoTest';
 import CleanNewAcoProducts from './pages/CleanNewAcoProducts';
 import ClientAlertDetail from './pages/ClientAlertDetail';
 import ClientDetails from './pages/ClientDetails';
@@ -31,15 +33,15 @@ import VTKAuditReport from './pages/VTKAuditReport';
 import VTKCostSetup from './pages/VTKCostSetup';
 import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
-import AutoTest from './pages/AutoTest';
-import AuditComplete from './pages/AuditComplete';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIInsights": AIInsights,
     "AlertList": AlertList,
+    "AuditComplete": AuditComplete,
     "AuditFluxo": AuditFluxo,
+    "AutoTest": AutoTest,
     "CleanNewAcoProducts": CleanNewAcoProducts,
     "ClientAlertDetail": ClientAlertDetail,
     "ClientDetails": ClientDetails,
@@ -70,8 +72,6 @@ export const PAGES = {
     "VTKCostSetup": VTKCostSetup,
     "VTKMarginAuditReport": VTKMarginAuditReport,
     "VerifyDataByYear": VerifyDataByYear,
-    "AutoTest": AutoTest,
-    "AuditComplete": AuditComplete,
 }
 
 export const pagesConfig = {
