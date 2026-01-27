@@ -24,7 +24,9 @@ export default function TaskNotifications() {
   });
 
   useEffect(() => {
-    checkForReminders();
+    if (tasks.length > 0) {
+      checkForReminders();
+    }
   }, [tasks]);
 
   const checkForReminders = () => {

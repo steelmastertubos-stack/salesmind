@@ -95,32 +95,40 @@ export default function FieldMode() {
   };
 
   const handleSubmitContact = async () => {
-    if (!selectedClient) return;
+    if (!selectedClient || !contactForm.notes) {
+      toast.error('Preencha as observações do contato');
+      return;
+    }
 
-    // Criar follow-up
-    await createFollowUpMutation.mutateAsync({
-      client_id: selectedClient.id,
-      client_name: selectedClient.trade_name || selectedClient.company_name,
-      type: contactForm.next_action_type,
-      notes: contactForm.notes,
-      outcome: 'neutral',
-      next_action_date: contactForm.next_action_date,
-      contact_date: format(new Date(), 'yyyy-MM-dd')
-    });
-
-    // Criar tarefa se solicitado
-    if (contactForm.create_task) {
-      await createTaskMutation.mutateAsync({
-        title: `Acompanhamento: ${selectedClient.trade_name || selectedClient.company_name}`,
-        description: contactForm.notes,
-        task_type: contactForm.next_action_type,
+    try {
+      // Criar follow-up
+      await createFollowUpMutation.mutateAsync({
         client_id: selectedClient.id,
         client_name: selectedClient.trade_name || selectedClient.company_name,
-        scheduled_date: contactForm.next_action_date,
-        scheduled_time: '09:00',
-        status: 'pending',
-        priority: 'medium'
+        type: contactForm.next_action_type,
+        notes: contactForm.notes,
+        outcome: 'neutral',
+        next_action_date: contactForm.next_action_date,
+        contact_date: format(new Date(), 'yyyy-MM-dd')
       });
+
+      // Criar tarefa se solicitado
+      if (contactForm.create_task) {
+        await createTaskMutation.mutateAsync({
+          title: `Acompanhamento: ${selectedClient.trade_name || selectedClient.company_name}`,
+          description: contactForm.notes,
+          task_type: contactForm.next_action_type,
+          client_id: selectedClient.id,
+          client_name: selectedClient.trade_name || selectedClient.company_name,
+          scheduled_date: contactForm.next_action_date,
+          scheduled_time: '09:00',
+          status: 'pending',
+          priority: 'medium'
+        });
+      }
+    } catch (error) {
+      console.error('Error creating follow-up:', error);
+      toast.error('Erro ao registrar contato');
     }
   };
 

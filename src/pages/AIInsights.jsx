@@ -67,26 +67,32 @@ export default function AIInsights() {
   // Generate insights using rules engine
   const dailyInsights = useMemo(() => {
     if (!clients.length || !orders.length) return [];
-    const insights = generateActionableInsights(clients, orders, quotes, opportunities);
     
-    // Enrich with insight_id and check if action already exists
-    return insights.map((insight, idx) => {
-      const insightId = `INSIGHT-${insight.client_id}-${insight.insight_type || 'ACTION'}-${idx}`;
-      const existingActivity = activities.find(a => 
-        a.customer_id === insight.client_id && 
-        a.notes?.includes(insight.title)
-      );
+    try {
+      const insights = generateActionableInsights(clients, orders, quotes, opportunities);
       
-      return {
-        ...insight,
-        insight_id: insightId,
-        insight_type: insight.insight_type || 'OPPORTUNITY',
-        scope_type: 'CUSTOMER',
-        scope_id: insight.client_id,
-        activity_id: existingActivity?.id,
-        status: existingActivity ? 'IN_PROGRESS' : 'NEW'
-      };
-    });
+      // Enrich with insight_id and check if action already exists
+      return insights.map((insight, idx) => {
+        const insightId = `INSIGHT-${insight.client_id}-${insight.insight_type || 'ACTION'}-${idx}`;
+        const existingActivity = activities.find(a => 
+          a.customer_id === insight.client_id && 
+          a.notes?.includes(insight.title)
+        );
+        
+        return {
+          ...insight,
+          insight_id: insightId,
+          insight_type: insight.insight_type || 'OPPORTUNITY',
+          scope_type: 'CUSTOMER',
+          scope_id: insight.client_id,
+          activity_id: existingActivity?.id,
+          status: existingActivity ? 'IN_PROGRESS' : 'NEW'
+        };
+      });
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      return [];
+    }
   }, [clients, orders, quotes, opportunities, activities]);
 
   const handleGenerateAction = async (insight) => {
