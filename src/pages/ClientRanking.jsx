@@ -94,25 +94,21 @@ export default function ClientRanking() {
   const topClients = ranking.slice(0, parseInt(rankingSize));
 
   // Identificar clientes para premiação
-  // REGRA: Clientes que compraram no ano + têm tag histórica "Premium - {ano}" OU is_premium=true (ano atual)
+  // REGRA: Top 20% dos clientes do ano com pelo menos 2 pedidos
   const awardClients = useMemo(() => {
-    const yearStr = String(selectedYear);
-    return ranking.filter(r => {
+    // Filtrar clientes que compraram no ano selecionado
+    const eligibleClients = ranking.filter(r => {
       const client = clients.find(c => c.id === r.client_id);
       if (!client) return false;
       
-      // Para o ano atual: status Ativo + is_premium
-      const isCurrentYear = parseInt(selectedYear) === currentYear;
-      if (isCurrentYear) {
-        return client.status === 'active' && client.is_premium === true;
-      }
-      
-      // Para anos anteriores: verificar tag histórica "Premium - {ano}"
-      const historicalTag = `Premium - ${yearStr}`;
-      const autoTags = client.auto_tags || [];
-      return autoTags.includes(historicalTag);
+      // Critérios: pelo menos 2 pedidos no ano
+      return r.order_count >= 2;
     });
-  }, [ranking, clients, selectedYear, currentYear]);
+    
+    // Pegar top 20% (mínimo 5, máximo 20)
+    const top20Percent = Math.max(5, Math.min(20, Math.ceil(eligibleClients.length * 0.2)));
+    return eligibleClients.slice(0, top20Percent);
+  }, [ranking, clients]);
 
   // Exportar para CSV
   const handleExport = () => {
