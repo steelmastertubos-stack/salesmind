@@ -203,14 +203,14 @@ export default function Layout({ children, currentPageName }) {
                   className={`
                     w-full flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200
                     ${hasSectionActive 
-                      ? 'bg-[#1F4E79]/40 text-white' 
-                      : 'text-slate-300 hover:bg-[#1F4E79]/20 hover:text-white'}
+                      ? 'bg-[#1F4E79]/40' 
+                      : 'hover:bg-[#1F4E79]/20'}
                   `}
                 >
-                  <span className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                  <span className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 text-slate-400 ${isExpanded ? 'rotate-90' : ''}`}>
                     <span className="text-sm">▸</span>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest flex-1 text-left">
+                  <span className="text-xs font-bold uppercase tracking-widest flex-1 text-left text-white">
                     {section.title}
                   </span>
                   {hasSectionActive && (
