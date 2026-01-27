@@ -39,6 +39,7 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "AIInsights": AIInsights,
     "AlertList": AlertList,
+    "AuditComplete": AuditComplete,
     "AuditFluxo": AuditFluxo,
     "CleanNewAcoProducts": CleanNewAcoProducts,
     "ClientAlertDetail": ClientAlertDetail,
