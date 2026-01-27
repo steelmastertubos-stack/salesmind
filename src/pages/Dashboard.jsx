@@ -377,48 +377,45 @@ export default function Dashboard() {
           )}
 
           {/* AI Insights Teaser */}
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-4 mt-4">
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-3">
             <div className="flex items-center gap-2 mb-2">
-              <Brain className="w-5 h-5 text-purple-600" />
-              <h3 className="font-semibold text-purple-900">Insights com IA</h3>
+              <Brain className="w-4 h-4 text-purple-600" />
+              <h3 className="font-semibold text-sm text-purple-900">Insights IA</h3>
             </div>
-            <p className="text-sm text-purple-700 mb-3">
-              Preveja compras e receba recomendações inteligentes
-            </p>
-            <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" asChild>
+            <Button size="sm" className="w-full text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" asChild>
               <a href="/AIInsights">
-                <Sparkles className="w-4 h-4 mr-2" />
+                <Sparkles className="w-3 h-3 mr-1" />
                 Ver Análises
               </a>
             </Button>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mt-4">
-            <h3 className="font-semibold text-slate-900 mb-4">Ações Rápidas</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-3">
+            <h3 className="font-semibold text-sm text-slate-900 mb-2">Ações Rápidas</h3>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
                 <a href="/Clients">
-                  <Users className="w-5 h-5 text-slate-600" />
-                  <span className="text-xs">Novo Cliente</span>
+                  <Users className="w-4 h-4 text-slate-600" />
+                  <span className="text-[10px]">Novo Cliente</span>
                 </a>
               </Button>
-              <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
                 <a href="/Quotes">
-                  <FileText className="w-5 h-5 text-slate-600" />
-                  <span className="text-xs">Novo Orçamento</span>
+                  <FileText className="w-4 h-4 text-slate-600" />
+                  <span className="text-[10px]">Novo Orçamento</span>
                 </a>
               </Button>
-              <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
                 <a href="/FieldMode">
-                  <Target className="w-5 h-5 text-slate-600" />
-                  <span className="text-xs">Modo Campo</span>
+                  <Target className="w-4 h-4 text-slate-600" />
+                  <span className="text-[10px]">Modo Campo</span>
                 </a>
               </Button>
-              <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
                 <a href="/Reports">
-                  <TrendingUp className="w-5 h-5 text-slate-600" />
-                  <span className="text-xs">Relatórios</span>
+                  <TrendingUp className="w-4 h-4 text-slate-600" />
+                  <span className="text-[10px]">Relatórios</span>
                 </a>
               </Button>
             </div>
