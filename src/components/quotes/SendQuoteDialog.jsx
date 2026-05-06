@@ -7,14 +7,13 @@ import { MessageCircle, Mail, Edit2, Send } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 export default function SendQuoteDialog({ quote, client, representative, onClose }) {
-  if (!quote || !client) return null;
-
   const [channel, setChannel] = useState(null);
   const [editableMessage, setEditableMessage] = useState('');
   const [editableSubject, setEditableSubject] = useState('');
 
   // Lógica inteligente: decidir se mostra valor no email
   const shouldShowValueInEmail = useMemo(() => {
+    if (!quote || !client) return false;
     // Mostrar valor se cliente for recorrente (tem histórico)
     if (client.purchase_count > 0) return true;
     
@@ -26,6 +25,8 @@ export default function SendQuoteDialog({ quote, client, representative, onClose
     
     return true;
   }, [client, quote]);
+
+  if (!quote || !client) return null;
 
   // Gerar mensagens automáticas
   const generateMessage = (type) => {

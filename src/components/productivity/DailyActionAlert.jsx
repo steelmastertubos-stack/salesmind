@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertCircle, Clock, Users, FileText, CheckCircle2, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, Clock, Users, FileText, CheckCircle2, Zap, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { createPageUrl } from '@/utils';
  * Mostra 1 (e só 1) ação principal baseada em prioridade
  */
 export default function DailyActionAlert({ tasks = [], opportunities = [], clients = [] }) {
+  const [dismissed, setDismissed] = useState(false);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -98,7 +99,7 @@ export default function DailyActionAlert({ tasks = [], opportunities = [], clien
     priority = 'success';
   }
 
-  if (!action) return null;
+  if (!action || dismissed) return null;
 
   const IconComponent = action.icon;
   const colorMap = {
@@ -118,7 +119,7 @@ export default function DailyActionAlert({ tasks = [], opportunities = [], clien
   };
 
   return (
-    <Card className={`border-2 ${colorMap[action.color]} cursor-pointer hover:shadow-lg transition-shadow`}>
+    <Card className={`border-2 ${colorMap[action.color]} hover:shadow-lg transition-shadow`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
@@ -128,11 +129,20 @@ export default function DailyActionAlert({ tasks = [], opportunities = [], clien
               <p className="text-sm mt-1 opacity-80">{action.description}</p>
             </div>
           </div>
-          {priority && (
-            <Badge className={`${badgeMap[action.color]} whitespace-nowrap`}>
-              {priority === 'critical' ? '🔴 CRÍTICO' : priority === 'high' ? '🟡 ALTO' : '🔵 INFO'}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {priority && (
+              <Badge className={`${badgeMap[action.color]} whitespace-nowrap`}>
+                {priority === 'critical' ? '🔴 CRÍTICO' : priority === 'high' ? '🟡 ALTO' : '🔵 INFO'}
+              </Badge>
+            )}
+            <button
+              onClick={() => setDismissed(true)}
+              className="p-1 rounded hover:bg-black/10 transition-colors flex-shrink-0"
+              title="Fechar aviso"
+            >
+              <X className="w-4 h-4 opacity-60" />
+            </button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

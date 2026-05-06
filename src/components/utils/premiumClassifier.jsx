@@ -60,7 +60,7 @@ export async function evaluatePremiumStatus(client, allOrders, year, ticketThres
     // REGRA 1: Cliente Inativo NUNCA pode ser Premium
     if (client.status === 'inactive') {
       if (previousPremium) {
-        await removePremi(client, year);
+        await removePremium(client, year);
         return { 
           changed: true, 
           is_premium: false, 

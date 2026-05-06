@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +11,20 @@ import {
   Calendar,
   Phone,
   TrendingDown,
-  Zap
+  Zap,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import PurchaseCycleActionMenu from './PurchaseCycleActionMenu';
 
 export default function IntegratedAlerts() {
+  const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
+
+  const dismissAlert = (id) => {
+    setDismissedAlerts(prev => new Set([...prev, id]));
+  };
+
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('-last_purchase_date', 500)
@@ -137,7 +144,9 @@ export default function IntegratedAlerts() {
     }
   };
 
-  if (allAlerts.length === 0) {
+  const visibleAlerts = allAlerts.filter(a => !dismissedAlerts.has(a.id));
+
+  if (visibleAlerts.length === 0) {
     return null;
   }
 
@@ -146,11 +155,11 @@ export default function IntegratedAlerts() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-orange-900">
           <AlertTriangle className="w-5 h-5" />
-          Alertas Inteligentes ({allAlerts.length})
+          Alertas Inteligentes ({visibleAlerts.length})
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {allAlerts.slice(0, 5).map(alert => {
+        {visibleAlerts.slice(0, 5).map(alert => {
           const Icon = getIcon(alert.type);
           return (
             <div
@@ -164,15 +173,24 @@ export default function IntegratedAlerts() {
                   <p className="text-xs opacity-80">{alert.description}</p>
                 </div>
               </div>
-              {alert.hasMenu ? (
-                <PurchaseCycleActionMenu client={alert.client} />
-              ) : (
-                <Link to={alert.link}>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    {alert.action}
-                  </Button>
-                </Link>
-              )}
+              <div className="flex items-center gap-2 ml-2">
+                {alert.hasMenu ? (
+                  <PurchaseCycleActionMenu client={alert.client} />
+                ) : (
+                  <Link to={alert.link}>
+                    <Button size="sm" variant="outline" className="text-xs">
+                      {alert.action}
+                    </Button>
+                  </Link>
+                )}
+                <button
+                  onClick={() => dismissAlert(alert.id)}
+                  className="p-1 rounded hover:bg-black/10 transition-colors flex-shrink-0"
+                  title="Fechar aviso"
+                >
+                  <X className="w-3.5 h-3.5 opacity-60" />
+                </button>
+              </div>
             </div>
           );
         })}
