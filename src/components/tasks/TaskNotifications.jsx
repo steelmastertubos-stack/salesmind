@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 export default function TaskNotifications() {
   const [activeNotifications, setActiveNotifications] = useState([]);
+  const [handledIds, setHandledIds] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
@@ -27,7 +28,7 @@ export default function TaskNotifications() {
     if (tasks.length > 0) {
       checkForReminders();
     }
-  }, [tasks]);
+  }, [tasks, handledIds]);
 
   const checkForReminders = () => {
     const now = new Date();
@@ -35,6 +36,7 @@ export default function TaskNotifications() {
 
     tasks.forEach(task => {
       if (task.status !== 'pending') return;
+      if (handledIds.has(task.id)) return;
 
       const scheduledDateTime = new Date(`${task.scheduled_date}T${task.scheduled_time}`);
       const oneHourBefore = new Date(scheduledDateTime.getTime() - 60 * 60 * 1000);
@@ -105,8 +107,14 @@ export default function TaskNotifications() {
     });
   };
 
+  const removeNotification = (taskId) => {
+    setHandledIds(prev => new Set([...prev, taskId]));
+    setActiveNotifications(prev => prev.filter(n => n.id !== taskId));
+  };
+
   const handleSnooze = (taskId, minutes) => {
     const snoozeUntil = new Date(Date.now() + minutes * 60 * 1000);
+    removeNotification(taskId);
     updateTaskMutation.mutate({
       id: taskId,
       data: { 
@@ -114,11 +122,11 @@ export default function TaskNotifications() {
         snoozed_until: snoozeUntil.toISOString()
       }
     });
-    setActiveNotifications(prev => prev.filter(n => n.id !== taskId));
     toast.success(`Lembrete adiado por ${minutes} minutos`);
   };
 
   const handleComplete = (taskId) => {
+    removeNotification(taskId);
     updateTaskMutation.mutate({
       id: taskId,
       data: { 
@@ -126,12 +134,11 @@ export default function TaskNotifications() {
         completed_at: new Date().toISOString()
       }
     });
-    setActiveNotifications(prev => prev.filter(n => n.id !== taskId));
     toast.success('Tarefa concluída!');
   };
 
   const handleDismiss = (taskId) => {
-    setActiveNotifications(prev => prev.filter(n => n.id !== taskId));
+    removeNotification(taskId);
   };
 
   if (activeNotifications.length === 0) return null;
