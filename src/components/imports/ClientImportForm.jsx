@@ -69,12 +69,71 @@ const autoMap = (sheetHeaders) => {
 
 // ── Template download ──────────────────────────────────────────────────────────
 const downloadTemplate = () => {
-  const ws = XLSX.utils.aoa_to_sheet([
-    ['Razão Social','CNPJ','E-mail','Telefone','WhatsApp','Nome do Responsável','Segmento / Área','Nome Fantasia','Cidade','Estado'],
-    ['Empresa Exemplo Ltda','12.345.678/0001-99','contato@empresa.com','11 3333-4444','11 9 8765-4321','João Silva','Metalúrgica','Empresa Exemplo','São Paulo','SP'],
+  // Aba principal com dados
+  const wsData = [
+    ['Razão Social *','CNPJ *','E-mail','Telefone','WhatsApp','Nome do Responsável','Segmento / Área','Nome Fantasia','Cidade','Estado'],
+    ['Metalúrgica Santos Ltda','12.345.678/0001-99','contato@santos.com','11 3333-4444','11 9 8765-4321','Carlos Santos','Metalúrgica','Santos Metal','São Paulo','SP'],
+    ['Caldeiraria Norte S/A','98.765.432/0001-00','comercial@cnorte.com.br','51 3222-8888','51 9 9876-5432','Ana Oliveira','Caldeiraria','CaldeNorte','Porto Alegre','RS'],
+    ['Estruturas MG Ltda','11.222.333/0001-44','contato@estruturasmg.com','31 4000-1234','31 9 7654-3210','Roberto Lima','Estruturas Metálicas','','Belo Horizonte','MG'],
+    ['Distribuidora Aço Sul Ltda','55.666.777/0001-88','vendas@acosul.com.br','41 3500-9900','','Marcos Pereira','Distribuidor de Aço','Aço Sul','Curitiba','PR'],
+    ['Serralheria Nova Era ME','33.444.555/0001-11','','62 3100-0000','62 9 8888-7777','','Serralheria','Nova Era','Goiânia','GO'],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Largura das colunas
+  ws['!cols'] = [
+    { wch: 35 }, { wch: 20 }, { wch: 30 }, { wch: 16 },
+    { wch: 18 }, { wch: 25 }, { wch: 28 }, { wch: 25 },
+    { wch: 18 }, { wch: 8 },
+  ];
+
+  // Aba de instruções
+  const wsInst = XLSX.utils.aoa_to_sheet([
+    ['INSTRUÇÕES DE PREENCHIMENTO'],
+    [''],
+    ['CAMPOS OBRIGATÓRIOS (*)',''],
+    ['Razão Social','Nome oficial da empresa conforme CNPJ'],
+    ['CNPJ','Formato: 12.345.678/0001-99  (com pontos, barra e traço)'],
+    [''],
+    ['CAMPOS OPCIONAIS','Podem ser deixados em branco e preenchidos depois no sistema'],
+    ['E-mail','E-mail principal de contato'],
+    ['Telefone','Ex: 11 3333-4444 ou (11) 3333-4444'],
+    ['WhatsApp','Ex: 11 9 8765-4321'],
+    ['Nome do Responsável','Nome do contato principal da empresa'],
+    ['Segmento / Área','Valores aceitos (copie exatamente):'],
+    ['','Metalúrgica'],
+    ['','Metalmecânica'],
+    ['','Caldeiraria'],
+    ['','Estruturas Metálicas'],
+    ['','Engenharia'],
+    ['','Construtoras'],
+    ['','Implemento Agrícola'],
+    ['','Implemento Rodoviário'],
+    ['','Agroindústria'],
+    ['','Óleo & Gás'],
+    ['','Química / Petroquímica'],
+    ['','Alimentos & Bebidas'],
+    ['','Papel e Celulose'],
+    ['','Manutenção Industrial'],
+    ['','Montagem Industrial'],
+    ['','Distribuidor de Aço'],
+    ['','Serralheria'],
+    ['Nome Fantasia','Nome popular / comercial da empresa'],
+    ['Cidade','Ex: São Paulo'],
+    ['Estado','Sigla da UF: SP, RJ, MG, RS...'],
+    [''],
+    ['DICAS',''],
+    ['• Não altere os cabeçalhos da aba "Clientes"',''],
+    ['• Remova as linhas de exemplo antes de importar (ou mantenha, o sistema detecta automaticamente)',''],
+    ['• Aceita arquivos .xlsx, .xls e .csv',''],
+    ['• Campos em branco podem ser preenchidos direto na tela de revisão antes de importar',''],
   ]);
+  wsInst['!cols'] = [{ wch: 55 }, { wch: 30 }];
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+  XLSX.utils.book_append_sheet(wb, wsInst, 'Instruções');
   XLSX.writeFile(wb, 'modelo-importacao-clientes.xlsx');
 };
 
@@ -200,9 +259,15 @@ export default function ClientImportForm({ onSuccess }) {
       {/* ── STEP 1: Upload ── */}
       {step === 'upload' && (
         <div className="space-y-4">
-          <Button variant="outline" size="sm" onClick={downloadTemplate} className="flex items-center gap-2">
-            <Download className="w-4 h-4" /> Baixar Modelo Excel
-          </Button>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">📥 Baixe o modelo de planilha</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Inclui exemplos preenchidos e aba com instruções detalhadas</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={downloadTemplate} className="flex items-center gap-2 border-emerald-400 text-emerald-700 hover:bg-emerald-100 whitespace-nowrap ml-4">
+              <Download className="w-4 h-4" /> Baixar Modelo .xlsx
+            </Button>
+          </div>
 
           <div
             className="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-colors"
