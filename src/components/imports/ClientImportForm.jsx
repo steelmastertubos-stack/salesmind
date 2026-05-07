@@ -1,285 +1,376 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, Download, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, Download, AlertCircle, Loader2, CheckCircle2, Edit3, FileSpreadsheet, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
-const parseCSV = (fileContent) => {
-  const lines = fileContent.trim().split('\n');
-  if (lines.length < 2) return { headers: [], rows: [] };
-  
-  const headers = lines[0].split(',').map(h => h.trim());
-  const rows = lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim());
-    const row = {};
-    headers.forEach((header, i) => {
-      row[header] = values[i] || '';
-    });
-    return row;
+// ── Colunas esperadas ──────────────────────────────────────────────────────────
+const EXPECTED_COLS = [
+  { key: 'company_name', label: 'Razão Social',      required: true },
+  { key: 'cnpj',         label: 'CNPJ',              required: true },
+  { key: 'email',        label: 'E-mail',            required: false },
+  { key: 'phone',        label: 'Telefone',          required: false },
+  { key: 'whatsapp',     label: 'WhatsApp',          required: false },
+  { key: 'contact_name', label: 'Nome do Responsável', required: false },
+  { key: 'segment',      label: 'Segmento / Área',   required: false },
+  { key: 'trade_name',   label: 'Nome Fantasia',     required: false },
+  { key: 'city',         label: 'Cidade',            required: false },
+  { key: 'state',        label: 'Estado (UF)',       required: false },
+];
+
+const SEGMENTS = [
+  'Metalúrgica','Metalmecânica','Caldeiraria','Estruturas Metálicas','Engenharia',
+  'Construtoras','Implemento Agrícola','Implemento Rodoviário','Agroindústria',
+  'Óleo & Gás','Química / Petroquímica','Alimentos & Bebidas','Papel e Celulose',
+  'Manutenção Industrial','Montagem Industrial','Distribuidor de Aço','Serralheria'
+];
+
+// ── Parse planilha ─────────────────────────────────────────────────────────────
+const parseFile = (file, binary) => {
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+  const workbook = XLSX.read(binary, { type: isExcel ? 'binary' : 'string' });
+  const ws = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
+  return data.map(row => {
+    const clean = {};
+    Object.keys(row).forEach(k => { clean[k] = String(row[k] ?? '').trim(); });
+    return clean;
   });
-  
-  return { headers, rows };
 };
 
-const parseExcel = (fileContent) => {
-  const workbook = XLSX.read(fileContent, { type: 'binary' });
-  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(worksheet);
-  
-  if (data.length === 0) return { headers: [], rows: [] };
-  
-  const headers = Object.keys(data[0]);
-  const rows = data.map(row => {
-    const cleanRow = {};
-    headers.forEach(header => {
-      cleanRow[header] = (row[header] || '').toString().trim();
-    });
-    return cleanRow;
+// ── Tentar mapear colunas da planilha ─────────────────────────────────────────
+const autoMap = (sheetHeaders) => {
+  const synonyms = {
+    company_name: ['razao social','razão social','empresa','company_name','company name','nome empresa','nome da empresa'],
+    cnpj:         ['cnpj','cpf/cnpj'],
+    email:        ['email','e-mail','e_mail','correio'],
+    phone:        ['telefone','fone','phone','tel','celular'],
+    whatsapp:     ['whatsapp','wpp','zap','whats'],
+    contact_name: ['responsavel','responsável','contato','nome contato','contact_name','nome responsável','nome do responsavel'],
+    segment:      ['segmento','area','área','ramo','setor'],
+    trade_name:   ['nome fantasia','trade_name','fantasia'],
+    city:         ['cidade','city'],
+    state:        ['estado','uf','state'],
+  };
+
+  const mapping = {};
+  EXPECTED_COLS.forEach(({ key }) => {
+    const found = sheetHeaders.find(h =>
+      synonyms[key]?.some(s => h.toLowerCase().includes(s))
+    );
+    mapping[key] = found || '';
   });
-  
-  return { headers, rows };
+  return mapping;
 };
 
+// ── Template download ──────────────────────────────────────────────────────────
 const downloadTemplate = () => {
-  const content = `code,company_name,trade_name,cnpj,email,phone,whatsapp,address,city,state,zip,country,responsible_user,status,notes
-CLI001,Empresa Ltda,Empresa,12.345.678/0001-99,contato@empresa.com,1133334444,11987654321,Rua A 100,São Paulo,SP,01234567,Brasil,João Silva,active,Cliente prioritário
-CLI002,Outro Negócio,Outro,98.765.432/0001-00,contato@outro.com,2133334444,21987654321,Rua B 200,Rio de Janeiro,RJ,20234567,Brasil,Maria Santos,active,`;
-  
-  const element = document.createElement('a');
-  element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
-  element.setAttribute('download', 'template-clientes.csv');
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Razão Social','CNPJ','E-mail','Telefone','WhatsApp','Nome do Responsável','Segmento / Área','Nome Fantasia','Cidade','Estado'],
+    ['Empresa Exemplo Ltda','12.345.678/0001-99','contato@empresa.com','11 3333-4444','11 9 8765-4321','João Silva','Metalúrgica','Empresa Exemplo','São Paulo','SP'],
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+  XLSX.writeFile(wb, 'modelo-importacao-clientes.xlsx');
 };
 
+// ── Componente principal ───────────────────────────────────────────────────────
 export default function ClientImportForm({ onSuccess }) {
-  const [file, setFile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [preview, setPreview] = useState(null);
-  const [errors, setErrors] = useState([]);
+  const [step, setStep] = useState('upload'); // upload | map | review | done
+  const [sheetRows, setSheetRows]   = useState([]);
+  const [sheetHeaders, setSheetHeaders] = useState([]);
+  const [mapping, setMapping]       = useState({});
+  const [rows, setRows]             = useState([]); // rows with mapped + editable data
+  const [isLoading, setIsLoading]   = useState(false);
+  const fileRef = useRef();
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      const isExcel = selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls');
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        try {
-          const content = event.target.result;
-          const { headers, rows } = isExcel ? parseExcel(content) : parseCSV(content);
-          
-          if (rows.length === 0) {
-            toast.error('Arquivo vazio');
-            return;
-          }
-          
-          setFile(selectedFile);
-          setPreview({ headers, rows: rows.slice(0, 5), total: rows.length });
-          setErrors([]);
-        } catch (error) {
-          toast.error('Erro ao ler o arquivo');
-        }
-      };
-      
-      if (isExcel) {
-        reader.readAsBinaryString(selectedFile);
-      } else {
-        reader.readAsText(selectedFile);
-      }
-    }
-  };
-
-  const validateRow = (row, index) => {
-    const rowErrors = [];
-    
-    if (!row.company_name?.trim()) rowErrors.push(`Linha ${index + 2}: company_name obrigatório`);
-    if (!row.cnpj?.trim()) rowErrors.push(`Linha ${index + 2}: CNPJ obrigatório`);
-    if (row.cnpj && !/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(row.cnpj)) {
-      rowErrors.push(`Linha ${index + 2}: CNPJ em formato inválido (XX.XXX.XXX/XXXX-XX)`);
-    }
-    if (!row.email?.trim()) rowErrors.push(`Linha ${index + 2}: email obrigatório`);
-    if (!row.phone?.trim()) rowErrors.push(`Linha ${index + 2}: phone obrigatório`);
-    
-    return rowErrors;
-  };
-
-  const handleImport = async () => {
-    if (!file) {
-      toast.error('Selecione um arquivo');
-      return;
-    }
-
-    setIsLoading(true);
+  // ── Step 1: Upload ───────────────────────────────────────────────────────────
+  const handleFile = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const isExcel = /\.(xlsx|xls)$/i.test(f.name);
     const reader = new FileReader();
-    
-    reader.onload = async (event) => {
+    reader.onload = (ev) => {
       try {
-        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-        const { rows } = isExcel ? parseExcel(event.target.result) : parseCSV(event.target.result);
-        
-        // Validar linhas
-        const allErrors = [];
-        rows.forEach((row, i) => {
-          allErrors.push(...validateRow(row, i));
-        });
-
-        if (allErrors.length > 0) {
-          setErrors(allErrors);
-          toast.error(`${allErrors.length} erro(s) encontrado(s)`);
-          setIsLoading(false);
-          return;
-        }
-
-        // Gerar ID do lote
-        const batchId = `CLIENT-${Date.now()}`;
-
-        // Preparar dados
-         const clients = rows.map(row => ({
-           code: row.code || `CLI-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-           company_name: row.company_name,
-           trade_name: row.trade_name || row.company_name,
-           cnpj: row.cnpj,
-           email: row.email,
-           phone: row.phone,
-           whatsapp: row.whatsapp || row.phone || '',
-           address: row.address || '',
-           city: row.city || '',
-           state: row.state || '',
-           zip_code: row.zip || '',
-           country: row.country || 'Brasil',
-           contact_name: row.responsible_user || '',
-           status: (row.status || 'active').toLowerCase() === 'active' ? 'active' : 'inactive',
-           notes: row.notes || '',
-           is_active: (row.status || 'active').toLowerCase() === 'active',
-           import_batch_id: batchId
-         }));
-
-        // Importar em lotes
-        const batchSize = 50;
-        let imported = 0;
-        
-        for (let i = 0; i < clients.length; i += batchSize) {
-          const batch = clients.slice(i, i + batchSize);
-          await base44.entities.Client.bulkCreate(batch);
-          imported += batch.length;
-        }
-
-        await base44.entities.ImportBatch.create({
-          batch_id: batchId,
-          entity_type: 'Client',
-          records_count: imported,
-          file_name: file.name,
-          status: 'active'
-        });
-
-        toast.success(`${imported} clientes importados com sucesso!`);
-        setFile(null);
-        setPreview(null);
-        onSuccess?.();
-      } catch (error) {
-        console.error('Erro na importação:', error);
-        toast.error('Erro ao importar clientes');
-      } finally {
-        setIsLoading(false);
-      }
+        const parsed = parseFile(f, ev.target.result);
+        if (!parsed.length) { toast.error('Arquivo vazio'); return; }
+        const headers = Object.keys(parsed[0]);
+        setSheetHeaders(headers);
+        setSheetRows(parsed);
+        setMapping(autoMap(headers));
+        setStep('map');
+      } catch { toast.error('Erro ao ler o arquivo'); }
     };
-    
-    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-    if (isExcel) {
-      reader.readAsBinaryString(file);
-    } else {
-      reader.readAsText(file);
-    }
+    isExcel ? reader.readAsBinaryString(f) : reader.readAsText(f);
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={downloadTemplate}
-          className="flex items-center gap-2"
-        >
-          <Download className="w-4 h-4" />
-          Baixar Template
+  // ── Step 2: Confirm mapping → build review rows ──────────────────────────────
+  const handleConfirmMap = () => {
+    const mapped = sheetRows.map((row, idx) => {
+      const r = { _idx: idx };
+      EXPECTED_COLS.forEach(({ key }) => {
+        r[key] = mapping[key] ? (row[mapping[key]] || '') : '';
+      });
+      return r;
+    });
+    setRows(mapped);
+    setStep('review');
+  };
+
+  // ── Step 3: Inline edit ───────────────────────────────────────────────────────
+  const updateCell = (idx, key, val) => {
+    setRows(prev => prev.map((r, i) => i === idx ? { ...r, [key]: val } : r));
+  };
+
+  const removeRow = (idx) => setRows(prev => prev.filter((_, i) => i !== idx));
+
+  const validRows    = rows.filter(r => r.company_name?.trim() && r.cnpj?.trim());
+  const invalidCount = rows.length - validRows.length;
+
+  // ── Step 4: Import ────────────────────────────────────────────────────────────
+  const handleImport = async () => {
+    setIsLoading(true);
+    const batchId = `CLIENT-${Date.now()}`;
+    const clients = validRows.map(r => ({
+      company_name: r.company_name.trim(),
+      trade_name:   r.trade_name?.trim() || r.company_name.trim(),
+      cnpj:         r.cnpj.trim(),
+      email:        r.email?.trim() || '',
+      phone:        r.phone?.trim() || '',
+      whatsapp:     r.whatsapp?.trim() || r.phone?.trim() || '',
+      contact_name: r.contact_name?.trim() || '',
+      segment:      r.segment?.trim() || 'Metalúrgica',
+      city:         r.city?.trim() || '',
+      state:        r.state?.trim() || '',
+      status:       'active',
+      is_active:    true,
+      import_batch_id: batchId,
+    }));
+
+    const size = 50;
+    let imported = 0;
+    for (let i = 0; i < clients.length; i += size) {
+      await base44.entities.Client.bulkCreate(clients.slice(i, i + size));
+      imported += Math.min(size, clients.length - i);
+    }
+    await base44.entities.ImportBatch.create({
+      batch_id: batchId, entity_type: 'Client',
+      records_count: imported, status: 'active',
+    });
+
+    setIsLoading(false);
+    setStep('done');
+    toast.success(`${imported} cliente(s) importado(s) com sucesso!`);
+    onSuccess?.();
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+  if (step === 'done') {
+    return (
+      <div className="text-center py-12 space-y-4">
+        <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
+        <p className="text-xl font-semibold text-slate-800">Importação concluída!</p>
+        <p className="text-slate-500">{validRows.length} clientes adicionados ao sistema.</p>
+        <Button onClick={() => { setStep('upload'); setRows([]); setSheetRows([]); }}>
+          Nova Importação
         </Button>
       </div>
+    );
+  }
 
-      <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-        <Input
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          onChange={handleFileChange}
-          className="hidden"
-          id="client-file"
-        />
-        <label htmlFor="client-file" className="cursor-pointer">
-          <div className="flex flex-col items-center gap-2">
-            <Upload className="w-8 h-8 text-slate-400" />
-            <p className="text-sm font-medium">Clique ou arraste um arquivo CSV</p>
-            <p className="text-xs text-slate-500">{file?.name || 'Nenhum arquivo selecionado'}</p>
-          </div>
-        </label>
+  return (
+    <div className="space-y-5">
+
+      {/* Steps indicator */}
+      <div className="flex items-center gap-1 text-xs font-medium">
+        {['upload','map','review'].map((s, i) => (
+          <React.Fragment key={s}>
+            <span className={`px-2 py-1 rounded-full ${step === s ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+              {i+1}. {s === 'upload' ? 'Arquivo' : s === 'map' ? 'Mapeamento' : 'Revisão'}
+            </span>
+            {i < 2 && <ChevronRight className="w-3 h-3 text-slate-300" />}
+          </React.Fragment>
+        ))}
       </div>
 
-      {preview && (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-slate-700">
-            Prévia: {preview.total} cliente(s) para importar
+      {/* ── STEP 1: Upload ── */}
+      {step === 'upload' && (
+        <div className="space-y-4">
+          <Button variant="outline" size="sm" onClick={downloadTemplate} className="flex items-center gap-2">
+            <Download className="w-4 h-4" /> Baixar Modelo Excel
+          </Button>
+
+          <div
+            className="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-colors"
+            onClick={() => fileRef.current?.click()}
+          >
+            <FileSpreadsheet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="font-medium text-slate-700">Clique para selecionar o arquivo</p>
+            <p className="text-xs text-slate-400 mt-1">CSV, XLS ou XLSX</p>
+            <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleFile} />
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800 space-y-1">
+            <p className="font-semibold">Campos obrigatórios na planilha:</p>
+            <p>✅ Razão Social &nbsp;|&nbsp; ✅ CNPJ</p>
+            <p className="text-blue-600">Os demais campos (e-mail, telefone, responsável, área) podem ser preenchidos após a importação diretamente no sistema.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── STEP 2: Column Mapping ── */}
+      {step === 'map' && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Encontramos <strong>{sheetRows.length}</strong> registro(s). Confirme o mapeamento das colunas:
           </p>
-          
-          <div className="overflow-x-auto border rounded-lg">
-            <table className="w-full text-xs">
+
+          <div className="border rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
               <thead className="bg-slate-50">
                 <tr>
-                  {preview.headers.map(h => (
-                    <th key={h} className="p-2 text-left font-medium">{h}</th>
-                  ))}
+                  <th className="px-4 py-2 text-left font-medium text-slate-600">Campo do sistema</th>
+                  <th className="px-4 py-2 text-left font-medium text-slate-600">Coluna da planilha</th>
+                  <th className="px-4 py-2 text-left font-medium text-slate-600">Prévia</th>
                 </tr>
               </thead>
               <tbody>
-                {preview.rows.map((row, i) => (
-                  <tr key={i} className="border-t hover:bg-slate-50">
-                    {preview.headers.map(h => (
-                      <td key={h} className="p-2 text-slate-600">{row[h]}</td>
-                    ))}
+                {EXPECTED_COLS.map(({ key, label, required }) => (
+                  <tr key={key} className="border-t">
+                    <td className="px-4 py-2 font-medium">
+                      {label}
+                      {required && <span className="ml-1 text-red-500">*</span>}
+                    </td>
+                    <td className="px-4 py-2">
+                      <Select
+                        value={mapping[key] || '__none__'}
+                        onValueChange={v => setMapping(prev => ({ ...prev, [key]: v === '__none__' ? '' : v }))}
+                      >
+                        <SelectTrigger className="w-48 h-8 text-xs">
+                          <SelectValue placeholder="Não mapeado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— Não mapeado —</SelectItem>
+                          {sheetHeaders.map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-4 py-2 text-xs text-slate-500 max-w-[200px] truncate">
+                      {mapping[key] ? (sheetRows[0]?.[mapping[key]] || '—') : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
 
-      {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <div className="flex items-start gap-2 mb-2">
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-            <p className="font-medium text-red-900">Erros encontrados:</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setStep('upload')}>Voltar</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 flex-1"
+              onClick={handleConfirmMap}
+              disabled={!mapping['company_name'] || !mapping['cnpj']}
+            >
+              Continuar para Revisão <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
-          <ul className="text-sm text-red-800 space-y-1">
-            {errors.slice(0, 10).map((err, i) => (
-              <li key={i}>• {err}</li>
-            ))}
-            {errors.length > 10 && <li>• +{errors.length - 10} erro(s)</li>}
-          </ul>
         </div>
       )}
 
-      <Button
-        onClick={handleImport}
-        disabled={!file || isLoading}
-        className="w-full bg-emerald-600 hover:bg-emerald-700"
-      >
-        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        {isLoading ? 'Importando...' : 'Importar Clientes'}
-      </Button>
+      {/* ── STEP 3: Review + inline edit ── */}
+      {step === 'review' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-600">
+              <strong>{validRows.length}</strong> prontos para importar
+              {invalidCount > 0 && <span className="text-red-500 ml-2">· {invalidCount} inválido(s) – sem Razão Social ou CNPJ</span>}
+            </p>
+            <p className="text-xs text-slate-400 flex items-center gap-1">
+              <Edit3 className="w-3 h-3" /> Clique nas células para editar
+            </p>
+          </div>
+
+          <div className="border rounded-xl overflow-auto max-h-[480px]">
+            <table className="w-full text-xs min-w-[900px]">
+              <thead className="bg-slate-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-2 py-2 text-left">#</th>
+                  {EXPECTED_COLS.map(({ key, label, required }) => (
+                    <th key={key} className="px-2 py-2 text-left whitespace-nowrap">
+                      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+                    </th>
+                  ))}
+                  <th className="px-2 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, idx) => {
+                  const invalid = !row.company_name?.trim() || !row.cnpj?.trim();
+                  return (
+                    <tr key={idx} className={`border-t ${invalid ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
+                      <td className="px-2 py-1 text-slate-400">{idx + 1}</td>
+                      {EXPECTED_COLS.map(({ key, required }) => (
+                        <td key={key} className="px-1 py-1">
+                          {key === 'segment' ? (
+                            <Select
+                              value={row[key] || ''}
+                              onValueChange={v => updateCell(idx, key, v)}
+                            >
+                              <SelectTrigger className={`h-7 text-xs min-w-[140px] ${!row[key] ? 'border-amber-300 bg-amber-50' : ''}`}>
+                                <SelectValue placeholder="Selecionar..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SEGMENTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              value={row[key] || ''}
+                              onChange={e => updateCell(idx, key, e.target.value)}
+                              className={`h-7 text-xs min-w-[100px] ${required && !row[key]?.trim() ? 'border-red-400 bg-red-50' : !row[key]?.trim() ? 'border-amber-200 bg-amber-50/40' : ''}`}
+                              placeholder={required ? '(obrigatório)' : '(opcional)'}
+                            />
+                          )}
+                        </td>
+                      ))}
+                      <td className="px-1 py-1">
+                        <button onClick={() => removeRow(idx)} className="p-1 text-slate-300 hover:text-red-500 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {invalidCount > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 text-sm text-amber-800">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Linhas em vermelho não serão importadas por falta de Razão Social ou CNPJ. Complete os dados ou remova as linhas.</span>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setStep('map')}>Voltar</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 flex-1"
+              onClick={handleImport}
+              disabled={isLoading || validRows.length === 0}
+            >
+              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isLoading ? 'Importando...' : `Importar ${validRows.length} cliente(s)`}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

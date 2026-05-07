@@ -61,8 +61,10 @@ export default function ImportData() {
               <div className="flex gap-2">
                 <Upload className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Formato esperado (CSV ou Excel):</p>
-                  <p>code, company_name, trade_name, cnpj, email, phone, whatsapp, address, city, state, zip, country, responsible_user, status, notes</p>
+                  <p className="font-medium mb-1">Importação inteligente de clientes (CSV ou Excel):</p>
+                  <p>✅ <strong>Obrigatórios:</strong> Razão Social, CNPJ</p>
+                  <p className="mt-1">📋 <strong>Opcionais:</strong> E-mail, Telefone, WhatsApp, Responsável, Segmento/Área — podem ser preenchidos direto na revisão antes de importar.</p>
+                  <p className="mt-1 text-xs text-blue-600">O sistema detecta automaticamente as colunas da planilha. Baixe o modelo para facilitar.</p>
                 </div>
               </div>
             </div>

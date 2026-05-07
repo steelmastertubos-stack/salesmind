@@ -7,7 +7,8 @@ import {
   Users,
   Plus,
   X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageHeader from '@/components/common/PageHeader';
 import ClientCard from '@/components/clients/ClientCard';
 import ClientForm from '@/components/forms/ClientForm';
+import ClientImportForm from '@/components/imports/ClientImportForm';
 import EmptyState from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -37,6 +39,7 @@ export default function Clients() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
@@ -205,6 +208,18 @@ export default function Clients() {
         }}
       />
 
+      {/* Import button */}
+      <div className="mb-4">
+        <Button
+          variant="outline"
+          onClick={() => setShowImport(true)}
+          className="flex items-center gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          Importar Clientes via Planilha
+        </Button>
+      </div>
+
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
@@ -366,6 +381,22 @@ export default function Clients() {
           onAction={!search && activeFilters === 0 ? () => setShowForm(true) : undefined}
         />
       )}
+
+      {/* Import Dialog */}
+      <Dialog open={showImport} onOpenChange={setShowImport}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+              Importar Clientes via Planilha
+            </DialogTitle>
+          </DialogHeader>
+          <ClientImportForm onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            setShowImport(false);
+          }} />
+        </DialogContent>
+      </Dialog>
 
       {/* Client Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
