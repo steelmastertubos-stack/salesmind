@@ -19,7 +19,8 @@ import {
           Package,
           DollarSign,
           Trophy,
-          TrendingDown
+          TrendingDown,
+          Calendar
         } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
@@ -93,6 +94,7 @@ export default function Layout({ children, currentPageName }) {
       items: [
         { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
         { name: 'Perdas', icon: TrendingDown, page: 'LossReport' },
+        { name: 'Histórico Comercial', icon: Calendar, page: 'HistoricoComercial' },
         { name: 'Insights IA', icon: Zap, page: 'AIInsights' }
       ]
     },

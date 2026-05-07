@@ -5,6 +5,8 @@ import IntegratedAlerts from '@/components/dashboard/IntegratedAlerts';
 import SuggestedActionCard from '@/components/productivity/SuggestedActionCard';
 import DailyActionAlert from '@/components/productivity/DailyActionAlert';
 import FollowUpSection from '@/components/dashboard/FollowUpSection';
+import MonthPeriodSelector from '@/components/dashboard/MonthPeriodSelector';
+import MonthlyStatsPanel from '@/components/dashboard/MonthlyStatsPanel';
 import { toast } from 'sonner';
 import { 
   Users, 
@@ -17,7 +19,8 @@ import {
   Calendar,
   RefreshCw,
   Brain,
-  Sparkles
+  Sparkles,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatsCard from '@/components/dashboard/StatsCard';
@@ -30,7 +33,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Dashboard() {
   const [greeting, setGreeting] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const queryClient = useQueryClient();
+  const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -179,20 +186,28 @@ export default function Dashboard() {
 
   const top10Clients = processedClients.slice(0, 10);
 
-  const thisMonthOrders = orders.filter(o => {
-    const orderDate = new Date(o.created_date);
-    const now = new Date();
-    return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
-  });
+  // Filtra pelo mês/ano selecionado
+  const inSelectedPeriod = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+  };
 
+  const thisMonthOrders = orders.filter(o => inSelectedPeriod(o.created_date));
   const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
-  
-  const pendingQuotes = quotes.filter(q => ['rascunho', 'emitido', 'enviado'].includes(q.status));
+
+  // Orçamentos em aberto do mês selecionado
+  const pendingQuotes = quotes.filter(q =>
+    inSelectedPeriod(q.created_date) && ['rascunho', 'emitido', 'enviado'].includes(q.status)
+  );
   const pendingQuotesValue = pendingQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
 
-  // COMISSÃO PREVISTA: Soma TODAS as comissões previstas
+  // COMISSÃO PREVISTA do período selecionado
   const pendingCommission = commissions
-    .filter(c => c.status === 'prevista')
+    .filter(c => {
+      const order = orders.find(o => o.id === c.order_id);
+      return order && inSelectedPeriod(order.created_date);
+    })
     .reduce((sum, c) => sum + (c.commission_total_value || c.commission_value || 0), 0);
 
   const blockedCommission = orders
@@ -237,18 +252,36 @@ export default function Dashboard() {
             {greeting}, {user?.full_name?.split(' ')[0] || 'Representante'}!
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="w-fit"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <MonthPeriodSelector
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onChange={(m, y) => { setSelectedMonth(m); setSelectedYear(y); }}
+          />
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-9"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Aviso de período */}
+      <div className={`flex items-start gap-2 px-4 py-3 rounded-xl text-sm border ${isCurrentMonth ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+        <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+        <span>
+          {isCurrentMonth
+            ? <>Este painel mostra apenas os dados do <strong>mês atual</strong>. Para consultar meses anteriores, acesse <a href="/HistoricoComercial" className="underline font-semibold">Histórico Comercial</a>.</>
+            : <>Você está visualizando dados de <strong>{new Date(selectedYear, selectedMonth).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong>. <a href="/HistoricoComercial" className="underline font-semibold">Ver Histórico Completo</a>.</>
+          }
+        </span>
       </div>
 
       {/* Stats Grid */}
@@ -266,24 +299,25 @@ export default function Dashboard() {
         ) : (
           <>
             <StatsCard
-              title="Faturamento Mês"
+              title="Faturamento no Mês"
               value={formatCurrency(thisMonthRevenue)}
               icon={DollarSign}
               color="emerald"
               subtitle={`${thisMonthOrders.length} pedidos`}
             />
             <StatsCard
-              title="Orçamentos Abertos"
+              title="Cotações em Aberto"
               value={pendingQuotes.length}
               icon={FileText}
               color="blue"
               subtitle={formatCurrency(pendingQuotesValue)}
             />
             <StatsCard
-              title="Comissão Prevista"
+              title="Comissão Estimada"
               value={formatCurrency(pendingCommission)}
               icon={TrendingUp}
               color="purple"
+              subtitle="pedidos do mês"
             />
             <StatsCard
               title="Clientes Ativos"
@@ -295,6 +329,18 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Monthly Stats Panel */}
+      {!isLoading && (
+        <MonthlyStatsPanel
+          quotes={quotes}
+          opportunities={opportunities}
+          orders={orders}
+          commissions={commissions}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+        />
+      )}
 
       {/* Daily Action Alert - Ação do Dia (Regra D1) - Compacto */}
       <div className="lg:col-span-2">
