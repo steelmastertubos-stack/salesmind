@@ -9,18 +9,19 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function GoalsPanel({ orders = [], quotes = [], opportunities = [] }) {
+export default function GoalsPanel({ orders = [], quotes = [], opportunities = [], selectedMonth, selectedYear, periodType = 'month' }) {
   const [showEditGoal, setShowEditGoal] = useState(false);
   const [newGoalValue, setNewGoalValue] = useState('');
   const queryClient = useQueryClient();
-  // Calcular valores do mês atual
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1; // 1-12
-  const currentYear = now.getFullYear();
 
-  // Buscar meta do mês atual
+  const now = new Date();
+  // Use selected period or fall back to current month
+  const currentMonth = selectedMonth !== undefined ? selectedMonth + 1 : now.getMonth() + 1; // 1-12
+  const currentYear = selectedYear !== undefined ? selectedYear : now.getFullYear();
+
+  // Buscar meta do período
   const { data: currentGoalData } = useQuery({
-    queryKey: ['monthlyGoal', currentYear, currentMonth],
+    queryKey: ['monthlyGoal', currentYear, currentMonth, periodType],
     queryFn: async () => {
       const goals = await base44.entities.MonthlyGoal.filter({ 
         year: currentYear, 
@@ -88,18 +89,20 @@ export default function GoalsPanel({ orders = [], quotes = [], opportunities = [
     }
   });
 
-  const thisMonthOrders = orders.filter(o => {
-    const orderDate = new Date(o.created_date);
-    return orderDate.getMonth() + 1 === currentMonth && 
-           orderDate.getFullYear() === currentYear &&
-           o.status !== 'cancelled';
-  });
+  const inPeriod = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (periodType === 'year') return d.getFullYear() === currentYear;
+    if (periodType === 'quarter') {
+      const selectedQ = Math.floor((currentMonth - 1) / 3);
+      const dq = Math.floor(d.getMonth() / 3);
+      return d.getFullYear() === currentYear && dq === selectedQ;
+    }
+    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
+  };
 
-  const thisMonthOpportunities = opportunities.filter(opp => {
-    const oppDate = new Date(opp.created_date);
-    return oppDate.getMonth() + 1 === currentMonth && 
-           oppDate.getFullYear() === currentYear;
-  });
+  const thisMonthOrders = orders.filter(o => inPeriod(o.created_date) && o.status !== 'cancelled');
+  const thisMonthOpportunities = opportunities.filter(opp => inPeriod(opp.created_date));
 
   // Valores - usar oportunidades do CRM
   const sold = thisMonthOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
@@ -146,9 +149,15 @@ export default function GoalsPanel({ orders = [], quotes = [], opportunities = [
               <Target className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-emerald-900">Meta do Mês</CardTitle>
+              <CardTitle className="text-emerald-900">
+                {periodType === 'year' ? 'Meta do Ano' : periodType === 'quarter' ? 'Meta do Trimestre' : 'Meta do Mês'}
+              </CardTitle>
               <p className="text-xs text-emerald-700">
-                {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                {periodType === 'year'
+                  ? `Ano ${currentYear}`
+                  : periodType === 'quarter'
+                    ? `T${Math.ceil(currentMonth / 3)} ${currentYear}`
+                    : new Date(currentYear, currentMonth - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
               </p>
             </div>
           </div>

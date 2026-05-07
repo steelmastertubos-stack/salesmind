@@ -33,11 +33,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Dashboard() {
   const [greeting, setGreeting] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [periodType, setPeriodType] = useState('month'); // 'month' | 'quarter' | 'year'
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const queryClient = useQueryClient();
-  const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
+  const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear() && periodType === 'month';
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -186,10 +187,16 @@ export default function Dashboard() {
 
   const top10Clients = processedClients.slice(0, 10);
 
-  // Filtra pelo mês/ano selecionado
+  // Filtra pelo período selecionado
   const inSelectedPeriod = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
+    if (periodType === 'year') return d.getFullYear() === selectedYear;
+    if (periodType === 'quarter') {
+      const q = Math.floor(selectedMonth / 3);
+      const dq = Math.floor(d.getMonth() / 3);
+      return d.getFullYear() === selectedYear && dq === q;
+    }
     return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
   };
 
@@ -259,7 +266,9 @@ export default function Dashboard() {
           <MonthPeriodSelector
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
+            periodType={periodType}
             onChange={(m, y) => { setSelectedMonth(m); setSelectedYear(y); }}
+            onPeriodTypeChange={setPeriodType}
           />
           <Button 
             variant="outline" 
@@ -279,7 +288,11 @@ export default function Dashboard() {
         <span>
           {isCurrentMonth
             ? <>Este painel mostra apenas os dados do <strong>mês atual</strong>. Para consultar meses anteriores, acesse <a href="/HistoricoComercial" className="underline font-semibold">Histórico Comercial</a>.</>
-            : <>Você está visualizando dados de <strong>{new Date(selectedYear, selectedMonth).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong>. <a href="/HistoricoComercial" className="underline font-semibold">Ver Histórico Completo</a>.</>
+            : <>Você está visualizando dados de <strong>{
+          periodType === 'year' ? `Ano ${selectedYear}` :
+          periodType === 'quarter' ? `T${Math.floor(selectedMonth / 3) + 1} ${selectedYear}` :
+          new Date(selectedYear, selectedMonth).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+        }</strong>. <a href="/HistoricoComercial" className="underline font-semibold">Ver Histórico Completo</a>.</>
           }
         </span>
       </div>
@@ -299,7 +312,7 @@ export default function Dashboard() {
         ) : (
           <>
             <StatsCard
-              title="Faturamento no Mês"
+              title={periodType === 'year' ? 'Faturamento no Ano' : periodType === 'quarter' ? 'Faturamento no Trimestre' : 'Faturamento no Mês'}
               value={formatCurrency(thisMonthRevenue)}
               icon={DollarSign}
               color="emerald"
@@ -339,6 +352,7 @@ export default function Dashboard() {
           commissions={commissions}
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
+          periodType={periodType}
         />
       )}
 
@@ -352,7 +366,14 @@ export default function Dashboard() {
 
       {/* Goals Panel - Compact */}
       <div className="lg:col-span-2">
-        <GoalsPanel orders={orders} quotes={quotes} opportunities={opportunities} />
+        <GoalsPanel
+          orders={orders}
+          quotes={quotes}
+          opportunities={opportunities}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          periodType={periodType}
+        />
       </div>
 
       {/* Integrated Alerts */}

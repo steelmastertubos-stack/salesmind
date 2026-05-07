@@ -7,29 +7,42 @@ const MONTHS = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
-export default function MonthlyStatsPanel({ quotes = [], opportunities = [], orders = [], commissions = [], selectedMonth, selectedYear }) {
+function getPeriodLabel(selectedMonth, selectedYear, periodType) {
+  if (periodType === 'year') return `Ano ${selectedYear}`;
+  if (periodType === 'quarter') {
+    const q = Math.floor(selectedMonth / 3) + 1;
+    return `T${q} ${selectedYear}`;
+  }
+  return `${MONTHS[selectedMonth]} ${selectedYear}`;
+}
+
+export default function MonthlyStatsPanel({
+  quotes = [], opportunities = [], orders = [], commissions = [],
+  selectedMonth, selectedYear, periodType = 'month'
+}) {
 
   const inPeriod = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
+    if (periodType === 'year') return d.getFullYear() === selectedYear;
+    if (periodType === 'quarter') {
+      const q = Math.floor(selectedMonth / 3);
+      const dq = Math.floor(d.getMonth() / 3);
+      return d.getFullYear() === selectedYear && dq === q;
+    }
     return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
   };
 
-  // Orçamentos do período
   const periodQuotes = quotes.filter(q => inPeriod(q.created_date));
   const openQuotes = periodQuotes.filter(q => ['rascunho', 'emitido', 'enviado'].includes(q.status));
   const wonQuotes = periodQuotes.filter(q => ['aprovado', 'convertido'].includes(q.status));
   const lostQuotes = periodQuotes.filter(q => q.status === 'cancelado');
   const totalQuotedValue = periodQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
 
-  // Oportunidades do período
   const periodOpps = opportunities.filter(o => inPeriod(o.created_date));
 
-  // Pedidos ganhos no período
   const periodOrders = orders.filter(o => inPeriod(o.created_date) && o.status !== 'cancelado');
-  const periodRevenue = periodOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
 
-  // Comissão estimada dos pedidos ganhos no período
   const periodCommission = commissions
     .filter(c => {
       const order = orders.find(o => o.id === c.order_id);
@@ -40,12 +53,12 @@ export default function MonthlyStatsPanel({ quotes = [], opportunities = [], ord
   const formatCurrency = (v) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v || 0);
 
-  const monthLabel = `${MONTHS[selectedMonth]} ${selectedYear}`;
+  const periodLabel = getPeriodLabel(selectedMonth, selectedYear, periodType);
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
-        Estatísticas · {monthLabel}
+        Estatísticas · {periodLabel}
       </p>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatsCard
@@ -53,7 +66,7 @@ export default function MonthlyStatsPanel({ quotes = [], opportunities = [], ord
           value={periodOpps.length}
           icon={Target}
           color="blue"
-          subtitle={`criadas no mês`}
+          subtitle="criadas no período"
         />
         <StatsCard
           title="Total Cotado"
