@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 // ── Colunas esperadas ──────────────────────────────────────────────────────────
 const EXPECTED_COLS = [
   { key: 'company_name', label: 'Razão Social',      required: true },
-  { key: 'cnpj',         label: 'CNPJ',              required: true },
+  { key: 'cnpj',         label: 'CNPJ',              required: false },
   { key: 'email',        label: 'E-mail',            required: false },
   { key: 'phone',        label: 'Telefone',          required: false },
   { key: 'whatsapp',     label: 'WhatsApp',          required: false },
@@ -71,7 +71,7 @@ const autoMap = (sheetHeaders) => {
 const downloadTemplate = () => {
   // Aba principal com dados
   const wsData = [
-    ['Razão Social *','CNPJ *','E-mail','Telefone','WhatsApp','Nome do Responsável','Segmento / Área','Nome Fantasia','Cidade','Estado'],
+    ['Razão Social *','CNPJ','E-mail','Telefone','WhatsApp','Nome do Responsável','Segmento / Área','Nome Fantasia','Cidade','Estado'],
     ['Metalúrgica Santos Ltda','12.345.678/0001-99','contato@santos.com','11 3333-4444','11 9 8765-4321','Carlos Santos','Metalúrgica','Santos Metal','São Paulo','SP'],
     ['Caldeiraria Norte S/A','98.765.432/0001-00','comercial@cnorte.com.br','51 3222-8888','51 9 9876-5432','Ana Oliveira','Caldeiraria','CaldeNorte','Porto Alegre','RS'],
     ['Estruturas MG Ltda','11.222.333/0001-44','contato@estruturasmg.com','31 4000-1234','31 9 7654-3210','Roberto Lima','Estruturas Metálicas','','Belo Horizonte','MG'],
@@ -187,7 +187,7 @@ export default function ClientImportForm({ onSuccess }) {
 
   const removeRow = (idx) => setRows(prev => prev.filter((_, i) => i !== idx));
 
-  const validRows    = rows.filter(r => r.company_name?.trim() && r.cnpj?.trim());
+  const validRows    = rows.filter(r => r.company_name?.trim());
   const invalidCount = rows.length - validRows.length;
 
   // ── Step 4: Import ────────────────────────────────────────────────────────────
@@ -281,7 +281,7 @@ export default function ClientImportForm({ onSuccess }) {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800 space-y-1">
             <p className="font-semibold">Campos obrigatórios na planilha:</p>
-            <p>✅ Razão Social &nbsp;|&nbsp; ✅ CNPJ</p>
+            <p>✅ Razão Social</p>
             <p className="text-blue-600">Os demais campos (e-mail, telefone, responsável, área) podem ser preenchidos após a importação diretamente no sistema.</p>
           </div>
         </div>
@@ -340,7 +340,7 @@ export default function ClientImportForm({ onSuccess }) {
             <Button
               className="bg-emerald-600 hover:bg-emerald-700 flex-1"
               onClick={handleConfirmMap}
-              disabled={!mapping['company_name'] || !mapping['cnpj']}
+              disabled={!mapping['company_name']}
             >
               Continuar para Revisão <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -354,7 +354,7 @@ export default function ClientImportForm({ onSuccess }) {
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">
               <strong>{validRows.length}</strong> prontos para importar
-              {invalidCount > 0 && <span className="text-red-500 ml-2">· {invalidCount} inválido(s) – sem Razão Social ou CNPJ</span>}
+              {invalidCount > 0 && <span className="text-red-500 ml-2">· {invalidCount} inválido(s) – sem Razão Social</span>}
             </p>
             <p className="text-xs text-slate-400 flex items-center gap-1">
               <Edit3 className="w-3 h-3" /> Clique nas células para editar
@@ -376,7 +376,7 @@ export default function ClientImportForm({ onSuccess }) {
               </thead>
               <tbody>
                 {rows.map((row, idx) => {
-                  const invalid = !row.company_name?.trim() || !row.cnpj?.trim();
+                  const invalid = !row.company_name?.trim();
                   return (
                     <tr key={idx} className={`border-t ${invalid ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
                       <td className="px-2 py-1 text-slate-400">{idx + 1}</td>
@@ -419,7 +419,7 @@ export default function ClientImportForm({ onSuccess }) {
           {invalidCount > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 text-sm text-amber-800">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>Linhas em vermelho não serão importadas por falta de Razão Social ou CNPJ. Complete os dados ou remova as linhas.</span>
+              <span>Linhas em vermelho não serão importadas por falta de Razão Social. Complete os dados ou remova as linhas.</span>
             </div>
           )}
 
