@@ -58,11 +58,11 @@ export default function ClientCard({ client, onEdit, onAddFollowUp }) {
       {/* Header */}
       <div className="p-4 border-b border-slate-100">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6f] rounded-xl flex items-center justify-center text-white font-bold">
+          <Link to={createPageUrl(`ClientDetails?id=${client.id}`)} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6f] rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
               {(client.trade_name || client.company_name || '?').charAt(0)}
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-semibold text-slate-900 line-clamp-1">
                 {client.trade_name || client.company_name}
               </h3>
@@ -79,7 +79,7 @@ export default function ClientCard({ client, onEdit, onAddFollowUp }) {
                 )}
               </div>
             </div>
-          </div>
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
