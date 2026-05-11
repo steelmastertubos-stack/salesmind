@@ -1,0 +1,92 @@
+{
+  "name": "WhatsAppMessage",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "client_phone": {
+      "type": "string",
+      "description": "N\u00famero do WhatsApp"
+    },
+    "opportunity_id": {
+      "type": "string",
+      "description": "ID da oportunidade (opcional)"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "ID do template usado (opcional)"
+    },
+    "template_name": {
+      "type": "string",
+      "description": "Nome do template"
+    },
+    "message_content": {
+      "type": "string",
+      "description": "Conte\u00fado da mensagem enviada"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "template"
+      ],
+      "default": "manual",
+      "description": "Tipo de mensagem"
+    },
+    "funnel_stage": {
+      "type": "string",
+      "description": "Etapa do funil no momento do envio"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Nome do vendedor que enviou"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email do vendedor"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "delivered",
+        "read",
+        "failed",
+        "pending"
+      ],
+      "default": "sent",
+      "description": "Status da mensagem"
+    },
+    "whatsapp_message_id": {
+      "type": "string",
+      "description": "ID da mensagem na API do WhatsApp (futuro)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do vendedor"
+    },
+    "followup_task_created": {
+      "type": "boolean",
+      "default": false
+    },
+    "followup_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_phone",
+    "message_content"
+  ]
+}

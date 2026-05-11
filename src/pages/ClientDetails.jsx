@@ -33,6 +33,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/common/PageHeader';
 import ClientForm from '@/components/forms/ClientForm';
+import WhatsAppSendModal from '@/components/whatsapp/WhatsAppSendModal';
+import WhatsAppTimeline from '@/components/whatsapp/WhatsAppTimeline';
 import PurchasePrediction from '@/components/ai/PurchasePrediction';
 import CrossSellSuggestions from '@/components/clients/CrossSellSuggestions';
 import ClientAlerts from '@/components/clients/ClientAlerts';
@@ -43,6 +45,7 @@ import { toast } from 'sonner';
 export default function ClientDetails() {
   const [clientId, setClientId] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [showFollowUpForm, setShowFollowUpForm] = useState(false);
   const [followUpData, setFollowUpData] = useState({
     type: 'call',
@@ -256,14 +259,14 @@ export default function ClientDetails() {
 
         {/* Contact Buttons */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
-          {whatsappLink && (
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex-1">
-              <Button variant="outline" className="w-full text-emerald-600 border-emerald-200 hover:bg-emerald-50">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                WhatsApp
-              </Button>
-            </a>
-          )}
+          <Button
+            variant="outline"
+            className="flex-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-semibold"
+            onClick={() => setShowWhatsApp(true)}
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Enviar WhatsApp
+          </Button>
           {client.phone && (
             <a href={`tel:${client.phone}`} className="flex-1">
               <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50">
@@ -298,7 +301,7 @@ export default function ClientDetails() {
 
       {/* Tabs */}
       <Tabs defaultValue="ai" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="ai" className="text-xs">
             <Brain className="w-3 h-3 mr-1" />
             IA
@@ -307,6 +310,10 @@ export default function ClientDetails() {
           <TabsTrigger value="memory" className="text-xs">Memória</TabsTrigger>
           <TabsTrigger value="followups" className="text-xs">Follow-ups</TabsTrigger>
           <TabsTrigger value="info" className="text-xs">Dados</TabsTrigger>
+          <TabsTrigger value="whatsapp" className="text-xs">
+            <MessageCircle className="w-3 h-3 mr-1 text-green-600" />
+            WhatsApp
+          </TabsTrigger>
         </TabsList>
 
         {/* AI Tab */}
@@ -552,7 +559,31 @@ export default function ClientDetails() {
             </div>
           </div>
         </TabsContent>
+
+        {/* WhatsApp Tab */}
+        <TabsContent value="whatsapp">
+          <div className="bg-white rounded-xl p-4 border border-slate-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-green-600" />
+                Histórico de Mensagens
+              </h3>
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowWhatsApp(true)}>
+                <MessageCircle className="w-4 h-4 mr-1" />
+                Nova Mensagem
+              </Button>
+            </div>
+            <WhatsAppTimeline clientId={clientId} />
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* WhatsApp Modal */}
+      <WhatsAppSendModal
+        open={showWhatsApp}
+        onClose={() => setShowWhatsApp(false)}
+        client={client}
+      />
 
       {/* Edit Form Dialog */}
       <Dialog open={showEditForm} onOpenChange={setShowEditForm}>

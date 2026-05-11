@@ -1,0 +1,50 @@
+{
+  "name": "WhatsAppTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do template"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "primeiro_contato",
+        "follow_up",
+        "proposta_enviada",
+        "lembrete_reuniao",
+        "recuperacao_lead",
+        "pos_venda",
+        "renovacao_recompra",
+        "outro"
+      ],
+      "description": "Categoria do template"
+    },
+    "body": {
+      "type": "string",
+      "description": "Corpo da mensagem com vari\u00e1veis {{nome_cliente}}, {{nome_vendedor}}, {{empresa}}, {{produto}}, {{data}}"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de vari\u00e1veis usadas no template",
+      "default": []
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantas vezes foi usado"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "body"
+  ]
+}
