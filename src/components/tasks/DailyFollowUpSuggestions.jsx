@@ -13,7 +13,6 @@ import {
   Zap,
   Check,
   Plus,
-  AlertTriangle,
   CalendarClock,
   Building2
 } from 'lucide-react';
