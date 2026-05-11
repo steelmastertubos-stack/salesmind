@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import TaskForm from '@/components/tasks/TaskForm';
+import DailyFollowUpSuggestions from '@/components/tasks/DailyFollowUpSuggestions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -137,8 +138,11 @@ export default function TasksPage() {
         }}
       />
 
-      <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="suggestions" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="suggestions">
+            ✨ Sugestões
+          </TabsTrigger>
           <TabsTrigger value="pending">
             Pendentes ({pendingTasks.length})
           </TabsTrigger>
@@ -149,6 +153,10 @@ export default function TasksPage() {
             Adiadas ({snoozedTasks.length})
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="suggestions">
+          <DailyFollowUpSuggestions />
+        </TabsContent>
 
         <TabsContent value="pending" className="space-y-3">
           {pendingTasks.length > 0 ? (

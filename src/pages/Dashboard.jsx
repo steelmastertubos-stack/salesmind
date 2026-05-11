@@ -5,6 +5,7 @@ import IntegratedAlerts from '@/components/dashboard/IntegratedAlerts';
 import SuggestedActionCard from '@/components/productivity/SuggestedActionCard';
 import DailyActionAlert from '@/components/productivity/DailyActionAlert';
 import FollowUpSection from '@/components/dashboard/FollowUpSection';
+import DailyFollowUpSuggestions from '@/components/tasks/DailyFollowUpSuggestions';
 import MonthPeriodSelector from '@/components/dashboard/MonthPeriodSelector';
 import MonthlyStatsPanel from '@/components/dashboard/MonthlyStatsPanel';
 import { toast } from 'sonner';
@@ -360,6 +361,9 @@ export default function Dashboard() {
       <div className="lg:col-span-2">
         <DailyActionAlert tasks={tasks} opportunities={opportunities} clients={clients} />
       </div>
+
+      {/* Sugestões automáticas de follow-up */}
+      <DailyFollowUpSuggestions />
 
       {/* Follow-up Section - Follow-ups Atrasados, Hoje e Próximos */}
       <FollowUpSection tasks={tasks} />
