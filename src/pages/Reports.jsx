@@ -169,7 +169,7 @@ export default function Reports() {
       if (!isNaN(createdDate.getTime())) years.add(createdDate.getFullYear());
     });
     
-    console.log('📅 Anos disponíveis:', Array.from(years).sort());
+    // anos disponíveis calculados
     
     return Array.from(years).sort((a, b) => b - a);
   }, [orders, quotes, opportunities]);
@@ -1010,13 +1010,15 @@ export default function Reports() {
       {/* Tabs */}
       {!activeDashboard && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
           <TabsTrigger value="ia">🤖 IA</TabsTrigger>
           <TabsTrigger value="executive">Executiva</TabsTrigger>
           <TabsTrigger value="sales">Vendas</TabsTrigger>
           <TabsTrigger value="clients">Clientes</TabsTrigger>
           <TabsTrigger value="regions">Regiões</TabsTrigger>
           <TabsTrigger value="segments">Segmentos</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
+          <TabsTrigger value="principals">Representadas</TabsTrigger>
           <TabsTrigger value="crm">CRM/Funil</TabsTrigger>
           <TabsTrigger value="seasonality">Sazonalidade</TabsTrigger>
         </TabsList>

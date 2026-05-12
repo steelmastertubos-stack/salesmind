@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -57,7 +57,7 @@ export default function Clients() {
   });
 
   // Enriquecer clientes com dados calculados
-  const enrichedClients = React.useMemo(() => {
+  const enrichedClients = useMemo(() => {
     return clients.map(client => {
       const clientOrders = orders.filter(o => o.client_id === client.id && o.created_date);
       const clientQuotes = quotes.filter(q => q.client_id === client.id && q.created_date);
@@ -178,10 +178,16 @@ export default function Clients() {
   const states = [...new Set(enrichedClients.map(c => c.state).filter(Boolean))];
 
   const filteredClients = enrichedClients.filter(client => {
-    const matchesSearch = 
-      (client.company_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
-      (client.trade_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
-      (client.cnpj || '').includes(search);
+    const q = search.toLowerCase();
+    const matchesSearch = !search ||
+      (client.company_name?.toLowerCase() || '').includes(q) ||
+      (client.trade_name?.toLowerCase() || '').includes(q) ||
+      (client.cnpj || '').includes(search) ||
+      (client.contact_name?.toLowerCase() || '').includes(q) ||
+      (client.email?.toLowerCase() || '').includes(q) ||
+      (client.phone || '').includes(search) ||
+      (client.whatsapp || '').includes(search) ||
+      (client.city?.toLowerCase() || '').includes(q);
     
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
     const matchesSegment = segmentFilter === 'all' || client.segment === segmentFilter;
@@ -225,7 +231,7 @@ export default function Clients() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Buscar por nome, fantasia ou CNPJ..."
+            placeholder="Buscar por nome, CNPJ, contato, e-mail, telefone ou cidade..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
