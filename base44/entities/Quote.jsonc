@@ -1,0 +1,289 @@
+{
+  "name": "Quote",
+  "type": "object",
+  "properties": {
+    "quote_number": {
+      "type": "string",
+      "description": "N\u00famero do or\u00e7amento"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "client_cnpj": {
+      "type": "string",
+      "description": "CNPJ do cliente"
+    },
+    "client_state": {
+      "type": "string",
+      "description": "Estado do cliente (UF)"
+    },
+    "client_city": {
+      "type": "string",
+      "description": "Cidade do cliente"
+    },
+    "client_state_registration": {
+      "type": "string",
+      "description": "Inscri\u00e7\u00e3o Estadual do cliente"
+    },
+    "client_address": {
+      "type": "string",
+      "description": "Endere\u00e7o do cliente"
+    },
+    "client_phone": {
+      "type": "string",
+      "description": "Telefone do cliente"
+    },
+    "client_contact": {
+      "type": "string",
+      "description": "Nome do contato do cliente"
+    },
+    "principal_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "principal_name": {
+      "type": "string",
+      "description": "Nome do representado"
+    },
+    "principal_cnpj": {
+      "type": "string",
+      "description": "CNPJ do representado"
+    },
+    "principal_state_registration": {
+      "type": "string",
+      "description": "Inscri\u00e7\u00e3o Estadual do representado"
+    },
+    "principal_address": {
+      "type": "string",
+      "description": "Endere\u00e7o do representado"
+    },
+    "principal_city": {
+      "type": "string",
+      "description": "Cidade do representado"
+    },
+    "principal_state": {
+      "type": "string",
+      "description": "Estado do representado"
+    },
+    "principal_zip_code": {
+      "type": "string",
+      "description": "CEP do representado"
+    },
+    "principal_phone": {
+      "type": "string",
+      "description": "Telefone do representado"
+    },
+    "principal_website": {
+      "type": "string",
+      "description": "Website do representado"
+    },
+    "principal_logo_url": {
+      "type": "string",
+      "description": "Logo do representado"
+    },
+    "representative_name": {
+      "type": "string",
+      "description": "Nome do representante"
+    },
+    "representative_document": {
+      "type": "string",
+      "description": "CNPJ/CPF do representante"
+    },
+    "representative_logo_url": {
+      "type": "string",
+      "description": "Logo do representante"
+    },
+    "opportunity_id": {
+      "type": "string",
+      "description": "ID da oportunidade vinculada"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_code": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "ncm": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "kg",
+              "mt",
+              "pc"
+            ]
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "weight_per_meter": {
+            "type": "number"
+          },
+          "total_weight": {
+            "type": "number"
+          },
+          "base_price_per_kg": {
+            "type": "number"
+          },
+          "icms_rate": {
+            "type": "number"
+          },
+          "ipi_rate": {
+            "type": "number"
+          },
+          "price_per_kg": {
+            "type": "number"
+          },
+          "item_subtotal": {
+            "type": "number"
+          },
+          "icms_value": {
+            "type": "number"
+          },
+          "ipi_value": {
+            "type": "number"
+          },
+          "item_total": {
+            "type": "number"
+          },
+          "delivery_days": {
+            "type": "number"
+          },
+          "vtk_cost_id": {
+            "type": "string",
+            "description": "ID do custo VTK"
+          },
+          "vtk_cost": {
+            "type": "number",
+            "description": "Custo VTK por unidade"
+          },
+          "vtk_aba": {
+            "type": "string",
+            "description": "Nome da aba VTK"
+          },
+          "vtk_margin_pct": {
+            "type": "number",
+            "description": "Margem percentual manual"
+          }
+        }
+      },
+      "description": "Itens do or\u00e7amento"
+    },
+    "products_subtotal": {
+      "type": "number",
+      "description": "Total de produtos sem impostos"
+    },
+    "total_icms": {
+      "type": "number",
+      "description": "Total de ICMS"
+    },
+    "total_ipi": {
+      "type": "number",
+      "description": "Total de IPI"
+    },
+    "total_weight": {
+      "type": "number",
+      "description": "Peso total do or\u00e7amento"
+    },
+    "freight_type": {
+      "type": "string",
+      "enum": [
+        "FOB",
+        "CIF"
+      ],
+      "default": "FOB",
+      "description": "Tipo de frete"
+    },
+    "freight_value": {
+      "type": "number",
+      "description": "Valor do frete"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Valor final do or\u00e7amento"
+    },
+    "terms": {
+      "type": "string",
+      "description": "Termos do or\u00e7amento (ex: 30/45/60)"
+    },
+    "avg_term_days": {
+      "type": "number",
+      "description": "Prazo m\u00e9dio dos vencimentos em dias"
+    },
+    "payment_terms": {
+      "type": "string",
+      "description": "Condi\u00e7\u00f5es de pagamento (texto descritivo)"
+    },
+    "commission_rate": {
+      "type": "number",
+      "description": "Taxa de comiss\u00e3o calculada/persistida"
+    },
+    "commission_value_total": {
+      "type": "number",
+      "description": "Valor total de comiss\u00e3o calculado/persistido"
+    },
+    "validity_days": {
+      "type": "number",
+      "description": "Validade em dias"
+    },
+    "validity_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "emitido",
+        "enviado",
+        "aprovado",
+        "convertido",
+        "cancelado"
+      ],
+      "default": "rascunho",
+      "description": "Status do or\u00e7amento"
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Or\u00e7amento travado para edi\u00e7\u00e3o"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "client_id",
+    "principal_id"
+  ]
+}

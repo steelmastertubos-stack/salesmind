@@ -1,0 +1,61 @@
+{
+  "name": "FollowUp",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "visit",
+        "whatsapp",
+        "email",
+        "meeting"
+      ],
+      "description": "Tipo de contato"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Assunto"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Anota\u00e7\u00f5es"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "neutral",
+        "negative",
+        "no_answer"
+      ],
+      "description": "Resultado"
+    },
+    "next_action": {
+      "type": "string",
+      "description": "Pr\u00f3xima a\u00e7\u00e3o"
+    },
+    "next_action_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da pr\u00f3xima a\u00e7\u00e3o"
+    },
+    "contact_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do contato"
+    }
+  },
+  "required": [
+    "client_id",
+    "type"
+  ]
+}

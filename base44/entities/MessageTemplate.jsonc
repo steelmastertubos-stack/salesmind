@@ -1,0 +1,45 @@
+{
+  "name": "MessageTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do template"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "RISK",
+        "ATTENTION",
+        "INACTIVE"
+      ],
+      "description": "Tipo de alerta"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "WHATSAPP",
+        "EMAIL"
+      ],
+      "description": "Canal de comunica\u00e7\u00e3o"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Assunto (para email)"
+    },
+    "body": {
+      "type": "string",
+      "description": "Corpo da mensagem (aceita vari\u00e1veis: {NOME}, {EMPRESA}, {DIAS}, {CICLO}, {ITEM}, {VALOR}, {VENDEDOR})"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "alert_type",
+    "channel",
+    "body"
+  ]
+}

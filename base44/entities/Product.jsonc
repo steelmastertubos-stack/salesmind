@@ -1,0 +1,94 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "principal_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo do produto"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome do produto"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o/especifica\u00e7\u00e3o"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "tubos_quadrados_retangulares",
+        "chapas",
+        "tubos_redondos",
+        "perfis",
+        "vigas",
+        "cantoneiras",
+        "outros"
+      ],
+      "description": "Categoria (define IPI autom\u00e1tico)"
+    },
+    "ncm": {
+      "type": "string",
+      "description": "NCM do produto"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "kg",
+        "mt",
+        "pc"
+      ],
+      "description": "Unidade padr\u00e3o"
+    },
+    "factor_6m": {
+      "type": "number",
+      "description": "Fator (peso da barra de 6m) - usado para NEW A\u00c7O"
+    },
+    "weight_per_meter": {
+      "type": "number",
+      "description": "Peso por metro (kg/mt) - calculado automaticamente como factor_6m \u00f7 6"
+    },
+    "ipi_rate": {
+      "type": "number",
+      "description": "Taxa de IPI personalizada"
+    },
+    "base_price_per_kg": {
+      "type": "number",
+      "description": "Pre\u00e7o base por kg COM ICMS 18%"
+    },
+    "cost_per_kg": {
+      "type": "number",
+      "description": "Custo por kg (para c\u00e1lculo de margem VTK)"
+    },
+    "icms_st_rate": {
+      "type": "number",
+      "description": "Taxa de ICMS ST para conex\u00f5es VTK"
+    },
+    "stock_quantity": {
+      "type": "number",
+      "description": "Quantidade em estoque"
+    },
+    "min_quantity": {
+      "type": "number",
+      "description": "Quantidade m\u00ednima de venda"
+    },
+    "is_imported": {
+      "type": "boolean",
+      "default": false,
+      "description": "Produto importado (ICMS 4%)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "principal_id",
+    "name",
+    "base_price_per_kg"
+  ]
+}

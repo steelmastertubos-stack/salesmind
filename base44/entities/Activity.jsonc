@@ -1,0 +1,80 @@
+{
+  "name": "Activity",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "RISK",
+        "ATTENTION",
+        "INACTIVE"
+      ],
+      "description": "Tipo de alerta"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "WHATSAPP",
+        "CALL",
+        "EMAIL",
+        "QUOTE",
+        "CLASSIFY",
+        "REMINDER",
+        "RESOLVED"
+      ],
+      "description": "Tipo de a\u00e7\u00e3o"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "ID do template usado (se houver)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "resolved"
+      ],
+      "default": "pending",
+      "description": "Status da atividade"
+    },
+    "next_follow_up": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do pr\u00f3ximo follow-up"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "outro_fornecedor",
+        "projeto_parado",
+        "problema_preco",
+        "problema_prazo",
+        "problema_atendimento",
+        "outro"
+      ],
+      "description": "Classifica\u00e7\u00e3o (para inativos)"
+    },
+    "classification_notes": {
+      "type": "string",
+      "description": "Detalhes da classifica\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "customer_id",
+    "alert_type",
+    "action_type"
+  ]
+}

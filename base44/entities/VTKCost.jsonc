@@ -1,0 +1,79 @@
+{
+  "name": "VTKCost",
+  "type": "object",
+  "properties": {
+    "aba_name": {
+      "type": "string",
+      "description": "Nome da aba de origem (ex: Tubul\u00e3o com Costura, Tubo Sem Costura, Tubo Com Costura)"
+    },
+    "aba_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da tabela de custo"
+    },
+    "product_type": {
+      "type": "string",
+      "description": "Tipo de produto (Tubul\u00e3o, Tubo Sem Costura, Tubo Com Costura)"
+    },
+    "specification": {
+      "type": "string",
+      "description": "Norma/Especifica\u00e7\u00e3o (API 5L, ASTM A-106, NBR 5580, etc)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Categoria (PRETO, IMPORTADO, GALVANIZADO, NACIONAL, etc)"
+    },
+    "bitola": {
+      "type": "string",
+      "description": "Bitola/Tamanho (12\", 14\", 1/4\", 1/2\", etc)"
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Schedule/Espessura (SCH 10, SCH 20, SCH 40, SCH 80, NBR 5580, etc)"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "KG",
+        "MT"
+      ],
+      "description": "Unidade de medida (KG ou MT)"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "description": "Custo unit\u00e1rio em R$"
+    },
+    "currency": {
+      "type": "string",
+      "default": "BRL",
+      "description": "Moeda (BRL)"
+    },
+    "icms": {
+      "type": "number",
+      "default": 18,
+      "description": "ICMS inclu\u00eddo no custo (%)"
+    },
+    "margin_target": {
+      "type": "number",
+      "default": 0,
+      "description": "Margem alvo (%)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Custo ativo para uso"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es (ex: itens fora de estoque, sob consulta)"
+    }
+  },
+  "required": [
+    "aba_name",
+    "aba_date",
+    "product_type",
+    "bitola",
+    "schedule",
+    "cost_per_unit"
+  ]
+}

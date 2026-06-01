@@ -1,0 +1,107 @@
+{
+  "name": "Commission",
+  "type": "object",
+  "properties": {
+    "representada_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "principal_id": {
+      "type": "string",
+      "description": "ID do representado (alias)"
+    },
+    "principal_name": {
+      "type": "string",
+      "description": "Nome do representado"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "ID do pedido vinculado"
+    },
+    "order_number": {
+      "type": "string",
+      "description": "N\u00famero do pedido"
+    },
+    "quote_id": {
+      "type": "string",
+      "description": "ID do or\u00e7amento origem"
+    },
+    "opportunity_id": {
+      "type": "string",
+      "description": "ID da oportunidade"
+    },
+    "sales_value": {
+      "type": "number",
+      "description": "Valor base de vendas (para c\u00e1lculo)"
+    },
+    "margin_pct": {
+      "type": "number",
+      "description": "Margem percentual (se aplic\u00e1vel VTK)"
+    },
+    "commission_rate": {
+      "type": "number",
+      "description": "Taxa de comiss\u00e3o (%) - PERSISTIR"
+    },
+    "commission_total_value": {
+      "type": "number",
+      "description": "Valor TOTAL da comiss\u00e3o - PERSISTIR"
+    },
+    "commission_value": {
+      "type": "number",
+      "description": "Valor da comiss\u00e3o (alias para compatibilidade)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "prevista",
+        "a_receber",
+        "recebida",
+        "cancelada"
+      ],
+      "default": "prevista",
+      "description": "Status da comiss\u00e3o m\u00e3e"
+    },
+    "expected_first_receipt_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data esperada do 1\u00ba recebimento"
+    },
+    "invoice_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do faturamento (legacy)"
+    },
+    "invoice_value": {
+      "type": "number",
+      "description": "Valor faturado (legacy)"
+    },
+    "payment_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista de recebimento (legacy)"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data efetiva de recebimento (legacy)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "order_id",
+    "sales_value",
+    "commission_rate",
+    "commission_total_value"
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "name": "Opportunity",
+  "type": "object",
+  "properties": {
+    "quote_id": {
+      "type": "string",
+      "description": "ID do or\u00e7amento vinculado"
+    },
+    "quote_number": {
+      "type": "string",
+      "description": "N\u00famero do or\u00e7amento"
+    },
+    "created_from_quote_id": {
+      "type": "string",
+      "description": "ID do or\u00e7amento que criou esta oportunidade (hist\u00f3rico)"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "principal_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "principal_name": {
+      "type": "string",
+      "description": "Nome do representado"
+    },
+    "value_estimated": {
+      "type": "number",
+      "description": "Valor estimado da oportunidade"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Valor total (legacy, usar value_estimated)"
+    },
+    "total_weight": {
+      "type": "number",
+      "description": "Peso total"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "proposta_enviada",
+        "em_negociacao",
+        "ganho",
+        "perdido"
+      ],
+      "default": "proposta_enviada",
+      "description": "Est\u00e1gio no funil"
+    },
+    "next_action_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da pr\u00f3xima a\u00e7\u00e3o"
+    },
+    "next_followup_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Pr\u00f3ximo follow-up (autom\u00e1tico)"
+    },
+    "next_action_type": {
+      "type": "string",
+      "enum": [
+        "whatsapp",
+        "call",
+        "email",
+        "visit"
+      ],
+      "description": "Tipo da pr\u00f3xima a\u00e7\u00e3o"
+    },
+    "last_contact_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do \u00faltimo contato"
+    },
+    "last_contact_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do \u00faltimo contato"
+    },
+    "days_without_contact": {
+      "type": "number",
+      "description": "Dias sem contato"
+    },
+    "priority_score": {
+      "type": "number",
+      "description": "Score de prioridade (0-100)"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low",
+      "description": "N\u00edvel de risco"
+    },
+    "loss_reason": {
+      "type": "string",
+      "description": "Motivo da perda"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Linha do tempo de eventos"
+    }
+  },
+  "required": [
+    "client_id",
+    "principal_id"
+  ]
+}

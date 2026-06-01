@@ -1,0 +1,57 @@
+{
+  "name": "PendingEmail",
+  "type": "object",
+  "properties": {
+    "opportunity_id": {
+      "type": "string",
+      "description": "ID da oportunidade"
+    },
+    "opportunity_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Email do destinat\u00e1rio"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Assunto do email"
+    },
+    "body": {
+      "type": "string",
+      "description": "Corpo do email"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora agendada"
+    },
+    "next_reminder": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Pr\u00f3ximo lembrete"
+    },
+    "reminder_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade de lembretes enviados"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Status do email"
+    }
+  },
+  "required": [
+    "opportunity_id",
+    "recipient_email",
+    "subject",
+    "body"
+  ]
+}

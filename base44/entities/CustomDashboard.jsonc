@@ -1,0 +1,107 @@
+{
+  "name": "CustomDashboard",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do dashboard"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o/objetivo do dashboard"
+    },
+    "dashboard_type": {
+      "type": "string",
+      "enum": [
+        "vendas",
+        "pos_venda",
+        "financeiro",
+        "operacional",
+        "executivo",
+        "personalizado"
+      ],
+      "default": "personalizado",
+      "description": "Tipo/foco do dashboard"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Compartilhado com toda a equipe"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email do criador"
+    },
+    "selected_kpis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de KPIs selecionados",
+      "default": []
+    },
+    "selected_charts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de gr\u00e1ficos selecionados",
+      "default": []
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "type": "string"
+        },
+        "principal_id": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "year": {
+          "type": "number"
+        }
+      },
+      "description": "Filtros padr\u00e3o salvos"
+    },
+    "layout": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "widget_id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "small",
+              "medium",
+              "large",
+              "full"
+            ]
+          }
+        }
+      },
+      "description": "Layout dos widgets no dashboard"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "description": "Dashboard favorito (acesso r\u00e1pido)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "dashboard_type"
+  ]
+}

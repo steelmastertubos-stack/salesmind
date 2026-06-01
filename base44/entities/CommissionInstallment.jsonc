@@ -1,0 +1,68 @@
+{
+  "name": "CommissionInstallment",
+  "type": "object",
+  "properties": {
+    "commission_id": {
+      "type": "string",
+      "description": "ID da comiss\u00e3o m\u00e3e"
+    },
+    "representada_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "ID do pedido vinculado"
+    },
+    "installment_no": {
+      "type": "number",
+      "description": "N\u00famero da parcela (1, 2, 3...)"
+    },
+    "installment_pct": {
+      "type": "number",
+      "description": "Percentual da parcela (ex: 33.33)"
+    },
+    "installment_value": {
+      "type": "number",
+      "description": "Valor da parcela"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento da parcela"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "prevista",
+        "a_receber",
+        "recebida",
+        "atrasada"
+      ],
+      "default": "prevista",
+      "description": "Status da parcela"
+    },
+    "received_value": {
+      "type": "number",
+      "description": "Valor recebido"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do recebimento"
+    },
+    "reference_month": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "commission_id",
+    "installment_value",
+    "due_date"
+  ]
+}

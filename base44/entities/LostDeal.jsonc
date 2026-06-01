@@ -1,0 +1,148 @@
+{
+  "name": "LostDeal",
+  "type": "object",
+  "properties": {
+    "opportunity_id": {
+      "type": "string",
+      "description": "ID da oportunidade"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "vendor_email": {
+      "type": "string",
+      "description": "Email do vendedor (criador da oportunidade)"
+    },
+    "vendor_name": {
+      "type": "string",
+      "description": "Nome do vendedor"
+    },
+    "principal_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "deal_value": {
+      "type": "number",
+      "description": "Valor da negocia\u00e7\u00e3o"
+    },
+    "motivo_primario": {
+      "type": "string",
+      "enum": [
+        "preco",
+        "prazo_entrega",
+        "concorrencia",
+        "estoque_indisponivel",
+        "condicao_pagamento",
+        "qualidade_tecnica",
+        "cliente_desistiu",
+        "falta_retorno_cliente",
+        "erro_interno",
+        "outro"
+      ],
+      "description": "Motivo principal da perda"
+    },
+    "motivos_secundarios": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "followup_atrasado",
+          "proposta_confusa",
+          "falta_alternativa_tecnica",
+          "condicao_comercial_fraca",
+          "demora_orcamento",
+          "falta_urgencia",
+          "falta_decisor",
+          "outro_motivo"
+        ]
+      },
+      "description": "Motivos secund\u00e1rios",
+      "default": []
+    },
+    "observacao": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre a perda"
+    },
+    "concorrente": {
+      "type": "string",
+      "description": "Nome do concorrente (se aplic\u00e1vel)"
+    },
+    "etapa_perda": {
+      "type": "string",
+      "enum": [
+        "proposta_enviada",
+        "em_negociacao",
+        "outra"
+      ],
+      "description": "Etapa do funil em que perdeu"
+    },
+    "perda_evitavel": {
+      "type": "string",
+      "enum": [
+        "inevitavel",
+        "potencialmente_evitavel",
+        "evitavel"
+      ],
+      "description": "Classifica\u00e7\u00e3o de evitabilidade (calculado automaticamente)"
+    },
+    "loss_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da perda"
+    },
+    "loss_month": {
+      "type": "number",
+      "description": "M\u00eas (1-12)"
+    },
+    "loss_year": {
+      "type": "number",
+      "description": "Ano"
+    },
+    "loss_quarter": {
+      "type": "number",
+      "description": "Trimestre (1-4)"
+    },
+    "loss_semester": {
+      "type": "number",
+      "description": "Semestre (1-2)"
+    },
+    "loss_day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Dia da semana"
+    },
+    "time_in_funnel_days": {
+      "type": "number",
+      "description": "Dias na oportunidade at\u00e9 perder"
+    },
+    "days_since_creation": {
+      "type": "number",
+      "description": "Dias desde a cria\u00e7\u00e3o da oportunidade"
+    },
+    "corrective_tasks_created": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flag se a\u00e7\u00f5es corretivas foram criadas"
+    }
+  },
+  "required": [
+    "opportunity_id",
+    "client_id",
+    "deal_value",
+    "motivo_primario",
+    "loss_date"
+  ]
+}

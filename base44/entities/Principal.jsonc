@@ -1,0 +1,157 @@
+{
+  "name": "Principal",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Raz\u00e3o social do representado"
+    },
+    "trade_name": {
+      "type": "string",
+      "description": "Nome fantasia"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ"
+    },
+    "state_registration": {
+      "type": "string",
+      "description": "Inscri\u00e7\u00e3o Estadual"
+    },
+    "address": {
+      "type": "string",
+      "description": "Endere\u00e7o completo"
+    },
+    "city": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "state": {
+      "type": "string",
+      "description": "Estado (UF)"
+    },
+    "zip_code": {
+      "type": "string",
+      "description": "CEP"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "website": {
+      "type": "string",
+      "description": "Site/website"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Nome do contato principal"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL do logo do representado"
+    },
+    "commission_percentage": {
+      "type": "number",
+      "description": "Percentual de comiss\u00e3o padr\u00e3o (quando FIXA)"
+    },
+    "payment_day": {
+      "type": "number",
+      "description": "Dia do m\u00eas para pagamento de comiss\u00f5es (1-31)"
+    },
+    "commission_policy": {
+      "type": "string",
+      "enum": [
+        "FIXA",
+        "POR_MARGEM",
+        "PARCELADA_POR_VENCIMENTO"
+      ],
+      "default": "FIXA",
+      "description": "Pol\u00edtica de comiss\u00e3o: FIXA (NEWA\u00c7O/INTERSTEEL) ou POR_MARGEM/PARCELADA_POR_VENCIMENTO (VTK)"
+    },
+    "default_terms": {
+      "type": "string",
+      "description": "Condi\u00e7\u00f5es de pagamento padr\u00e3o (ex: 30/45/60 ou A_VISTA/30)"
+    },
+    "payment_terms": {
+      "type": "string",
+      "description": "Condi\u00e7\u00f5es de pagamento padr\u00e3o (legacy)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "use_vtk_commission_table": {
+      "type": "boolean",
+      "default": false,
+      "description": "Usar tabela de comiss\u00e3o VTK por margem"
+    },
+    "vtk_commission_table": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "min_margin": {
+            "type": "number"
+          },
+          "max_margin": {
+            "type": "number"
+          },
+          "commission_rate": {
+            "type": "number"
+          },
+          "bracket_name": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Tabela de comiss\u00e3o por faixa de margem"
+    },
+    "stock": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "ID do produto"
+          },
+          "product_code": {
+            "type": "string",
+            "description": "C\u00f3digo do produto"
+          },
+          "product_name": {
+            "type": "string",
+            "description": "Nome do produto"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantidade em estoque"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unidade (kg, mt, pc)"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "\u00daltima atualiza\u00e7\u00e3o do estoque"
+          }
+        }
+      },
+      "description": "Estoque de produtos por representada",
+      "default": []
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "company_name",
+    "cnpj"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Receipt",
+  "type": "object",
+  "properties": {
+    "representada_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do recebimento"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Valor recebido"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "linked_installments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das parcelas vinculadas"
+    }
+  },
+  "required": [
+    "representada_id",
+    "received_at",
+    "amount"
+  ]
+}

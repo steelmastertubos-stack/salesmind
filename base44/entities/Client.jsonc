@@ -1,0 +1,320 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Raz\u00e3o social"
+    },
+    "trade_name": {
+      "type": "string",
+      "description": "Nome fantasia"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ"
+    },
+    "state_registration": {
+      "type": "string",
+      "description": "Inscri\u00e7\u00e3o estadual"
+    },
+    "segment": {
+      "type": "string",
+      "enum": [
+        "Metal\u00fargica",
+        "Metalmec\u00e2nica",
+        "Caldeiraria",
+        "Estruturas Met\u00e1licas",
+        "Engenharia",
+        "Construtoras",
+        "Implemento Agr\u00edcola",
+        "Implemento Rodovi\u00e1rio",
+        "Agroind\u00fastria",
+        "\u00d3leo & G\u00e1s",
+        "Qu\u00edmica / Petroqu\u00edmica",
+        "Alimentos & Bebidas",
+        "Papel e Celulose",
+        "Manuten\u00e7\u00e3o Industrial",
+        "Montagem Industrial",
+        "Distribuidor de A\u00e7o",
+        "Serralheria"
+      ],
+      "description": "Segmento de atua\u00e7\u00e3o (obrigat\u00f3rio)"
+    },
+    "segment_code": {
+      "type": "string",
+      "description": "C\u00f3digo do segmento para BI (SEG-01 a SEG-17)"
+    },
+    "complexity": {
+      "type": "string",
+      "enum": [
+        "Leve",
+        "M\u00e9dia",
+        "Pesada"
+      ],
+      "description": "Porte/Complexidade (opcional)"
+    },
+    "main_applications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "enum": [
+        "Tubos estruturais",
+        "Tubos para condu\u00e7\u00e3o",
+        "Chapas",
+        "Perfis",
+        "Flanges e conex\u00f5es",
+        "Estruturas",
+        "Projetos sob medida"
+      ],
+      "description": "Aplica\u00e7\u00f5es principais (multiselect, opcional)"
+    },
+    "manual_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags manuais criadas pelo usu\u00e1rio",
+      "default": []
+    },
+    "auto_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags autom\u00e1ticas baseadas em regras",
+      "default": []
+    },
+    "tags_last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u00daltima atualiza\u00e7\u00e3o das tags autom\u00e1ticas"
+    },
+    "cnae": {
+      "type": "string",
+      "description": "CNAE principal"
+    },
+    "address": {
+      "type": "string",
+      "description": "Endere\u00e7o completo"
+    },
+    "city": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "state": {
+      "type": "string",
+      "description": "Estado"
+    },
+    "zip_code": {
+      "type": "string",
+      "description": "CEP"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "WhatsApp"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Nome do contato principal"
+    },
+    "contact_role": {
+      "type": "string",
+      "description": "Cargo do contato"
+    },
+    "contact_birthday": {
+      "type": "string",
+      "format": "date",
+      "description": "Anivers\u00e1rio do contato"
+    },
+    "contact_football_team": {
+      "type": "string",
+      "description": "Time de futebol"
+    },
+    "contact_favorite_drink": {
+      "type": "string",
+      "description": "Bebida preferida"
+    },
+    "contact_interests": {
+      "type": "string",
+      "description": "Interesses e hobbies"
+    },
+    "important_dates": {
+      "type": "string",
+      "description": "Datas importantes (anivers\u00e1rio empresa, etc)"
+    },
+    "personal_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es pessoais de relacionamento"
+    },
+    "purchase_preferences": {
+      "type": "string",
+      "description": "Prefer\u00eancias de compra"
+    },
+    "price_restrictions": {
+      "type": "string",
+      "description": "Restri\u00e7\u00f5es de pre\u00e7o"
+    },
+    "payment_restrictions": {
+      "type": "string",
+      "description": "Restri\u00e7\u00f5es de prazo"
+    },
+    "product_restrictions": {
+      "type": "string",
+      "description": "Restri\u00e7\u00f5es de produto"
+    },
+    "strategic_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es estrat\u00e9gicas"
+    },
+    "previous_complaints": {
+      "type": "string",
+      "description": "Reclama\u00e7\u00f5es anteriores"
+    },
+    "recurring_objections": {
+      "type": "string",
+      "description": "Obje\u00e7\u00f5es recorrentes"
+    },
+    "special_conditions": {
+      "type": "string",
+      "description": "Condi\u00e7\u00f5es especiais negociadas"
+    },
+    "average_purchase_cycle": {
+      "type": "number",
+      "description": "Ciclo m\u00e9dio de compra (dias)"
+    },
+    "average_ticket": {
+      "type": "number",
+      "description": "Ticket m\u00e9dio"
+    },
+    "last_purchase_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da \u00faltima compra"
+    },
+    "last_purchase_product": {
+      "type": "string",
+      "description": "\u00daltimo produto comprado"
+    },
+    "last_purchase_value": {
+      "type": "number",
+      "description": "Valor da \u00faltima compra"
+    },
+    "last_quoted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do \u00faltimo or\u00e7amento"
+    },
+    "last_quoted_product": {
+      "type": "string",
+      "description": "\u00daltimo material cotado"
+    },
+    "last_quoted_value": {
+      "type": "number",
+      "description": "Valor do \u00faltimo or\u00e7amento"
+    },
+    "last_contact_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do \u00faltimo contato"
+    },
+    "next_contact_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do pr\u00f3ximo contato sugerido"
+    },
+    "total_purchases": {
+      "type": "number",
+      "description": "Total de compras"
+    },
+    "purchase_count": {
+      "type": "number",
+      "description": "Quantidade de compras"
+    },
+    "opportunity_index": {
+      "type": "number",
+      "description": "\u00cdndice de oportunidade (0-100)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "at_risk",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Status operacional \u00daNICO (exclusivo)"
+    },
+    "is_premium": {
+      "type": "boolean",
+      "default": false,
+      "description": "Cliente Premium (status Ativo + recorr\u00eancia + ticket alto)"
+    },
+    "premium_since": {
+      "type": "string",
+      "format": "date",
+      "description": "Data que se tornou Premium"
+    },
+    "premium_year": {
+      "type": "number",
+      "description": "Ano de refer\u00eancia Premium"
+    },
+    "status_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de mudan\u00e7as de status para evitar inatividade"
+    },
+    "inactive_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade de vezes que ficou inativo"
+    },
+    "last_inactive_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u00daltima vez que ficou inativo"
+    },
+    "reactivation_notes": {
+      "type": "string",
+      "description": "Notas sobre reativa\u00e7\u00f5es anteriores"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "company_name",
+    "cnpj",
+    "segment",
+    "contact_name",
+    "phone",
+    "email"
+  ]
+}

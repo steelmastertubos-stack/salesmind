@@ -1,0 +1,61 @@
+{
+  "name": "FinancialAudit",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "PEDIDO_SEM_COMISSAO",
+        "COMISSAO_SEM_PARCELAS",
+        "PARCELA_SEM_VENCIMENTO",
+        "DIVERGENCIA_RECEBIMENTO",
+        "STATUS_INCONSISTENTE",
+        "ORCAMENTO_SEM_OPORTUNIDADE",
+        "OPORTUNIDADE_SEM_PEDIDO"
+      ],
+      "description": "Tipo do erro/alerta"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "INFO",
+        "ALERTA",
+        "CRITICO"
+      ],
+      "default": "INFO",
+      "description": "Gravidade"
+    },
+    "entity_type": {
+      "type": "string",
+      "description": "Tipo de entidade (Order, Commission, Quote, etc)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID da entidade"
+    },
+    "message": {
+      "type": "string",
+      "description": "Mensagem descritiva do problema"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Problema resolvido?"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da resolu\u00e7\u00e3o"
+    },
+    "resolved_by": {
+      "type": "string",
+      "description": "Quem resolveu"
+    }
+  },
+  "required": [
+    "type",
+    "entity_type",
+    "entity_id",
+    "message"
+  ]
+}

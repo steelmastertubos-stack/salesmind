@@ -1,0 +1,235 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "order_number": {
+      "type": "string",
+      "description": "N\u00famero do pedido"
+    },
+    "quote_id": {
+      "type": "string",
+      "description": "ID do or\u00e7amento origem"
+    },
+    "opportunity_id": {
+      "type": "string",
+      "description": "ID da oportunidade vinculada"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "principal_id": {
+      "type": "string",
+      "description": "ID do representado"
+    },
+    "principal_name": {
+      "type": "string",
+      "description": "Nome do representado"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_code": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "unit_cost": {
+            "type": "number"
+          },
+          "total_price": {
+            "type": "number"
+          },
+          "total_cost": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Itens do pedido"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Valor total do pedido"
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Custo total do pedido"
+    },
+    "total_weight": {
+      "type": "number",
+      "description": "Peso total"
+    },
+    "total_weight_kg": {
+      "type": "number",
+      "description": "Peso total em kg"
+    },
+    "total_icms": {
+      "type": "number",
+      "description": "Total de ICMS"
+    },
+    "total_ipi": {
+      "type": "number",
+      "description": "Total de IPI"
+    },
+    "terms": {
+      "type": "string",
+      "description": "Termos do pedido (ex: 30/45/60)"
+    },
+    "avg_term_days": {
+      "type": "number",
+      "description": "Prazo m\u00e9dio dos vencimentos"
+    },
+    "payment_terms": {
+      "type": "string",
+      "description": "Condi\u00e7\u00f5es de pagamento (texto)"
+    },
+    "average_payment_days": {
+      "type": "number",
+      "description": "Prazo m\u00e9dio de faturamento (dias)"
+    },
+    "payment_installments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Parcelas do pagamento"
+    },
+    "original_margin_pct": {
+      "type": "number",
+      "description": "Margem original (%)"
+    },
+    "adjusted_margin_pct": {
+      "type": "number",
+      "description": "Margem considerada ap\u00f3s ajuste (%)"
+    },
+    "margin_adjustment": {
+      "type": "number",
+      "description": "Ajuste aplicado na margem"
+    },
+    "commission_bracket": {
+      "type": "string",
+      "description": "Faixa de comiss\u00e3o VTK"
+    },
+    "commission_rate": {
+      "type": "number",
+      "description": "Percentual de comiss\u00e3o"
+    },
+    "commission_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "invoiced",
+        "paid",
+        "at_risk",
+        "glossed",
+        "disputed"
+      ],
+      "default": "pending",
+      "description": "Status da comiss\u00e3o (legacy)"
+    },
+    "expected_commission": {
+      "type": "number",
+      "description": "Comiss\u00e3o prevista"
+    },
+    "commission_paid_value": {
+      "type": "number",
+      "description": "Valor da comiss\u00e3o paga"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aberto",
+        "confirmado",
+        "em_producao",
+        "faturado",
+        "entregue",
+        "cancelado"
+      ],
+      "default": "aberto",
+      "description": "Status do pedido"
+    },
+    "billing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de faturamento"
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "N\u00famero da NF"
+    },
+    "invoice_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da NF"
+    },
+    "invoiced_value": {
+      "type": "number",
+      "description": "Valor faturado"
+    },
+    "delivery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de entrega"
+    },
+    "status_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de altera\u00e7\u00f5es de status"
+    }
+  },
+  "required": [
+    "client_id",
+    "principal_id",
+    "total_value"
+  ]
+}
