@@ -21,7 +21,8 @@ import {
           Trophy,
           TrendingDown,
           Calendar,
-          MessageCircle
+          MessageCircle,
+          Brain
         } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
@@ -93,6 +94,7 @@ export default function Layout({ children, currentPageName }) {
     {
       title: 'INTELIGÊNCIA',
       items: [
+        { name: '🧠 Intelligence', icon: Brain, page: 'Intelligence' },
         { name: 'Relatórios', icon: BarChart3, page: 'Reports' },
         { name: 'Perdas', icon: TrendingDown, page: 'LossReport' },
         { name: 'Histórico Comercial', icon: Calendar, page: 'HistoricoComercial' },

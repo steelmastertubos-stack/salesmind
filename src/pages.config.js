@@ -36,6 +36,7 @@ import VTKMarginAuditReport from './pages/VTKMarginAuditReport';
 import VerifyDataByYear from './pages/VerifyDataByYear';
 import HistoricoComercial from './pages/HistoricoComercial';
 import WhatsAppCRM from './pages/WhatsAppCRM';
+import Intelligence from './pages/Intelligence';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +79,7 @@ export const PAGES = {
     "VerifyDataByYear": VerifyDataByYear,
     "HistoricoComercial": HistoricoComercial,
     "WhatsAppCRM": WhatsAppCRM,
+    "Intelligence": Intelligence,
 }
 
 export const pagesConfig = {
