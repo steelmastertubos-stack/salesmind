@@ -1,496 +1,194 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import IntegratedAlerts from '@/components/dashboard/IntegratedAlerts';
-import SuggestedActionCard from '@/components/productivity/SuggestedActionCard';
-import DailyActionAlert from '@/components/productivity/DailyActionAlert';
-import FollowUpSection from '@/components/dashboard/FollowUpSection';
-import DailyFollowUpSuggestions from '@/components/tasks/DailyFollowUpSuggestions';
-import MonthPeriodSelector from '@/components/dashboard/MonthPeriodSelector';
-import MonthlyStatsPanel from '@/components/dashboard/MonthlyStatsPanel';
-import { toast } from 'sonner';
-import { 
-  Users, 
-  FileText, 
-  DollarSign, 
-  TrendingUp,
-  ShoppingCart,
-  Target,
-  Zap,
-  Calendar,
-  RefreshCw,
-  Brain,
-  Sparkles,
-  Info
-} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { DollarSign, ShoppingCart, FileText, Users, TrendingUp, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import StatsCard from '@/components/dashboard/StatsCard';
-import OpportunityCard from '@/components/dashboard/OpportunityCard';
-import AlertsPanel from '@/components/dashboard/AlertsPanel';
-import GoalsPanel from '@/components/dashboard/GoalsPanel';
-import PriorityClients from '@/components/dashboard/PriorityClients';
 import { Skeleton } from '@/components/ui/skeleton';
+import ExecutiveKPICard from '@/components/dashboard/ExecutiveKPICard.jsx';
+import FunnelBar from '@/components/dashboard/FunnelBar.jsx';
+import AlertsSummaryPanel from '@/components/dashboard/AlertsSummaryPanel.jsx';
+import GoalProgressBar from '@/components/dashboard/GoalProgressBar.jsx';
+import PriorityOpportunitiesPanel from '@/components/dashboard/PriorityOpportunitiesPanel.jsx';
+import TodayAgendaPanel from '@/components/dashboard/TodayAgendaPanel.jsx';
+import CommissionSummaryPanel from '@/components/dashboard/CommissionSummaryPanel.jsx';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+
+const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
 export default function Dashboard() {
-  const [greeting, setGreeting] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [periodType, setPeriodType] = useState('month'); // 'month' | 'quarter' | 'year'
-  const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const queryClient = useQueryClient();
-  const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear() && periodType === 'month';
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Bom dia');
-    else if (hour < 18) setGreeting('Boa tarde');
-    else setGreeting('Boa noite');
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+
+  const greeting = useMemo(() => {
+    const h = now.getHours();
+    if (h < 12) return 'Bom dia';
+    if (h < 18) return 'Boa tarde';
+    return 'Boa noite';
   }, []);
 
-  const { data: clients = [], isLoading: loadingClients, refetch: refetchClients } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => base44.entities.Client.list('-opportunity_index', 100)
-  });
+  const { data: user } = useQuery({ queryKey: ['user'], queryFn: () => base44.auth.me() });
+  const { data: clients = [], isLoading: lc } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list('-opportunity_index', 200) });
+  const { data: opportunities = [], isLoading: lo } = useQuery({ queryKey: ['opportunities'], queryFn: () => base44.entities.Opportunity.list('-priority_score', 200) });
+  const { data: orders = [], isLoading: lor } = useQuery({ queryKey: ['orders'], queryFn: () => base44.entities.Order.list('-created_date', 200) });
+  const { data: quotes = [], isLoading: lq } = useQuery({ queryKey: ['quotes'], queryFn: () => base44.entities.Quote.list('-created_date', 100) });
+  const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => base44.entities.Task.list('-scheduled_date', 100) });
+  const { data: commissions = [] } = useQuery({ queryKey: ['commissions'], queryFn: () => base44.entities.Commission.list('-created_date', 300) });
+  const { data: installments = [] } = useQuery({ queryKey: ['commission-installments'], queryFn: () => base44.entities.CommissionInstallment.list('-due_date', 300) });
+  const { data: goals = [] } = useQuery({ queryKey: ['monthly-goals'], queryFn: () => base44.entities.MonthlyGoal.list('-created_date', 12) });
 
-  const { data: quotes = [], isLoading: loadingQuotes } = useQuery({
-    queryKey: ['quotes'],
-    queryFn: () => base44.entities.Quote.list('-created_date', 50)
-  });
+  const isLoading = lc || lo || lor || lq;
 
-  const { data: orders = [], isLoading: loadingOrders } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100)
-  });
+  // Métricas do mês atual
+  const monthOrders = useMemo(() => orders.filter(o => {
+    const d = new Date(o.created_date);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  }), [orders, thisMonth, thisYear]);
 
-  const { data: commissions = [] } = useQuery({
-    queryKey: ['commissions'],
-    queryFn: () => base44.entities.Commission.list('-created_date', 500)
-  });
+  const monthRevenue = monthOrders.reduce((s, o) => s + (o.total_value || 0), 0);
 
-  const { data: installments = [] } = useQuery({
-    queryKey: ['commission-installments'],
-    queryFn: () => base44.entities.CommissionInstallment.list('-due_date', 500)
-  });
+  const monthQuotes = useMemo(() => quotes.filter(q => {
+    const d = new Date(q.created_date);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear && ['rascunho', 'emitido', 'enviado'].includes(q.status);
+  }), [quotes, thisMonth, thisYear]);
 
-  const { data: opportunities = [] } = useQuery({
-    queryKey: ['opportunities'],
-    queryFn: () => base44.entities.Opportunity.list('-created_date', 100)
-  });
+  const pipelineValue = opportunities
+    .filter(o => o.stage !== 'perdido' && o.stage !== 'ganho')
+    .reduce((s, o) => s + (o.value_estimated || o.total_value || 0), 0);
 
-  const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-scheduled_date', 100)
-  });
-
-  // Enriquecer clientes com dados de ciclo, ticket e último material
-  const enrichClientData = (client) => {
-    // Pedidos do cliente
-    const clientOrders = orders.filter(o => o.client_id === client.id && o.created_date);
-    
-    // Orçamentos do cliente
-    const clientQuotes = quotes.filter(q => q.client_id === client.id && q.created_date);
-    
-    // Calcular ciclo médio de compra
-    let averageCycle = client.average_purchase_cycle;
-    if ((!averageCycle || averageCycle === 0) && clientOrders.length >= 2) {
-      const orderDates = clientOrders
-        .map(o => new Date(o.created_date))
-        .filter(d => !isNaN(d.getTime()))
-        .sort((a, b) => a - b);
-      
-      if (orderDates.length >= 2) {
-        const intervals = [];
-        for (let i = 1; i < orderDates.length; i++) {
-          const days = Math.floor((orderDates[i] - orderDates[i-1]) / (1000 * 60 * 60 * 24));
-          if (days > 0) intervals.push(days);
-        }
-        
-        if (intervals.length > 0) {
-          averageCycle = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
-        }
-      }
-    }
-    
-    // Se ainda não tiver ciclo, usar padrão de 30 dias
-    if (!averageCycle || averageCycle === 0) {
-      averageCycle = 30;
-    }
-    
-    // Calcular ticket médio
-    let averageTicket = client.average_ticket;
-    if ((!averageTicket || averageTicket === 0) && clientOrders.length > 0) {
-      const totalValue = clientOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
-      averageTicket = totalValue / clientOrders.length;
-    }
-    
-    // Último material orçado
-    let lastQuotedProduct = client.last_quoted_product;
-    let lastQuotedValue = client.last_quoted_value;
-    let lastQuotedDate = client.last_quoted_date;
-    
-    if (!lastQuotedProduct && clientQuotes.length > 0) {
-      const sortedQuotes = [...clientQuotes].sort((a, b) => 
-        new Date(b.created_date) - new Date(a.created_date)
-      );
-      const lastQuote = sortedQuotes[0];
-      
-      if (lastQuote?.items?.[0]) {
-        lastQuotedProduct = lastQuote.items[0].product_name;
-        lastQuotedValue = lastQuote.total_value;
-        lastQuotedDate = lastQuote.created_date;
-      }
-    }
-    
-    return {
-      ...client,
-      average_purchase_cycle: averageCycle,
-      average_ticket: averageTicket,
-      last_quoted_product: lastQuotedProduct,
-      last_quoted_value: lastQuotedValue,
-      last_quoted_date: lastQuotedDate
-    };
-  };
-
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me()
-  });
-
-  const calculateOpportunityIndex = (client) => {
-    if (!client.last_purchase_date) return 30;
-    
-    const daysSince = Math.floor((new Date() - new Date(client.last_purchase_date)) / (1000 * 60 * 60 * 24));
-    const cycle = client.average_purchase_cycle || 30;
-    const ticket = client.average_ticket || 0;
-    
-    let index = 50;
-    
-    // Days factor
-    if (daysSince >= cycle * 0.8) index += 30;
-    else if (daysSince >= cycle * 0.5) index += 15;
-    
-    // Ticket factor
-    if (ticket > 10000) index += 10;
-    else if (ticket > 5000) index += 5;
-    
-    // Cap at 100
-    return Math.min(100, Math.max(0, index));
-  };
-
-  const processedClients = clients.map(client => {
-    const enriched = enrichClientData(client);
-    return {
-      ...enriched,
-      opportunity_index: enriched.opportunity_index || calculateOpportunityIndex(enriched)
-    };
-  }).sort((a, b) => (b.opportunity_index || 0) - (a.opportunity_index || 0));
-
-  const top10Clients = processedClients.slice(0, 10);
-
-  // Filtra pelo período selecionado
-  const inSelectedPeriod = (dateStr) => {
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    if (periodType === 'year') return d.getFullYear() === selectedYear;
-    if (periodType === 'quarter') {
-      const q = Math.floor(selectedMonth / 3);
-      const dq = Math.floor(d.getMonth() / 3);
-      return d.getFullYear() === selectedYear && dq === q;
-    }
-    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
-  };
-
-  const thisMonthOrders = orders.filter(o => inSelectedPeriod(o.created_date));
-  const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + (o.total_value || 0), 0);
-
-  // Orçamentos em aberto do mês selecionado
-  const pendingQuotes = quotes.filter(q =>
-    inSelectedPeriod(q.created_date) && ['rascunho', 'emitido', 'enviado'].includes(q.status)
-  );
-  const pendingQuotesValue = pendingQuotes.reduce((sum, q) => sum + (q.total_value || 0), 0);
-
-  // COMISSÃO PREVISTA do período selecionado
-  const pendingCommission = commissions
-    .filter(c => {
-      const order = orders.find(o => o.id === c.order_id);
-      return order && inSelectedPeriod(order.created_date);
-    })
-    .reduce((sum, c) => sum + (c.commission_total_value || c.commission_value || 0), 0);
-
-  const blockedCommission = orders
-    .filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status))
-    .reduce((sum, o) => sum + (o.expected_commission || 0), 0);
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value || 0);
-  };
+  const monthGoalRecord = goals.find(g => g.month === `${thisYear}-${String(thisMonth + 1).padStart(2, '0')}`);
+  const monthGoal = monthGoalRecord?.revenue_goal || 0;
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await Promise.all([
-        queryClient.invalidateQueries(['clients']),
-        queryClient.invalidateQueries(['quotes']),
-        queryClient.invalidateQueries(['orders']),
-        queryClient.invalidateQueries(['commissions']),
-        queryClient.invalidateQueries(['user'])
-      ]);
-      toast.success('Dados atualizados!');
-    } catch (error) {
-      toast.error('Erro ao atualizar dados');
-    } finally {
-      setIsRefreshing(false);
-    }
+    setRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries(['clients']),
+      queryClient.invalidateQueries(['opportunities']),
+      queryClient.invalidateQueries(['orders']),
+      queryClient.invalidateQueries(['quotes']),
+      queryClient.invalidateQueries(['tasks']),
+      queryClient.invalidateQueries(['commissions']),
+      queryClient.invalidateQueries(['commission-installments']),
+    ]);
+    setRefreshing(false);
+    toast.success('Dados atualizados!');
   };
 
-  const isLoading = loadingClients || loadingQuotes || loadingOrders;
+  const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
+    <div className="pb-24 lg:pb-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            {greeting}, {user?.full_name?.split(' ')[0] || 'Representante'}!
+          <h1 className="text-xl font-bold text-slate-900">
+            {greeting}, {user?.full_name?.split(' ')[0] || 'Representante'} 👋
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
+          <p className="text-xs text-slate-400 capitalize mt-0.5">{dateStr}</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <MonthPeriodSelector
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-            periodType={periodType}
-            onChange={(m, y) => { setSelectedMonth(m); setSelectedYear(y); }}
-            onPeriodTypeChange={setPeriodType}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="text-slate-500 border-slate-200"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
+
+      {/* KPI Row */}
+      {isLoading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <ExecutiveKPICard
+            title="Faturado no Mês"
+            value={fmt(monthRevenue)}
+            subtitle={`${monthOrders.length} pedidos`}
+            icon={DollarSign}
+            color="green"
+            badge={monthGoal > 0 ? `${Math.round((monthRevenue / monthGoal) * 100)}% meta` : undefined}
           />
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="h-9"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-          </Button>
+          <ExecutiveKPICard
+            title="Pipeline Ativo"
+            value={fmt(pipelineValue)}
+            subtitle={`${opportunities.filter(o => o.stage !== 'ganho' && o.stage !== 'perdido').length} oportunidades`}
+            icon={TrendingUp}
+            color="blue"
+          />
+          <ExecutiveKPICard
+            title="Cotações em Aberto"
+            value={monthQuotes.length}
+            subtitle={fmt(monthQuotes.reduce((s, q) => s + (q.total_value || 0), 0))}
+            icon={FileText}
+            color="purple"
+          />
+          <ExecutiveKPICard
+            title="Comissão Prevista"
+            value={fmt(commissions.filter(c => c.status === 'prevista').reduce((s, c) => s + (c.commission_total_value || c.commission_value || 0), 0))}
+            subtitle="negócios ganhos"
+            icon={DollarSign}
+            color="green"
+          />
+          <ExecutiveKPICard
+            title="Clientes Ativos"
+            value={clients.filter(c => c.status === 'active').length}
+            subtitle={`${clients.filter(c => c.status === 'at_risk' || c.status === 'inactive').length} em risco`}
+            icon={Users}
+            color={clients.filter(c => c.status === 'at_risk' || c.status === 'inactive').length > 0 ? 'red' : 'blue'}
+          />
         </div>
-      </div>
-
-      {/* Aviso de período */}
-      <div className={`flex items-start gap-2 px-4 py-3 rounded-xl text-sm border ${isCurrentMonth ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
-        <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-        <span>
-          {isCurrentMonth
-            ? <>Este painel mostra apenas os dados do <strong>mês atual</strong>. Para consultar meses anteriores, acesse <a href="/HistoricoComercial" className="underline font-semibold">Histórico Comercial</a>.</>
-            : <>Você está visualizando dados de <strong>{
-          periodType === 'year' ? `Ano ${selectedYear}` :
-          periodType === 'quarter' ? `T${Math.floor(selectedMonth / 3) + 1} ${selectedYear}` :
-          new Date(selectedYear, selectedMonth).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-        }</strong>. <a href="/HistoricoComercial" className="underline font-semibold">Ver Histórico Completo</a>.</>
-          }
-        </span>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoading ? (
-          <>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 border border-slate-100">
-                <Skeleton className="w-10 h-10 rounded-xl mb-3" />
-                <Skeleton className="h-8 w-20 mb-1" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ))}
-          </>
-        ) : (
-          <>
-            <StatsCard
-              title={periodType === 'year' ? 'Faturamento no Ano' : periodType === 'quarter' ? 'Faturamento no Trimestre' : 'Faturamento no Mês'}
-              value={formatCurrency(thisMonthRevenue)}
-              icon={DollarSign}
-              color="emerald"
-              subtitle={`${thisMonthOrders.length} pedidos`}
-            />
-            <StatsCard
-              title="Cotações em Aberto"
-              value={pendingQuotes.length}
-              icon={FileText}
-              color="blue"
-              subtitle={formatCurrency(pendingQuotesValue)}
-            />
-            <StatsCard
-              title="Comissão Estimada"
-              value={formatCurrency(pendingCommission)}
-              icon={TrendingUp}
-              color="purple"
-              subtitle="pedidos do mês"
-            />
-            <StatsCard
-              title="Clientes Ativos"
-              value={clients.filter(c => c.status === 'active').length}
-              icon={Users}
-              color="amber"
-              subtitle={`de ${clients.length} total`}
-            />
-          </>
-        )}
-      </div>
-
-      {/* Monthly Stats Panel */}
-      {!isLoading && (
-        <MonthlyStatsPanel
-          quotes={quotes}
-          opportunities={opportunities}
-          orders={orders}
-          commissions={commissions}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          periodType={periodType}
-        />
       )}
 
-      {/* Daily Action Alert - Ação do Dia (Regra D1) - Compacto */}
-      <div className="lg:col-span-2">
-        <DailyActionAlert tasks={tasks} opportunities={opportunities} clients={clients} />
-      </div>
+      {/* Meta */}
+      {monthGoal > 0 && !isLoading && (
+        <GoalProgressBar revenue={monthRevenue} goal={monthGoal} />
+      )}
 
-      {/* Sugestões automáticas de follow-up */}
-      <DailyFollowUpSuggestions />
+      {/* Funil */}
+      {!isLoading && <FunnelBar opportunities={opportunities} />}
 
-      {/* Follow-up Section - Follow-ups Atrasados, Hoje e Próximos */}
-      <FollowUpSection tasks={tasks} />
-
-      {/* Goals Panel - Compact */}
-      <div className="lg:col-span-2">
-        <GoalsPanel
-          orders={orders}
-          quotes={quotes}
-          opportunities={opportunities}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          periodType={periodType}
-        />
-      </div>
-
-      {/* Integrated Alerts */}
-      <IntegratedAlerts />
-
-      {/* Main Content */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Top 10 Opportunities */}
+      {/* Grid principal */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Coluna esquerda: Oportunidades + Agenda */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-emerald-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Top 10 Oportunidades</h2>
-            </div>
-            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-              Ordenado por índice
-            </span>
-          </div>
-
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl p-4 border border-slate-100">
-                  <Skeleton className="h-6 w-32 mb-3" />
-                  <Skeleton className="h-4 w-24 mb-4" />
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    {[...Array(3)].map((_, j) => (
-                      <Skeleton key={j} className="h-16 rounded-xl" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-10 w-full rounded-xl" />
-                </div>
-              ))}
-            </div>
-          ) : top10Clients.length > 0 ? (
-            <div className="grid sm:grid-cols-2 gap-4">
-              {top10Clients.map((client, index) => (
-                <OpportunityCard 
-                  key={client.id} 
-                  client={client} 
-                  rank={index + 1}
-                />
-              ))}
-            </div>
+            <Skeleton className="h-64 rounded-2xl" />
           ) : (
-            <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
-              <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-semibold text-slate-900 mb-1">Nenhum cliente cadastrado</h3>
-              <p className="text-sm text-slate-500">Comece cadastrando seus clientes para ver as oportunidades</p>
-            </div>
+            <PriorityOpportunitiesPanel opportunities={opportunities} />
+          )}
+          {isLoading ? (
+            <Skeleton className="h-48 rounded-2xl" />
+          ) : (
+            <TodayAgendaPanel tasks={tasks} />
           )}
         </div>
 
-        {/* Right Sidebar - Alerts & Actions */}
+        {/* Coluna direita: Alertas + Comissões */}
         <div className="space-y-4">
-          <AlertsPanel 
-            clients={processedClients}
-            orders={orders}
-            commissionAlerts={{
-              blockedValue: blockedCommission,
-              blockedCount: orders.filter(o => ['at_risk', 'glossed', 'disputed'].includes(o.commission_status)).length
-            }}
-          />
-
-          {/* Priority Clients - Compacto */}
-          {!isLoading && clients.length > 0 && (
-            <PriorityClients clients={clients} orders={orders} />
+          {isLoading ? (
+            <Skeleton className="h-56 rounded-2xl" />
+          ) : (
+            <AlertsSummaryPanel
+              clients={clients}
+              tasks={tasks}
+              opportunities={opportunities}
+              installments={installments}
+            />
           )}
-
-          {/* AI Insights Teaser */}
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Brain className="w-4 h-4 text-purple-600" />
-              <h3 className="font-semibold text-sm text-purple-900">Insights IA</h3>
-            </div>
-            <Button size="sm" className="w-full text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" asChild>
-              <a href="/AIInsights">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Ver Análises
-              </a>
-            </Button>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-3">
-            <h3 className="font-semibold text-sm text-slate-900 mb-2">Ações Rápidas</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
-                <a href="/Clients">
-                  <Users className="w-4 h-4 text-slate-600" />
-                  <span className="text-[10px]">Novo Cliente</span>
-                </a>
-              </Button>
-              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
-                <a href="/Quotes">
-                  <FileText className="w-4 h-4 text-slate-600" />
-                  <span className="text-[10px]">Novo Orçamento</span>
-                </a>
-              </Button>
-              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
-                <a href="/FieldMode">
-                  <Target className="w-4 h-4 text-slate-600" />
-                  <span className="text-[10px]">Modo Campo</span>
-                </a>
-              </Button>
-              <Button size="sm" variant="outline" className="h-auto py-2 flex-col gap-1 text-xs" asChild>
-                <a href="/Reports">
-                  <TrendingUp className="w-4 h-4 text-slate-600" />
-                  <span className="text-[10px]">Relatórios</span>
-                </a>
-              </Button>
-            </div>
-          </div>
+          {isLoading ? (
+            <Skeleton className="h-48 rounded-2xl" />
+          ) : (
+            <CommissionSummaryPanel commissions={commissions} installments={installments} />
+          )}
         </div>
       </div>
     </div>
