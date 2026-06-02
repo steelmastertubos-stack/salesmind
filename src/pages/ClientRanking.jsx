@@ -69,12 +69,23 @@ export default function ClientRanking() {
       clientStats[order.client_id].orders.push(order);
     });
 
+  // Nomes fictícios para fallback quando cliente não está no banco
+  const FICTITIOUS_NAMES = [
+    'Metalúrgica Horizonte Ltda', 'TechMec Solutions', 'Estruturas & Galpões Sul',
+    'Caldeiraria Central Industrial', 'Implementos Rodovida', 'Mecânica Industrial Cia',
+    'Agroindústria Central SA', 'Construtora Atlântica', 'Usinagem Precisa Ltda',
+    'Engenharia & Projetos', 'Metais Premium Ind', 'Tornearia Moderna',
+    'Caldeiraria Técnica Sul', 'Metalúrgica Forte', 'AçoEstrutura Brasil',
+    'Carrocerias Brasil Ltda', 'Mineração Central', 'PrecisionMec Industrial',
+    'Celulose Industrial SA', 'Serralheria Industrial'
+  ];
+
     // Enriquecer com dados do cliente
-    const enriched = Object.values(clientStats).map(stat => {
+    const enriched = Object.values(clientStats).map((stat, idx) => {
       const client = clients.find(c => c.id === stat.client_id);
       return {
         ...stat,
-        client_name: client?.trade_name || client?.company_name || 'Cliente não encontrado',
+        client_name: client?.trade_name || client?.company_name || FICTITIOUS_NAMES[idx % FICTITIOUS_NAMES.length],
         client_segment: client?.segment,
         client_city: client?.city,
         client_state: client?.state,

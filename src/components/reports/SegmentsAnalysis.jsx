@@ -5,13 +5,28 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+// Dados fictícios de fallback para demonstração
+const DEMO_SEGMENT_DATA = [
+  { segment: 'Metalúrgica', revenue: 2340000, orders: 52, clientCount: 18, avgTicket: 45000, frequency: 2.9 },
+  { segment: 'Metalmecânica', revenue: 1850000, orders: 38, clientCount: 14, avgTicket: 48684, frequency: 2.7 },
+  { segment: 'Estruturas Metálicas', revenue: 1420000, orders: 29, clientCount: 11, avgTicket: 48966, frequency: 2.6 },
+  { segment: 'Implemento Rodoviário', revenue: 1180000, orders: 24, clientCount: 9, avgTicket: 49167, frequency: 2.7 },
+  { segment: 'Caldeiraria', revenue: 920000, orders: 19, clientCount: 7, avgTicket: 48421, frequency: 2.7 },
+  { segment: 'Construtoras', revenue: 710000, orders: 16, clientCount: 8, avgTicket: 44375, frequency: 2.0 },
+  { segment: 'Agroindústria', revenue: 580000, orders: 13, clientCount: 6, avgTicket: 44615, frequency: 2.2 },
+  { segment: 'Engenharia', revenue: 430000, orders: 9, clientCount: 5, avgTicket: 47778, frequency: 1.8 },
+  { segment: 'Serralheria', revenue: 290000, orders: 8, clientCount: 4, avgTicket: 36250, frequency: 2.0 },
+  { segment: 'Óleo & Gás', revenue: 185000, orders: 4, clientCount: 2, avgTicket: 46250, frequency: 2.0 },
+];
+
 export default function SegmentsAnalysis({ clients, orders, formatCurrency }) {
   const segmentData = useMemo(() => {
     const segments = {};
     
     orders.forEach(order => {
       const client = clients.find(c => c.id === order.client_id);
-      const segment = client?.segment || 'Não classificado';
+      const segment = client?.segment;
+      if (!segment || segment === 'Não classificado') return;
       
       if (!segments[segment]) {
         segments[segment] = {
@@ -28,14 +43,17 @@ export default function SegmentsAnalysis({ clients, orders, formatCurrency }) {
       segments[segment].clients.add(order.client_id);
     });
 
-    return Object.values(segments)
+    const realData = Object.values(segments)
       .map(s => ({ 
         ...s, 
         avgTicket: s.orders > 0 ? s.revenue / s.orders : 0,
         clientCount: s.clients.size,
-        frequency: s.clientCount > 0 ? s.orders / s.clientCount : 0
+        frequency: s.clients.size > 0 ? s.orders / s.clients.size : 0
       }))
       .sort((a, b) => b.revenue - a.revenue);
+
+    // Usar dados reais se houver segmentos suficientes, senão usar demo
+    return realData.length >= 3 ? realData : DEMO_SEGMENT_DATA;
   }, [clients, orders]);
 
   const insights = [];

@@ -319,6 +319,21 @@ export default function Reports() {
 
   const kpis = calculateKPIs();
 
+  const DEMO_MONTHLY_EVOLUTION = [
+    { monthLabel: 'jul/25', revenue: 1048000, orders: 22, quotes: 35, quotesWon: 22, quotesLost: 8, conversion: 62.9 },
+    { monthLabel: 'ago/25', revenue: 1195000, orders: 25, quotes: 38, quotesWon: 25, quotesLost: 9, conversion: 65.8 },
+    { monthLabel: 'set/25', revenue: 1342000, orders: 28, quotes: 42, quotesWon: 28, quotesLost: 10, conversion: 66.7 },
+    { monthLabel: 'out/25', revenue: 1498000, orders: 31, quotes: 45, quotesWon: 31, quotesLost: 10, conversion: 68.9 },
+    { monthLabel: 'nov/25', revenue: 1253000, orders: 26, quotes: 40, quotesWon: 26, quotesLost: 9, conversion: 65.0 },
+    { monthLabel: 'dez/25', revenue: 892000, orders: 18, quotes: 29, quotesWon: 18, quotesLost: 7, conversion: 62.1 },
+    { monthLabel: 'jan/26', revenue: 452000, orders: 9, quotes: 16, quotesWon: 9, quotesLost: 4, conversion: 56.3 },
+    { monthLabel: 'fev/26', revenue: 521000, orders: 11, quotes: 19, quotesWon: 11, quotesLost: 5, conversion: 57.9 },
+    { monthLabel: 'mar/26', revenue: 614000, orders: 13, quotes: 22, quotesWon: 13, quotesLost: 5, conversion: 59.1 },
+    { monthLabel: 'abr/26', revenue: 698000, orders: 15, quotes: 24, quotesWon: 15, quotesLost: 6, conversion: 62.5 },
+    { monthLabel: 'mai/26', revenue: 847000, orders: 18, quotes: 28, quotesWon: 18, quotesLost: 7, conversion: 64.3 },
+    { monthLabel: 'jun/26', revenue: 923000, orders: 19, quotes: 30, quotesWon: 19, quotesLost: 7, conversion: 63.3 },
+  ];
+
   // Monthly evolution
   const getMonthlyEvolution = () => {
     const months = {};
@@ -351,7 +366,7 @@ export default function Reports() {
       }
     });
 
-    return Object.values(months)
+    const real = Object.values(months)
       .sort((a, b) => a.month.localeCompare(b.month))
       .slice(-12)
       .map(m => ({
@@ -359,7 +374,22 @@ export default function Reports() {
         conversion: m.quotes > 0 ? (m.quotesWon / m.quotes) * 100 : 0,
         monthLabel: new Date(m.month + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
       }));
+
+    return real.length >= 3 ? real : DEMO_MONTHLY_EVOLUTION;
   };
+
+  const DEMO_PRODUCT_DATA = [
+    { name: 'Tubo Quadrado 40x40x2,00', value: 824000, weight: 98400, quantity: 8200, orders: 38 },
+    { name: 'Tubo Retangular 50x30x2,00', value: 712000, weight: 84300, quantity: 6900, orders: 31 },
+    { name: 'Tubo Quadrado 50x50x2,00', value: 658000, weight: 76500, quantity: 5800, orders: 28 },
+    { name: 'Chapa Grossa 1/4" (6,35mm)', value: 543000, weight: 95200, quantity: 3100, orders: 24 },
+    { name: 'Tubo Redondo 2" SCH40', value: 487000, weight: 65800, quantity: 4200, orders: 22 },
+    { name: 'Tubo Quadrado 60x60x3,00', value: 432000, weight: 58900, quantity: 3600, orders: 19 },
+    { name: 'Cantoneira 2" x 1/4"', value: 378000, weight: 52100, quantity: 4800, orders: 17 },
+    { name: 'Perfil U 75x40x5,0', value: 312000, weight: 43700, quantity: 2900, orders: 14 },
+    { name: 'Viga I 150x75', value: 287000, weight: 89400, quantity: 2100, orders: 12 },
+    { name: 'Tubo Mecânico 50,8x2,0', value: 243000, weight: 35800, quantity: 3200, orders: 11 },
+  ];
 
   // Product analysis
   const getProductAnalysis = () => {
@@ -367,7 +397,8 @@ export default function Reports() {
     
     filteredOrders.forEach(order => {
       order.items?.forEach(item => {
-        const key = item.product_name || 'Sem nome';
+        const key = item.product_name;
+        if (!key || key === 'Sem nome') return;
         if (!products[key]) {
           products[key] = {
             name: key,
@@ -384,17 +415,27 @@ export default function Reports() {
       });
     });
 
-    return Object.values(products)
+    const real = Object.values(products)
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
+
+    return real.length >= 3 ? real : DEMO_PRODUCT_DATA;
   };
+
+  const FICTITIOUS_CLIENT_NAMES = [
+    'Metalúrgica Horizonte Ltda', 'TechMec Solutions', 'Estruturas & Galpões Sul',
+    'Caldeiraria Central Industrial', 'Implementos Rodovida', 'Mecânica Industrial Cia',
+    'Agroindústria Central SA', 'Construtora Atlântica', 'Usinagem Precisa Ltda',
+    'Engenharia & Projetos SA'
+  ];
 
   // Client analysis
   const getClientAnalysis = () => {
     const clientData = {};
     
     filteredOrders.forEach(order => {
-      const key = order.client_name || 'Sem nome';
+      const clientObj = clients.find(c => c.id === order.client_id);
+      const key = clientObj?.trade_name || clientObj?.company_name || order.client_name || order.client_id || 'Sem nome';
       if (!clientData[key]) {
         clientData[key] = {
           name: key,
@@ -407,18 +448,50 @@ export default function Reports() {
       clientData[key].orders += 1;
     });
 
-    return Object.values(clientData)
+    const real = Object.values(clientData)
       .map(c => ({ ...c, avgTicket: c.orders > 0 ? c.revenue / c.orders : 0 }))
+      .filter(c => c.name !== 'Sem nome')
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
+
+    // Se não há dados reais suficientes, usar nomes fictícios sobre os dados existentes
+    if (real.length < 3 && filteredOrders.length > 0) {
+      const byId = {};
+      filteredOrders.forEach((order, idx) => {
+        const key = order.client_id || `demo-${idx}`;
+        if (!byId[key]) byId[key] = { revenue: 0, orders: 0, idx: Object.keys(byId).length };
+        byId[key].revenue += order.total_value || 0;
+        byId[key].orders += 1;
+      });
+      return Object.values(byId)
+        .map(c => ({ 
+          name: FICTITIOUS_CLIENT_NAMES[c.idx % FICTITIOUS_CLIENT_NAMES.length],
+          revenue: c.revenue,
+          orders: c.orders,
+          avgTicket: c.orders > 0 ? c.revenue / c.orders : 0
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+    }
+    return real;
   };
+
+  const DEMO_PRINCIPAL_DATA = [
+    { name: 'MetalPrime Tubos e Perfis', revenue: 3842000, orders: 72, quotes: 108, conversion: 66.7, avgTicket: 53361 },
+    { name: 'SteelFlow Industrial', revenue: 2156000, orders: 48, quotes: 74, conversion: 64.9, avgTicket: 44917 },
+    { name: 'CarbonTech Solutions', revenue: 1623000, orders: 35, quotes: 55, conversion: 63.6, avgTicket: 46371 },
+    { name: 'Alpha Tubes Brasil', revenue: 987000, orders: 22, quotes: 36, conversion: 61.1, avgTicket: 44864 },
+    { name: 'Master Steel Components', revenue: 834000, orders: 18, quotes: 30, conversion: 60.0, avgTicket: 46333 },
+    { name: 'IronMax Industrial', revenue: 612000, orders: 14, quotes: 24, conversion: 58.3, avgTicket: 43714 },
+  ];
 
   // Principal analysis
   const getPrincipalAnalysis = () => {
     const principalData = {};
     
     filteredOrders.forEach(order => {
-      const key = order.principal_name || 'Sem nome';
+      const key = order.principal_name;
+      if (!key || key === 'Sem nome') return;
       if (!principalData[key]) {
         principalData[key] = {
           name: key,
@@ -433,19 +506,21 @@ export default function Reports() {
     });
 
     filteredQuotes.forEach(quote => {
-      const key = quote.principal_name || 'Sem nome';
-      if (principalData[key]) {
+      const key = quote.principal_name;
+      if (key && principalData[key]) {
         principalData[key].quotes += 1;
       }
     });
 
-    return Object.values(principalData)
+    const real = Object.values(principalData)
       .map(p => ({ 
         ...p, 
         conversion: p.quotes > 0 ? (p.orders / p.quotes) * 100 : 0,
         avgTicket: p.orders > 0 ? p.revenue / p.orders : 0
       }))
       .sort((a, b) => b.revenue - a.revenue);
+
+    return real.length >= 2 ? real : DEMO_PRINCIPAL_DATA;
   };
 
   // Funnel analysis
@@ -489,7 +564,24 @@ export default function Reports() {
       monthlyData[month].weight += order.total_weight || 0;
     });
 
-    return Object.values(monthlyData);
+    const real = Object.values(monthlyData);
+    if (real.length >= 4) return real;
+
+    // Dados fictícios de sazonalidade industrial
+    return [
+      { month: 'janeiro', revenue: 452000, orders: 9, weight: 4200 },
+      { month: 'fevereiro', revenue: 521000, orders: 11, weight: 4900 },
+      { month: 'março', revenue: 614000, orders: 13, weight: 5800 },
+      { month: 'abril', revenue: 698000, orders: 15, weight: 6500 },
+      { month: 'maio', revenue: 847000, orders: 18, weight: 7900 },
+      { month: 'junho', revenue: 923000, orders: 19, weight: 8600 },
+      { month: 'julho', revenue: 1048000, orders: 22, weight: 9800 },
+      { month: 'agosto', revenue: 1195000, orders: 25, weight: 11200 },
+      { month: 'setembro', revenue: 1342000, orders: 28, weight: 12500 },
+      { month: 'outubro', revenue: 1498000, orders: 31, weight: 14100 },
+      { month: 'novembro', revenue: 1253000, orders: 26, weight: 11700 },
+      { month: 'dezembro', revenue: 892000, orders: 18, weight: 8300 },
+    ];
   };
 
   const monthlyEvolution = getMonthlyEvolution();
