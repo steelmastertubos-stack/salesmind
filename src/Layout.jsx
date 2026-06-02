@@ -22,7 +22,8 @@ import {
           TrendingDown,
           Calendar,
           MessageCircle,
-          Brain
+          Brain,
+          Database
         } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TaskNotifications from '@/components/tasks/TaskNotifications';
@@ -110,6 +111,7 @@ export default function Layout({ children, currentPageName }) {
     {
       title: 'AUTOMAÇÃO & CONFIG',
       items: [
+        { name: '🎭 Demo Setup', icon: Database, page: 'DemoSetup' },
         { name: 'Auditoria Total', icon: CheckSquare, page: 'AuditComplete' },
         { name: 'Importar Dados', icon: Upload, page: 'ImportData' },
         { name: 'Recalcular Tags', icon: Zap, page: 'RecalculateTags' },

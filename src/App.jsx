@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import HistoricoComercial from './pages/HistoricoComercial';
+import DemoSetup from './pages/DemoSetup';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -62,6 +63,11 @@ const AuthenticatedApp = () => {
       <Route path="/HistoricoComercial" element={
         <LayoutWrapper currentPageName="HistoricoComercial">
           <HistoricoComercial />
+        </LayoutWrapper>
+      } />
+      <Route path="/DemoSetup" element={
+        <LayoutWrapper currentPageName="DemoSetup">
+          <DemoSetup />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
